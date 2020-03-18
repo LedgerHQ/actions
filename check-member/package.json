@@ -1,0 +1,17 @@
+{
+  "name": "check-member",
+  "version": "1.0.0",
+  "description": "action to ban a user from launching a workflow",
+  "author": "Valentin D. Pinkman <valentin.d.pinkman@icloud.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "ncc build main.js -o build -m",
+    "watch": "yarn build --watch"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.3",
+    "@actions/github": "^2.1.1",
+    "@zeit/ncc": "^0.21.1"
+  }
+}

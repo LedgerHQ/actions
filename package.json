@@ -1,0 +1,33 @@
+{
+  "name": "actions",
+  "version": "1.0.0",
+  "description": "central repository for Ledger custom github actions",
+  "repository": "git@github.com:LedgerHQ/actions.git",
+  "author": "Valentin D. Pinkman <valentin.d.pinkman@icloud.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "check-member",
+    "get-pr-number",
+    "get-package-infos"
+  ],
+  "scripts": {
+    "build": "yarn workspaces run build"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-config-standard": "^14.1.0",
+    "eslint-plugin-import": "^2.20.1",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "prettier": "^1.19.1"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn build && git add -u"
+    }
+  }
+}
