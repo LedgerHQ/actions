@@ -10,3 +10,4 @@ runs:
 
 branding:
   icon: user-check
+  color: yellow

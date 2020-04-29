@@ -1,0 +1,10 @@
+name: 'run-headless'
+description: 'run script in a headless able container'
+authors: IAmMorrow
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+
+branding:
+  icon: monitor
+  color: blue
