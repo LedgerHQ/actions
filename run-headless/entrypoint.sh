@@ -6,4 +6,4 @@ rm -rf node_modules
 yarn --frozen-lockfile
 yarn ci
 yarn build
-yarn spectron
+if [ -n "$1" -a "$1" = '1' ]; then yarn spectron -u; else yarn spectron; fi
