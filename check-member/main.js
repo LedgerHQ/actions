@@ -9,4 +9,4 @@ const main = async () => {
   }
 };
 
-main().catch(err => core.setFailed(err.message));
+main().catch((err) => core.setFailed(err.message));
