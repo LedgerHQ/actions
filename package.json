@@ -8,12 +8,18 @@
   "private": true,
   "workspaces": [
     "check-member",
+    "check-pr-screenshots",
     "get-pr-number",
     "get-package-infos",
     "run-headless"
   ],
   "scripts": {
-    "build": "yarn workspaces run build"
+    "build": "yarn workspaces run build",
+    "version:check-member": "cd check-member && yarn version --new-version $npm_package_version",
+    "version:check-pr-screenshots": "cd check-pr-screenshots && yarn version --new-version $npm_package_version",
+    "version:get-pr-number": "cd get-pr-number && yarn version --new-version $npm_package_version",
+    "version:get-package-infos": "cd get-package-infos && yarn version --new-version $npm_package_version",
+    "postversion": "yarn version:check-member && version:check-pr-screenshots && version:get-pr-number && version:get-package-infos"
   },
   "devDependencies": {
     "eslint": "^7.1.0",

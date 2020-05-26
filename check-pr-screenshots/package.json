@@ -1,0 +1,17 @@
+{
+  "name": "check-pr-screenshots",
+  "version": "1.0.0",
+  "description": "check if merge on develop is from new screenshots",
+  "author": "Valentin D. Pinkman <valentin.d.pinkman@icloud.com>",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "build": "ncc build main.js -o build -m",
+    "watch": "yarn build --watch"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.4",
+    "@actions/github": "^2.2.0",
+    "@zeit/ncc": "^0.22.3"
+  }
+}
