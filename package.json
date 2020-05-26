@@ -1,6 +1,6 @@
 {
   "name": "actions",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "central repository for Ledger custom github actions",
   "repository": "git@github.com:LedgerHQ/actions.git",
   "author": "Valentin D. Pinkman <valentin.d.pinkman@icloud.com>",
@@ -14,12 +14,7 @@
     "run-headless"
   ],
   "scripts": {
-    "build": "yarn workspaces run build",
-    "version:check-member": "cd check-member && yarn version --new-version $npm_package_version",
-    "version:check-pr-screenshots": "cd check-pr-screenshots && yarn version --new-version $npm_package_version",
-    "version:get-pr-number": "cd get-pr-number && yarn version --new-version $npm_package_version",
-    "version:get-package-infos": "cd get-package-infos && yarn version --new-version $npm_package_version",
-    "postversion": "yarn version:check-member && version:check-pr-screenshots && version:get-pr-number && version:get-package-infos"
+    "build": "yarn workspaces run build"
   },
   "devDependencies": {
     "eslint": "^7.1.0",
