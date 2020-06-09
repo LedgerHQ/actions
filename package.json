@@ -1,6 +1,6 @@
 {
   "name": "actions",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "central repository for Ledger custom github actions",
   "repository": "git@github.com:LedgerHQ/actions.git",
   "author": "Valentin D. Pinkman <valentin.d.pinkman@icloud.com>",
