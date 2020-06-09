@@ -11,6 +11,10 @@ const uploadImage = async () => {
     throw new Error('no clientId defined');
   }
 
+  if (fs.existsSync(path)) {
+    throw new Error('the path provided does not exists');
+  }
+
   const upload = async (file) => {
     const body = new FormData();
     body.append('type', 'file');
@@ -28,20 +32,20 @@ const uploadImage = async () => {
     return res.json();
   };
 
-  if (fs.existsSync(path)) {
-    const files = fs.readdirSync(path);
-    const resultsP = files.map((file) => {
-      const img = fs.readFileSync(`${path}/${file}`);
-      return upload(img);
-    });
+  const files = fs.readdirSync(path);
+  const resultsP = files.map((file) => {
+    const img = fs.readFileSync(`${path}/${file}`);
+    return upload(img);
+  });
 
-    const results = await Promise.all(resultsP);
-    const res = results.map((r) => {
-      return r.data.link;
-    });
-    console.log(res);
-    core.setOutput('images', res);
-  }
+  const results = await Promise.all(resultsP);
+  const res = results.map((r) => {
+    return r.data.link;
+  });
+
+  console.log(res);
+
+  core.setOutput('images', res);
 };
 
 uploadImage().catch((err) => {
