@@ -6,7 +6,6 @@ const main = async () => {
 
   let str = '';
   if (imgArr.length) {
-    str += '## Diff output';
     imgArr.map((image) => {
       str += '![](' + image + ') \n';
     });
