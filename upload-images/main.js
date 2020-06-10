@@ -5,13 +5,8 @@ const FormData = require('form-data');
 const { resolve } = require('path');
 
 const uploadImage = async () => {
-  const clientId = core.getInput('clientId', { required: true });
   const path = core.getInput('path');
   const fullPath = resolve(path);
-
-  if (!clientId) {
-    throw new Error('no clientId defined');
-  }
 
   if (fs.existsSync(fullPath)) {
     throw new Error('the path provided does not exists');
@@ -26,7 +21,7 @@ const uploadImage = async () => {
       method: 'POST',
       headers: {
         Accept: 'application/json',
-        Authorization: `Client-ID ${clientId}`,
+        Authorization: `Client-ID 11eb8a62f4c7927`,
       },
       body,
     });

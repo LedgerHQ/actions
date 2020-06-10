@@ -5,9 +5,6 @@ inputs:
   path:
     description: path to look for images to upload (relative to root of current project)
     required: true
-  clientId:
-    description: imgur clientId used to upload files
-    required: true
 outputs:
   images:
     description: 'string[] of images uploaded to imgur'
