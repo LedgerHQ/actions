@@ -11,8 +11,6 @@
     "check-pr-screenshots",
     "get-pr-number",
     "get-package-infos",
-    "run-headless",
-    "upload-images",
     "prepare-comment-body"
   ],
   "scripts": {
