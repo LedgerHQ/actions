@@ -1,6 +1,6 @@
 name: 'run-headless'
 description: 'run script in a headless able container'
-authors: IAmMorrow
+author: IAmMorrow
 runs:
   using: 'docker'
   image: 'Dockerfile'
