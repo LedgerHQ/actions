@@ -10,7 +10,7 @@
     "watch": "yarn build --watch"
   },
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.2.6",
     "@actions/github": "^2.2.0",
     "@zeit/ncc": "^0.22.3",
     "semver": "^7.3.2"
