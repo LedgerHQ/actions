@@ -3,10 +3,9 @@ import semver from 'semver';
 import * as fs from 'fs';
 
 const main = async (): Promise<void> => {
-  const packageName: string =
-    core.getInput('package', { required: false }) || 'package.json';
-  const workspace: string = core.getInput('workspace', { required: true });
-  const json = fs.readFileSync(`${workspace}/${packageName}`, 'utf8');
+  const packageName: string = core.getInput('package');
+  const path: string = core.getInput('path');
+  const json = fs.readFileSync(`${path}/${packageName}`, 'utf8');
   const pkg = JSON.parse(json);
 
   const { version } = semver.coerce(pkg.version);
