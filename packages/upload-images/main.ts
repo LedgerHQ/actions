@@ -6,14 +6,14 @@ import * as path from 'path';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const clean = (str) =>
+const clean = (str: string): string =>
   str
     .replace('-expected.png', '')
     .replace('-actual.png', '')
     .replace('-diff.png', '');
 
-const isDiff = (str) => str.includes('diff');
-const isActual = (str) => str.includes('actual');
+const isDiff = (str): boolean => str.includes('diff');
+const isActual = (str): boolean => str.includes('actual');
 
 const uploadImage = async () => {
   const p = core.getInput('path');
@@ -36,7 +36,7 @@ const uploadImage = async () => {
           Accept: 'application/json',
           Authorization: `Client-ID 11eb8a62f4c7927`,
         },
-        // @ts-ignore correct types are not found. FormData are acceptable
+        // @ts-expect-error correct types are not found. FormData are acceptable
         body,
       });
 
