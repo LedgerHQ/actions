@@ -4,7 +4,7 @@ on:
     inputs:
       instance-type:
         description: name of runner to use
-        required: true
+        required: false
         type: string
         default: t3.medium
         # c5.4xlarge
