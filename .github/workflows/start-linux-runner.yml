@@ -1,6 +1,13 @@
 name: Start self-hosted EC2 runner (Linux)
 on:
   workflow_call:
+    inputs:
+      instance-type:
+        description: name of runner to use
+        required: true
+        type: string
+        default: t3.medium
+        # c5.4xlarge
     secrets:
       CI_BOT_TOKEN:
         required: true
@@ -31,7 +38,7 @@ jobs:
           mode: start
           github-token: ${{ secrets.CI_BOT_TOKEN }}
           ec2-image-id: ${{ steps.get-ami-id.outputs.ami-id }}
-          ec2-instance-type: t3.medium
+          ec2-instance-type: ${{ inputs.instance-type }}
           subnet-id: subnet-0eeb962bb7d9d96ef # production-shared-private-eu-west-1a
           security-group-id: sg-010daba499648d1e7 # infra-gha-runner-sg
       - name: get volume-id
