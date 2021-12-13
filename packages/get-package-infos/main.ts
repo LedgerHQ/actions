@@ -1,0 +1,19 @@
+import * as core from '@actions/core';
+import semver from 'semver';
+import * as fs from 'fs';
+
+const main = async (): Promise<void> => {
+  const packageName: string =
+    core.getInput('package', { required: false }) || 'package.json';
+  const workspace: string = core.getInput('workspace', { required: true });
+  const json = fs.readFileSync(`${workspace}/${packageName}`, 'utf8');
+  const pkg = JSON.parse(json);
+
+  const { version } = semver.coerce(pkg.version);
+
+  core.setOutput('version', pkg.version);
+  core.setOutput('clean', version);
+  core.setOutput('name', pkg.name);
+};
+
+main().catch((err) => core.setFailed(err.message));
