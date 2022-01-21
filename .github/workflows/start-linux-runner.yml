@@ -18,6 +18,8 @@ on:
       ec2-instance-id:
         description: ec2 instance id
         value: ${{ jobs.start-runner.outputs.ec2-instance-id }}
+env:
+  AWS_REGION: eu-west-1
 
 jobs:
   start-runner:
