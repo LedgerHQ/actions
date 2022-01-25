@@ -19,7 +19,7 @@ env:
 jobs:
   stop-runner:
     name: stop self-hosted EC2 runner
-    runs-on: [ledger-live]
+    runs-on: [ledger-live, linux]
     if: ${{ always() }}
     steps:
       - name: Stop EC2 runner
