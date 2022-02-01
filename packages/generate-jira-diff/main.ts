@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import fetch from 'isomorphic-unfetch';
 
 const BASE_URL = 'https://ledgerhq.atlassian.net/issues/?jql=';
-const regexp = /LL-\d+/g;
+const regexp = /(LL|LIVE)-\d+/gi;
 
 const main = async () => {
   const base = core.getInput('base');
