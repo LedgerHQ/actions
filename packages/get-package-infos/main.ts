@@ -11,8 +11,11 @@ const main = async (): Promise<void> => {
   const { version } = semver.coerce(pkg.version);
 
   core.setOutput('version', pkg.version);
+  core.debug(`version ${pkg.version}`);
   core.setOutput('clean', version);
+  core.debug(`clean ${version}`);
   core.setOutput('name', pkg.name);
+  core.debug(`name ${pkg.name}`);
 };
 
 main().catch((err) => core.setFailed(err.message));
