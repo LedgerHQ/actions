@@ -3,14 +3,15 @@ import * as core from '@actions/core';
 import { promises as fs } from 'fs';
 
 const main = async () => {
-  const imagesObject = await fs.readFile(core.getInput('images'));
+  const imagesObject = await fs.readFile(core.getInput('images'), 'utf8');
   const lintoutput = await fs.readFile(core.getInput('lintoutput'), 'utf8');
   const jestoutput = await fs.readFile(core.getInput('jestoutput'), 'utf8');
 
+  const parsed = JSON.parse(imagesObject);
   let str = '';
   let hasFailed = false;
-  for (const platform of imagesObject) {
-    const current = imagesObject[platform];
+  for (const platform in parsed) {
+    const current = parsed[platform];
     if (Array.isArray(current) && current.length) {
       if (!hasFailed) hasFailed = true;
       str += `
