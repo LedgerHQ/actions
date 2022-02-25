@@ -1,24 +1,29 @@
 name: "Validate and publish"
-description: "Run different validation steps on a lib and publish it to gemfury"
+description: "Run different validation steps on a lib and publish it to a python package index"
 
 inputs:
   python-version:
     description: "Version of python to use"
     required: false
     default: "3.9"
+  public:
+    description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
+    required: false
+    default: false
 
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/python-lib-action/test@v2
+    - uses: LedgerHQ/actions/python-lib/test@main
       with:
         python-version: ${{ inputs.python-version }}
-    - uses: LedgerHQ/python-lib-action/check-version@v2
+    - uses: LedgerHQ/actions/python-lib/check-version@main
       with:
         python-version: ${{ inputs.python-version }}
-    - uses: LedgerHQ/python-lib-action/publish@v2
+    - uses: LedgerHQ/actions/python-lib/publish@main
       with:
         python-version: ${{ inputs.python-version }}
+        public: ${{ inputs.public }}
       env:
         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         PYPI_PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
