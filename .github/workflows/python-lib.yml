@@ -1,0 +1,22 @@
+name: Test python-lib action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ python-lib/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ python-lib/** ]
+
+defaults:
+  run:
+    working-directory: python-lib
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test new version of the action
+        run: echo "Not sure how to easily test this ¯\_(ツ)_/¯"

@@ -6,6 +6,10 @@ inputs:
     description: "Version of python to use"
     required: false
     default: "3.9"
+  public:
+    description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -27,7 +31,7 @@ runs:
         tag_name: ${{ env.RELEASE_NAME }}
         release_name: ${{ env.RELEASE_NAME }}
     - name: Push to GemFury
-      if: ${{ inputs.public == "false" && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      if: ${{ inputs.public == 'false' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
       env:
         DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
       run: |
@@ -37,7 +41,7 @@ runs:
         curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
       shell: bash
     - name: Push to Pypi
-      if: ${{ inputs.public == "true" && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      if: ${{ inputs.public == 'true' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN  }}
