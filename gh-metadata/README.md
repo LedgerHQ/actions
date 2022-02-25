@@ -15,7 +15,7 @@ jobs:
     name: Compute metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: LedgerHQ/gh-metadata-action@v1
+      - uses: LedgerHQ/actions/gh-metadata@main
         id: metadata
     outputs:
       refs: ${{ toJson(steps.metadata.outputs) }}

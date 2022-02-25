@@ -1,5 +1,5 @@
 name: "Publish"
-description: "Publish a new version to gemfury"
+description: "Publish a new version"
 
 inputs:
   python-version:
@@ -27,7 +27,7 @@ runs:
         tag_name: ${{ env.RELEASE_NAME }}
         release_name: ${{ env.RELEASE_NAME }}
     - name: Push to GemFury
-      if: ${{ startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      if: ${{ inputs.public == "false" && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
       env:
         DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
       run: |
@@ -35,4 +35,15 @@ runs:
         package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
         echo "Publishing package: ${package_file}"
         curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
+      shell: bash
+    - name: Push to Pypi
+      if: ${{ inputs.public == "true" && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN  }}
+        TWINE_NON_INTERACTIVE: 1
+      run: |
+        python3 -m pip install --upgrade build twine
+        python3 -m build
+        twine upload dist/*
       shell: bash

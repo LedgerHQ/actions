@@ -7,7 +7,7 @@ Github action to build, test, and publish new versions of a python library.
 For a simple validation + publish on push to main, you can simply use:
 
 ```yaml
-- uses: LedgerHQ/python-lib-action@v2
+- uses: LedgerHQ/actions/python-lib@main
   env:
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,15 +23,15 @@ for two versions of python followed by a single publish), then you can
 call the sub-actions separately as such:
 
 ```yaml
-- uses: LedgerHQ/python-lib-action/test@v2
+- uses: LedgerHQ/actions/python-lib/test@main
   with:
     # Version of python to use, defaults to 3.9
     python-version: 3.9
-- uses: LedgerHQ/python-lib-action/check-version@v2
+- uses: LedgerHQ/actions/python-lib/check-version@main
   with:
     # Version of python to use, defaults to 3.9
     python-version: 3.9
-- uses: LedgerHQ/python-lib-action/publish@v2
+- uses: LedgerHQ/actions/python-lib/publish@main
   env:
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,6 +40,19 @@ call the sub-actions separately as such:
   with:
     # Version of python to use, defaults to 3.9
     python-version: 3.9
+```
+
+You can also choose to publish your package publicly
+
+```yaml
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Token used to push the new version to pypi.org
+    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUBLIC_API_TOKEN }}
+  with:
+    public: true
+
 ```
 
 ## Requirements
