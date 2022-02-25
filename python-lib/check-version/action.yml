@@ -1,0 +1,27 @@
+name: "Check version"
+description: "Check if the version is unused"
+
+inputs:
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Set env vars
+      run: |
+        echo "RELEASE_NAME=$(python setup.py --fullname)" >> $GITHUB_ENV
+      shell: bash
+    - name: Check version
+      run: |
+        echo "Checking that tag ${{ env.RELEASE_NAME }} does not already exist."
+        git fetch --tags
+        git tag ${{ env.RELEASE_NAME }}
+        git tag -d ${{ env.RELEASE_NAME }}
+      shell: bash
