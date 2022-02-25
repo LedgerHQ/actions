@@ -1,0 +1,22 @@
+name: has-hash-commit-deps
+description: checks if any dependencies is from a git repository
+author: valpinkman
+inputs:
+  workspace:
+    description: name of the organisation to check for
+    required: true
+  package:
+    description: package.json file
+    default: package.json
+    required: false
+outputs:
+  has-hash-commit-deps:
+    description: true if any dependencies is from a git repository
+
+runs:
+  using: node16
+  main: build/index.js
+
+branding:
+  icon: user-check
+  color: yellow

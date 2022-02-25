@@ -1,4 +1,4 @@
-name:  prepare-comment-body
+name: prepare-comment-body
 description: gets a list of images and return a formatted markdown body for comment
 author: valpinkman
 outputs:
@@ -9,7 +9,7 @@ inputs:
     description: array of images to include in body of comment
     required: true
 runs:
-  using: node12
+  using: node16
   main: build/index.js
 
 branding:
