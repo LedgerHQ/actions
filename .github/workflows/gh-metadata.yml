@@ -1,0 +1,25 @@
+name: Test gh-metadata action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ gh-metadata/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ gh-metadata/** ]
+
+defaults:
+  run:
+    working-directory: gh-metadata
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test new version of the action
+        uses: ./gh-metadata
+        id: metadata
+      - name: Display outputs
+        run: echo "${{ toJson(steps.metadata.outputs) }}"
