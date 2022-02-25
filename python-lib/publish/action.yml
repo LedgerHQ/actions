@@ -1,0 +1,38 @@
+name: "Publish"
+description: "Publish a new version to gemfury"
+
+inputs:
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Set env vars
+      run: |
+        echo "RELEASE_NAME=$(python setup.py --fullname)" >> $GITHUB_ENV
+      shell: bash
+    - name: Create Release
+      if: ${{ startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ env.RELEASE_NAME }}
+        release_name: ${{ env.RELEASE_NAME }}
+    - name: Push to GemFury
+      if: ${{ startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      env:
+        DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
+      run: |
+        python setup.py sdist
+        package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
+        echo "Publishing package: ${package_file}"
+        curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
+      shell: bash

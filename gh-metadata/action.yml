@@ -1,0 +1,57 @@
+name: "Compute git metadata"
+description: "Compute git metadata for a PR as output"
+outputs:
+  target:
+    description: "Target of the PR, if any"
+    value: ${{ steps.refs.outputs.target }}
+  branch:
+    description: "Branch that triggered the action"
+    value: ${{ steps.refs.outputs.branch }}
+  version:
+    description: "Version tagging the commit that triggered the action"
+    value: ${{ steps.refs.outputs.version }}
+  sha:
+    description: "SHA of the commit that triggered the action"
+    value: ${{ steps.refs.outputs.sha }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - name: Compute base ref (branch/tag) name
+      id: refs
+      run: |
+        if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
+          echo "::set-output name=target::origin/${GITHUB_BASE_REF#refs/heads/}"
+        elif  [[ $GITHUB_REF == refs/heads/feature/* ]]; then
+          echo "::set-output name=target::main"
+        else
+          echo "::set-output name=target::HEAD^"
+        fi
+
+        if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
+          branch=${GITHUB_HEAD_REF#refs/heads/}
+          # Workaround https://github.com/actions/checkout/issues/299 and https://github.com/actions/checkout/issues/237
+          sha=${{ github.event.pull_request.head.sha }}
+        elif [[ $GITHUB_REF == refs/heads/* ]]; then
+          branch=${GITHUB_REF#refs/heads/}
+          sha=${{ github.sha }}
+        fi
+
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          # It's a tag aka. a semver dotted release (X.Y.Z assuming no v prefix)
+          version=${GITHUB_REF#refs/tags/}
+          echo "::set-output name=branch::${version}"
+          echo "::set-output name=version::${version}"
+          echo "::set-output name=sha::${{ github.sha }}"
+        elif [[ ! -z "$branch" ]]; then
+          echo "::set-output name=branch::${branch}"
+          echo "::set-output name=version::${branch//\//-}-$(git rev-parse --short HEAD)"
+          echo "::set-output name=sha::${sha}"
+        else
+          echo "::error ::Unkown case: current build is neither a tag, a branch or a pull request"
+          exit 1
+        fi
+      shell: bash
+    - name: Display output
+      run: echo "${{ toJson(steps.refs.outputs) }}"
+      shell: bash

@@ -1,0 +1,37 @@
+name: "Lint and test"
+description: "Lint and test a python library"
+
+inputs:
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: ${{ inputs.python-version }}
+    - name: Set env vars
+      run: |
+        echo "PACKAGE_NAME=$(python -c 'import setuptools;print(setuptools.find_packages(exclude=["tests", "tests.*"])[0])')" >> $GITHUB_ENV
+      shell: bash
+    - name: Lint
+      uses: pre-commit/action@v2.0.3
+    - name: Install dependencies
+      run: |
+        pip install --extra-index-url https://${{ env.PYPI_PUSH_TOKEN }}:@pypi.fury.io/ledger -r requirements-dev.txt
+        pip install --extra-index-url https://${{ env.PYPI_PUSH_TOKEN }}:@pypi.fury.io/ledger .[tests]
+      shell: bash
+    - name: Test
+      run: |
+        pytest -s --cov=./${{ env.PACKAGE_NAME }}
+        if $(python -c "import mypy"); then
+            mypy --install-types --non-interactive ./${{ env.PACKAGE_NAME }};
+        else
+            echo "mypy not installed, skipping";
+        fi
+        codecov
+      shell: bash
