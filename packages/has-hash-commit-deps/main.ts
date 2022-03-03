@@ -20,7 +20,7 @@ async function main() {
         .concat(
           Object.keys(devDependencies).map((key) => devDependencies[key])
         );
-      const has = versions.some((v) => v.includes('.git'));
+      const has = versions.some((v) => v.includes('.git') || v.includes('#'));
       core.setOutput('has-hash-commit-deps', has);
       return;
     } catch (error) {
