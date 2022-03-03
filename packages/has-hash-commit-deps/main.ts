@@ -6,8 +6,10 @@ async function main() {
   const workspace = core.getInput('workspace');
   const pkg = core.getInput('package');
   const packagePath = join(workspace, pkg);
+  core.debug(packagePath);
   try {
     const p = await fs.readFile(packagePath, 'utf8');
+    core.debug(p);
     if (!p) {
       core.setOutput('has-hash-commit-deps', false);
       return;
@@ -21,7 +23,7 @@ async function main() {
     core.setOutput('has-hash-commit-deps', has);
     return;
   } catch (error) {
-    core.error(error);
+    core.debug(error);
     throw error;
   }
 }
