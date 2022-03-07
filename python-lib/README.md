@@ -52,7 +52,19 @@ You can also choose to publish your package publicly
     PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUBLIC_API_TOKEN }}
   with:
     public: true
+```
 
+if your package depends on another hosted on our private repo, you will also
+need a *deploy* token for test
+
+```yaml
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
+    PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
+  with:
+    public: true
 ```
 
 ## Requirements

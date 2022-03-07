@@ -17,6 +17,8 @@ runs:
     - uses: LedgerHQ/actions/python-lib/test@main
       with:
         python-version: ${{ inputs.python-version }}
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
     - uses: LedgerHQ/actions/python-lib/check-version@main
       with:
         python-version: ${{ inputs.python-version }}

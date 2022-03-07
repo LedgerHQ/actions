@@ -22,8 +22,8 @@ runs:
       uses: pre-commit/action@v2.0.3
     - name: Install dependencies
       run: |
-        pip install --extra-index-url https://${{ env.PYPI_PUSH_TOKEN }}:@pypi.fury.io/ledger -r requirements-dev.txt
-        pip install --extra-index-url https://${{ env.PYPI_PUSH_TOKEN }}:@pypi.fury.io/ledger .[tests]
+        pip install --extra-index-url https://${{ env.PYPI_DEPLOY_TOKEN }}:@pypi.fury.io/ledger -r requirements-dev.txt
+        pip install --extra-index-url https://${{ env.PYPI_DEPLOY_TOKEN }}:@pypi.fury.io/ledger .[tests]
       shell: bash
     - name: Test
       run: |
