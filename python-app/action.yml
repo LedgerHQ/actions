@@ -1,0 +1,25 @@
+name: "Validate and publish"
+description: "Run different validation steps on a app and push a docker image"
+
+inputs:
+  src-path:
+    description: "path to src directory"
+    required: false
+    default: "src"
+
+
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/actions/python-app/lint@main
+
+    - uses: LedgerHQ/actions/python-app/test@main
+      with:
+        src-path: ${{ inputs.src-path }}
+
+    - uses: LedgerHQ/actions/python-app/goss@main
+      with:
+        GOSS_IMAGE: goss_image:latest
+        GOSS_FILES_PATH: .github/goss
+
+    - uses: LedgerHQ/actions/python-app/docker@main
