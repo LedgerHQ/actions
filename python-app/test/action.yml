@@ -1,0 +1,66 @@
+name: "test"
+description: "run unittest"
+
+inputs:
+  src-path:
+    description: "path to src directory"
+    required: false
+    default: "src"
+
+runs:
+  using: "composite"
+  steps:
+    - name: clone repo
+      uses: actions/checkout@v3
+
+    - name: install tools to parse python version
+      run: |
+        pip install toml-cli
+      shell: bash
+
+    - name: parse python version
+      run: |
+        version=$(toml get --toml-path Pipfile requires.python_version)
+        if [[ $? != 0 || -z $version ]]; then
+          version=3.9
+        fi
+        echo python_version=$version >> $GITHUB_ENV
+      shell: bash
+
+    - name: setup python with parsed version
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.python_version }}
+
+    - name: Install pipenv
+      run: |
+        pip install --upgrade pip
+        pip install pipenv
+        python --version ; pip --version ; pipenv --version
+      shell: bash
+
+    - name: Install package in development mode
+      run: |
+        pipenv sync --dev
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
+      shell: bash
+
+    - name: Run unittest
+      run: |
+        pipenv run pytest -s --cov=./${SRC}
+      env:
+        SRC: ${{ inputs.src-path }}
+      shell: bash
+
+    - name: Optionally run mypy
+      run: |
+        if $(pipenv run python -c "import mypy" 2> /dev/null); then
+          echo "run mypy on ${SRC}"
+          pipenv run mypy --install-types --non-interactive ${SRC}
+        else
+          echo "mypy not installed, skipping";
+        fi
+      env:
+        SRC: ${{ inputs.src-path }}
+      shell: bash
