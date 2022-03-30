@@ -7,7 +7,7 @@ runs:
   steps:
     - name: Check if step is needed
       run: |
-        echo docker_needed=${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'main' }} >> $GITHUB_ENV
+        echo docker_needed=${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main' }} >> $GITHUB_ENV
       shell: bash
 
     - if: ${{ env.docker_needed == 'true' }}
