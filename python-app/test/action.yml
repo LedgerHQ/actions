@@ -14,8 +14,9 @@ runs:
       uses: actions/checkout@v3
 
     - name: install tools to parse python version
+      # click pinned because of https://github.com/tiangolo/typer/issues/377
       run: |
-        pip install toml-cli
+        pip install toml-cli click==8.0.4
       shell: bash
 
     - name: parse python version
