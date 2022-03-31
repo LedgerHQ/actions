@@ -13,11 +13,15 @@ runs:
     - if: ${{ env.docker_needed == 'true' }}
       name: Clone
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # needed for VERSION
 
     - if: ${{ env.docker_needed == 'true' }}
-      name: Build image name (lowercase)
+      name: Info for build
       run: |
+        # lowercase image name
         echo IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+        echo VERSION=$(git describe --tags) >> $GITHUB_ENV
       shell: bash
 
     - if: ${{ env.docker_needed == 'true' }}
@@ -56,7 +60,9 @@ runs:
       uses: docker/build-push-action@v2
       with:
         context: .
-        build-args: PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
+        build-args: |
+          PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
+          VERSION=${{ env.VERSION }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         push: true
