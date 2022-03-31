@@ -39,3 +39,5 @@ Goss files are expected to be present in `.github/goss/`
 
  * `LedgerHQ/actions/python-app/docker`
 Build and publish a docker image for: `main`, `tags`, `feature/*`
+You can use the `VERSION` build arg to get the version as provided by `git
+describe --tags`
