@@ -7,9 +7,13 @@ inputs:
     required: false
     default: "3.9"
   public:
-    description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
+    description: "If true, push to public python package index pypi.org, otherwise use our private fury.io"
     required: false
     default: false
+  dist_format:
+    description: "Format of the use for the publishable ouput"
+    required: false
+    default: "sdist"
 
 runs:
   using: "composite"
@@ -35,8 +39,17 @@ runs:
       env:
         DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
       run: |
-        python setup.py sdist
-        package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
+        if [[ ${{ inputs.dist_format }} == "bdist_wheel" ]]; then
+          pip install wheel
+          python setup.py bdist_wheel
+          package_file=$(find dist -type f -name "${{ env.RELEASE_NAME }}*.whl")
+        elif [[ ${{ inputs.dist_format }} == "sdist" ]]; then
+          python setup.py sdist
+          package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
+        else
+          echo "Unsuported dist format '${{ inputs.dist_format }}'"
+          exit 1
+        fi
         echo "Publishing package: ${package_file}"
         curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
       shell: bash
@@ -48,6 +61,11 @@ runs:
         TWINE_NON_INTERACTIVE: 1
       run: |
         python3 -m pip install --upgrade build twine
-        python3 -m build
-        twine upload dist/*
+        if [[ ${{ inputs.dist_format }} == "sdist" ]]; then
+          python3 -m build
+          twine upload dist/*
+        else
+          echo "Unsuported dist format '${{ inputs.dist_format }}'"
+          exit 1
+        fi
       shell: bash
