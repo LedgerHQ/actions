@@ -40,11 +40,15 @@ runs:
         DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
       run: |
         if [[ ${{ inputs.dist_format }} == "bdist_wheel" ]]; then
-          pip install wheel
-          python setup.py bdist_wheel
+          if [[ ! -d ./dist/ ]]; then
+            pip install wheel
+            python setup.py bdist_wheel
+          fi
           package_file=$(find dist -type f -name "${{ env.RELEASE_NAME }}*.whl")
         elif [[ ${{ inputs.dist_format }} == "sdist" ]]; then
-          python setup.py sdist
+          if [[ ! -d ./dist/ ]]; then
+            python setup.py sdist
+          fi
           package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
         else
           echo "Unsuported dist format '${{ inputs.dist_format }}'"
@@ -62,7 +66,9 @@ runs:
       run: |
         python3 -m pip install --upgrade build twine
         if [[ ${{ inputs.dist_format }} == "sdist" ]]; then
-          python3 -m build
+          if [[ ! -d ./dist/ ]]; then
+            python3 -m build
+          fi
           twine upload dist/*
         else
           echo "Unsuported dist format '${{ inputs.dist_format }}'"
