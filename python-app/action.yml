@@ -17,7 +17,7 @@ runs:
       with:
         src-path: ${{ inputs.src-path }}
 
-    - uses: LedgerHQ/actions/python-app/goss@main
+    - uses: LedgerHQ/actions/python-app/goss@goss
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
