@@ -50,7 +50,7 @@ runs:
 
     - if: ${{ env.goss_enabled == 'true' }}
       name: Run GOSS validation
-      run: dgoss run ${{ inputs.GOSS_IMAGE }}
+      run: dgoss run --network "host" ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
       shell: bash
