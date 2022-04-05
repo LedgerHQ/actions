@@ -51,10 +51,11 @@ runs:
     - if: ${{ env.goss_enabled == 'true' }}
       name: Run GOSS validation
       run: |
+        opts=""
         if [[ -n ${{ job.container.network }} ]]; then
           opts="--network ${{ job.container.network }}"
         fi
-        dgoss run ${opts} ${{ inputs.GOSS_IMAGE }}
+        dgoss run -e VAULT_NOTIF_CENTER_DATABASE_HOST=postgres ${opts} ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
       shell: bash
