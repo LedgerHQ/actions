@@ -55,6 +55,7 @@ runs:
         if [[ -n ${{ job.container.network }} ]]; then
           opts="--network ${{ job.container.network }}"
         fi
+        docker run --rm=true praqma/network-multitool ping -c3 postgres
         dgoss run -e VAULT_NOTIF_CENTER_DATABASE_HOST=postgres ${opts} ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
