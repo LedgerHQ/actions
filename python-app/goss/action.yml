@@ -51,10 +51,10 @@ runs:
     - if: ${{ env.goss_enabled == 'true' }}
       name: Run GOSS validation
       run: |
-        # if [[ -n ${{ job.container.network }} ]]; then
-        #   opts="--network ${{ job.container.network }}"
-        # fi
-        dgoss run --network "host" ${{ inputs.GOSS_IMAGE }}
+        if [[ -n ${{ job.container.network }} ]]; then
+          opts="--network ${{ job.container.network }}"
+        fi
+        dgoss run ${opts} ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
       shell: bash
