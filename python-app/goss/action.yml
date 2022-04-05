@@ -51,12 +51,19 @@ runs:
     - if: ${{ env.goss_enabled == 'true' }}
       name: Run GOSS validation
       run: |
-        opts=""
-        if [[ -n ${{ job.container.network }} ]]; then
-          opts="--network ${{ job.container.network }}"
-        fi
-        docker run --rm=true praqma/network-multitool ping -c3 postgres
-        dgoss run -e VAULT_NOTIF_CENTER_DATABASE_HOST=postgres ${opts} ${{ inputs.GOSS_IMAGE }}
+        # opts=""
+        # if [[ -n ${{ job.container.network }} ]]; then
+        #   opts="--network ${{ job.container.network }}"
+        # fi
+        echo "local"
+        ping -c3 postgres || true
+        echo "ping"
+        docker run --rm=true praqma/network-multitool ping -c3 postgres || true
+        echo "ping in network"
+        docker run --rm=true --network ${{ job.container.network }} praqma/network-multitool ping -c3 postgres || true
+        echo "ping in host network"
+        docker run --rm=true --network "host" praqma/network-multitool ping -c3 postgres || true
+        #dgoss run -e VAULT_NOTIF_CENTER_DATABASE_HOST=postgres ${opts} ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
       shell: bash
