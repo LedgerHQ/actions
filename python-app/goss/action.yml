@@ -20,21 +20,22 @@ runs:
       id: goss_file
       run: |
         if [[ -d ${{ inputs.GOSS_FILES_PATH }} ]]; then
-          echo goss_enabled=true >> $GITHUB_ENV
+          echo "::set-output name=goss_enabled::true"
         else
-          echo goss_enabled=false >> $GITHUB_ENV
+          echo "::set-output name=goss_enabled::false"
         fi
       shell: bash
 
-    - if: ${{ env.goss_enabled == 'true' }}
+    - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Set up QEMU
       uses: docker/setup-qemu-action@v1
 
-    - if: ${{ env.goss_enabled == 'true' }}
+    - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v1
 
-    - if: ${{ env.goss_enabled == 'true' }}
+
+    - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Build docker image
       id: docker_build
       uses: docker/build-push-action@v2
@@ -43,12 +44,11 @@ runs:
         load: true
         build-args: PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
 
-
-    - if: ${{ env.goss_enabled == 'true' }}
+    - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Install Goss
       uses: e1himself/goss-installation-action@v1.0.3
 
-    - if: ${{ env.goss_enabled == 'true' }}
+    - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Run GOSS validation
       run: dgoss run --network "host" ${{ inputs.GOSS_IMAGE }}
       env:

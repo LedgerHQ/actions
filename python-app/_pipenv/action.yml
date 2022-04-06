@@ -1,0 +1,63 @@
+name: "test"
+description: "run unittest"
+
+inputs:
+  sync-dev:
+    description: "sync with --dev"
+    required: false
+    default: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: clone repo
+      uses: actions/checkout@v3
+
+    - name: setup python
+      # version is not important yet
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: install tools to parse python version
+      run: |
+        pip install toml-cli
+      shell: bash
+
+    - name: parse python version
+      id: parse-python-version
+      run: |
+        version=$(toml get --toml-path Pipfile requires.python_version)
+        if [[ $? != 0 || -z $version ]]; then
+          version=3.9
+        fi
+        echo "::set-output name=python-version::$version"
+      shell: bash
+
+    - name: setup python with parsed version
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ steps.parse-python-version.outputs.python-version }}
+
+    - name: Install pipenv
+      run: |
+        pip install --upgrade pip
+        pip install pipenv
+        python --version ; pip --version ; pipenv --version
+      shell: bash
+
+    - if: ${{ inputs.sync-dev == 'true' }}
+      name: Install package in dev mode
+      run: |
+        pipenv sync --dev
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
+      shell: bash
+
+    - if: ${{ inputs.sync-dev == 'false' }}
+      name: Install package in normal mode
+      run: |
+        pipenv sync
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
+      shell: bash
