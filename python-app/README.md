@@ -48,3 +48,7 @@ describe --tags`
  * `LedgerHQ/actions/python-app/doc`
 call `pipenv openapi` to generate an openapi file and push it to redocly
 This step is only active if `redocly-project` is given.
+
+
+For convenience, we also provide `LedgerHQ/actions/python-app/init` that setup
+python and run `pipenv sync` (with `--dev` optionally)

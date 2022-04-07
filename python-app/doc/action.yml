@@ -21,7 +21,7 @@ runs:
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       name: pipenv
-      uses: LedgerHQ/actions/python-app/_pipenv@main
+      uses: LedgerHQ/actions/python-app/init@main
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       name: Generate openapi
