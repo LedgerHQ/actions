@@ -16,7 +16,7 @@ runs:
     - name: Check if step is needed
       id: check-doc
       run: |
-        echo "::set-output name=is-doc-needed::${{ inputs.redocly-project != '' && (startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main') }}"
+        echo "::set-output name=is-doc-needed::${{ inputs.redocly-project != '' && startsWith(github.ref, 'refs/tags/') }}"
       shell: bash
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
