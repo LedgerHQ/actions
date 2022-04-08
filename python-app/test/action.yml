@@ -10,42 +10,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: clone repo
-      uses: actions/checkout@v3
-
-    - name: install tools to parse python version
-      # click pinned because of https://github.com/tiangolo/typer/issues/377
-      run: |
-        pip install toml-cli click==8.0.4
-      shell: bash
-
-    - name: parse python version
-      run: |
-        version=$(toml get --toml-path Pipfile requires.python_version)
-        if [[ $? != 0 || -z $version ]]; then
-          version=3.9
-        fi
-        echo python_version=$version >> $GITHUB_ENV
-      shell: bash
-
-    - name: setup python with parsed version
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ env.python_version }}
-
-    - name: Install pipenv
-      run: |
-        pip install --upgrade pip
-        pip install pipenv
-        python --version ; pip --version ; pipenv --version
-      shell: bash
-
-    - name: Install package in development mode
-      run: |
-        pipenv sync --dev
-      env:
-        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
-      shell: bash
+    - name: pipenv
+      uses: LedgerHQ/actions/python-app/init@main
 
     - name: Run unittest
       run: |

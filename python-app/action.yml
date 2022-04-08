@@ -7,6 +7,12 @@ inputs:
     required: false
     default: "src"
 
+  redocly-project:
+    description: |
+      name of the project on redocly (eg "@ledger/my project@v1"),
+      if empty, step is skipped
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -23,3 +29,7 @@ runs:
         GOSS_FILES_PATH: .github/goss
 
     - uses: LedgerHQ/actions/python-app/docker@main
+
+    - uses: LedgerHQ/actions/python-app/doc@main
+      with:
+        redocly-project: ${{ inputs.redocly-project }}

@@ -19,10 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: LedgerHQ/actions/python-app@main
+        with:
+          redocly-project: "@ledger/Vault Notification Center@v1"
         env:
           PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
           CI_BOT_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
           CI_BOT_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+          REDOCLY_AUTHORIZATION: ${{ secrets.REDOCLY_AUTHORIZATION }}
 ```
 
 This action is a `composite` of
@@ -41,3 +44,11 @@ Goss files are expected to be present in `.github/goss/`
 Build and publish a docker image for: `main`, `tags`, `feature/*`
 You can use the `VERSION` build arg to get the version as provided by `git
 describe --tags`
+
+ * `LedgerHQ/actions/python-app/doc`
+call `pipenv openapi` to generate an openapi file and push it to redocly
+This step is only active if `redocly-project` is given.
+
+
+For convenience, we also provide `LedgerHQ/actions/python-app/init` that setup
+python and run `pipenv sync` (with `--dev` optionally)
