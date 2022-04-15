@@ -28,7 +28,7 @@ runs:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@main
+    - uses: LedgerHQ/actions/python-app/docker@debug
 
     - uses: LedgerHQ/actions/python-app/doc@main
       with:
