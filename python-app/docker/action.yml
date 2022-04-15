@@ -8,13 +8,13 @@ runs:
     - name: Check if step is needed
       id: check-docker
       run: |
-        echo ${{ github }}
+        echo "${{ toJSON(github) }}"
         echo "*********"
         echo ${{ github.ref }}
         echo "IF"
         echo "${{ startsWith(github.ref, 'refs/heads/feature/') }}"
         echo "FULL"
-        echo "${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main' }}"
+        echo "${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.head_ref, 'feature/') || github.ref == 'refs/heads/main' }}"
         echo "::set-output name=is-docker-needed::${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.ref, 'refs/heads/feature/') || github.ref == 'refs/heads/main' }}"
       shell: bash
 
