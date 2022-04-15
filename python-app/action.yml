@@ -17,19 +17,19 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/python-app/lint@main
+    # - uses: LedgerHQ/actions/python-app/lint@main
 
-    - uses: LedgerHQ/actions/python-app/test@main
-      with:
-        src-path: ${{ inputs.src-path }}
+    # - uses: LedgerHQ/actions/python-app/test@main
+    #   with:
+    #     src-path: ${{ inputs.src-path }}
 
-    - uses: LedgerHQ/actions/python-app/goss@main
-      with:
-        GOSS_IMAGE: goss_image:latest
-        GOSS_FILES_PATH: .github/goss
+    # - uses: LedgerHQ/actions/python-app/goss@main
+    #   with:
+    #     GOSS_IMAGE: goss_image:latest
+    #     GOSS_FILES_PATH: .github/goss
 
     - uses: LedgerHQ/actions/python-app/docker@debug
 
-    - uses: LedgerHQ/actions/python-app/doc@main
-      with:
-        redocly-project: ${{ inputs.redocly-project }}
+    # - uses: LedgerHQ/actions/python-app/doc@main
+    #   with:
+    #     redocly-project: ${{ inputs.redocly-project }}

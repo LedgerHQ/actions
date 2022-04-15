@@ -8,6 +8,8 @@ runs:
     - name: Check if step is needed
       id: check-docker
       run: |
+        echo ${{ github }}
+        echo "*********"
         echo ${{ github.ref }}
         echo "IF"
         echo "${{ startsWith(github.ref, 'refs/heads/feature/') }}"
