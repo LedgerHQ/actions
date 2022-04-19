@@ -29,6 +29,7 @@ runs:
       run: |
         pytest -s --cov=./${{ env.PACKAGE_NAME }}
         if $(python -c "import mypy"); then
+            rm .mypy_cache || echo "No mypy cache found"
             mypy --install-types --non-interactive ./${{ env.PACKAGE_NAME }};
         else
             echo "mypy not installed, skipping";
