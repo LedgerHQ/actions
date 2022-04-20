@@ -1,6 +1,12 @@
 name: Build
 description: Build and publish image
 
+inputs:
+  build-args:
+    description: "args to pass to docker build"
+    required: false
+    default: ""
+
 runs:
   using: "composite"
 
@@ -62,6 +68,7 @@ runs:
       with:
         context: .
         build-args: |
+          ${{ inputs.build-args }}
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
           VERSION=${{ env.VERSION }}
         tags: ${{ steps.meta.outputs.tags }}

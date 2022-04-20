@@ -14,6 +14,11 @@ inputs:
     required: false
     default: ""
 
+  docker-build-args:
+    description: "args to pass to docker build"
+    required: false
+    default: ""
+
 runs:
   using: "composite"
   steps:
@@ -29,6 +34,8 @@ runs:
         GOSS_FILES_PATH: .github/goss
 
     - uses: LedgerHQ/actions/python-app/docker@main
+      with:
+        build-args: ${{ inputs.docker-build-args }}
 
     - uses: LedgerHQ/actions/python-app/doc@main
       with:
