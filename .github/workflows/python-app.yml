@@ -1,0 +1,27 @@
+name: Test python-lib action
+
+on:
+  push:
+    branches: [ main, feature/** ]
+    paths: [ python-app/** ]
+  pull_request:
+    branches: [ main, feature/** ]
+    paths: [ python-app/** ]
+
+defaults:
+  run:
+    working-directory: python-app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test building the new action
+        uses: peter-evans/repository-dispach@v2
+        with:
+          token: ${{ github.token }}
+          repository : LedgerHQ/test-actions
+          event-type: test-build
+          client-patyload : '{"ref": "${{ github.ref }}", "sha": "${{ github.sha}}"}'
