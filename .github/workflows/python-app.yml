@@ -2,10 +2,11 @@ name: Test python-lib action
 
 on:
   push:
-    branches: [ main, feature/** ]
+    branches: [ main, 'feature/*' ]
     paths: [ python-app/** ]
   pull_request:
-    branches: [ main, feature/** ]
+    branches: [ main, 'feature/*' ]
+    tags: [ '*' ]
     paths: [ python-app/** ]
 
 defaults:
