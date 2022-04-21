@@ -33,4 +33,4 @@ jobs:
           token: ${{ github.token }}
           repository : LedgerHQ/test-actions
           event-type: test-build
-          client-patyload : '{"ref": "${{ github.ref }}", "sha": "${{ github.sha}}"}'
+          client-payload : '{"ref": "${{ github.ref }}", "sha": "${{ github.sha}}"}'
