@@ -1,13 +1,21 @@
 name: Test python-lib action
 
 on:
+  workflow_dispatch:
   push:
-    branches: [ main, 'feature/*' ]
-    paths: [ python-app/** ]
+    branches:
+      - main
+      - 'feature/**'
+    paths:
+      - 'python-app/**'
   pull_request:
-    branches: [ main, 'feature/*' ]
-    tags: [ '*' ]
-    paths: [ python-app/** ]
+    branches:
+      - main
+      - 'feature/**'
+    tags:
+      - '*'
+    paths:
+      - 'python-app/**'
 
 defaults:
   run:
