@@ -30,7 +30,7 @@ jobs:
       - name: Test building the new action
         uses: peter-evans/repository-dispatch@v2
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.CI_BOT_TOKEN }}
           repository : LedgerHQ/test-actions
           event-type: test-build
           client-payload : '{"ref": "${{ github.ref }}", "sha": "${{ github.sha}}"}'
