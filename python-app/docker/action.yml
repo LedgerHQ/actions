@@ -59,7 +59,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ env.CI_BOT_USERNAME || github.actor }}
-        password: ${{ env.CI_BOT_TOKEN || secrets.GITHUB_TOKEN }}
+        password: ${{ env.CI_BOT_TOKEN || github.token }}
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
