@@ -1,6 +1,9 @@
 name: Build
 description: Build and publish image
 
+env:
+  DEFAULT_PUSH: true
+
 inputs:
   build-args:
     description: "args to pass to docker build"
@@ -11,6 +14,14 @@ runs:
   using: "composite"
 
   steps:
+    -name: Check if is test mode or not
+      id: check-test
+      run: |
+        PUSH=$DEFAULT_PUSH
+        if [ -n $IS_TEST ] && [ $IS_TEST == 'true' ]; then PUSH=false; fi
+        echo ::set-output push=PUSH::${PUSH}
+      shell: bash
+
     - name: Check if step is needed
       id: check-docker
       run: |
@@ -73,4 +84,4 @@ runs:
           VERSION=${{ env.VERSION }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        push: true
+        push: ${{ steps.check-test.PUSH }}
