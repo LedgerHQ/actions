@@ -18,8 +18,33 @@ runs:
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.python-version }}
+    - name: Get feature branch name
+      if: ${{ startsWith(github.ref, 'refs/heads/feature/') }}
+      id: feature
+      run: |
+        ref="${{ github.ref }}"
+        echo "::set-output name=feature-name::${ref#refs/heads/feature/}"
+      shell: bash
+    - uses: LedgerHQ/actions/gemfury/latest-version
+      if: ${{ inputs.public == 'false' && startsWith(github.ref, 'refs/heads/feature/') }}
+      id: fury
+      with:
+        feature-name: ${{ steps.feature.outputs.feature-name }}
+      env:
+        FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
     - name: Set env vars
       run: |
+        publish_feature="false"
+        if [[ -n "${{ steps.fury.outputs.next-feature-tag }}" ]];
+          if [[ $(grep -E '__version__ = ".+"' setup.py) ]]; then
+            echo "Temporarily updating version with feature tag ${{ steps.fury.outputs.next-feature-tag }}."
+            sed -i 's/__version__ = "\(.\+\)"/__version__ = "\1${{ steps.fury.outputs.next-feature-tag }}"/' setup.py
+            publish_feature="true"
+          else
+            echo "Can't find __version__ to update, skipping feature publish."
+          fi
+        fi
+        echo "PUBLISH_FEATURE=${publish_feature}" >> $GITHUB_ENV
         echo "RELEASE_NAME=$(python setup.py --fullname)" >> $GITHUB_ENV
       shell: bash
     - name: Create Release
@@ -31,14 +56,10 @@ runs:
         tag_name: ${{ env.RELEASE_NAME }}
         release_name: ${{ env.RELEASE_NAME }}
     - name: Push to GemFury
-      if: ${{ inputs.public == 'false' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+      if: ${{ inputs.public == 'false' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || env.PUBLISH_FEATURE == 'true') }}
+      uses: LedgerHQ/actions/gemfury/publish
       env:
         DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
-      run: |
-        python setup.py sdist
-        package_file="dist/${{ env.RELEASE_NAME }}.tar.gz"
-        echo "Publishing package: ${package_file}"
-        curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
       shell: bash
     - name: Push to Pypi
       if: ${{ inputs.public == 'true' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
