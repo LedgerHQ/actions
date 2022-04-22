@@ -1,0 +1,13 @@
+name: "Publish new version to gemfury"
+description: "Publish new version to gemfury"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Push to GemFury
+      run: |
+        python setup.py sdist
+        package_file=$(find dist -type f -name "*.tar.gz")
+        echo "Publishing package: ${package_file}"
+        curl -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
+      shell: bash

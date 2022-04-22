@@ -1,0 +1,33 @@
+name: "Get latest package version"
+description: "Get latest package version from gemfury"
+
+inputs:
+  feature-name:
+    description: "Name of the feature to target"
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/actions/gemfury/install@main
+    - name: Get version data
+      run: |
+        feature_name=${{ inputs.feature-name }}
+        if [[ -n "${feature_name}" ]]; then
+          dotted_feature_name=${feature_name//-/.}
+          grep_filter="rc[0-9]+\+${dotted_feature_name}"
+        fi
+
+        last_version=$(fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} vault-proto | grep -E ".*${grep_filter}" | head -n 1 | awk '{print $1}')
+        echo "::set-output name=last-version::${last_version}"
+
+        if [[ -n "${feature_name}" ]]; then
+          # remove everything after the rcX
+          last_version=${last_version%+*}
+          # remove everything before and including rc
+          last_rc_number=${last_version#*rc}
+          feature_tag="rc$((last_rc_number+1))+${feature_name}"
+          echo "::set-output name=next-feature-tag::${feature_tag}"
+        fi
+      shell: bash
