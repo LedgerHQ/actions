@@ -9,7 +9,7 @@ inputs:
   public:
     description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -45,7 +45,7 @@ runs:
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN  }}
-        TWINE_NON_INTERACTIVE: 1
+        TWINE_NON_INTERACTIVE: "1"
       run: |
         python3 -m pip install --upgrade build twine
         python3 -m build

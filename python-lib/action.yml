@@ -9,7 +9,7 @@ inputs:
   public:
     description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "composite"
