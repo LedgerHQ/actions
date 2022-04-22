@@ -19,6 +19,7 @@ runs:
           grep_filter="rc[0-9]+\+${dotted_feature_name}"
         fi
 
+        # This `versions` command can only be executed by a PYPI_FULL_ACCESS_TOKEN
         last_version=$(fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} vault-proto | grep -E ".*${grep_filter}" | head -n 1 | awk '{print $1}')
         echo "::set-output name=last-version::${last_version}"
 

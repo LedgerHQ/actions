@@ -26,7 +26,7 @@ runs:
         echo "::set-output name=feature-name::${ref#refs/heads/feature/}"
       shell: bash
     - uses: LedgerHQ/actions/gemfury/latest-version
-      if: ${{ inputs.public == 'false' && startsWith(github.ref, 'refs/heads/feature/') }}
+      if: ${{ inputs.public == 'false' && startsWith(github.ref, 'refs/heads/feature/') && env.PYPI_FULL_ACCESS_TOKEN != '' }}
       id: fury
       with:
         feature-name: ${{ steps.feature.outputs.feature-name }}
@@ -59,13 +59,13 @@ runs:
       if: ${{ inputs.public == 'false' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || env.PUBLISH_FEATURE == 'true') }}
       uses: LedgerHQ/actions/gemfury/publish
       env:
-        DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
+        DEPLOY_TOKEN: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
       shell: bash
     - name: Push to Pypi
       if: ${{ inputs.public == 'true' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN  }}
+        TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
         TWINE_NON_INTERACTIVE: "1"
       run: |
         python3 -m pip install --upgrade build twine
