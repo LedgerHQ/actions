@@ -1,0 +1,24 @@
+name: Test gemfury action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ gemfury/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ gemfury/** ]
+
+defaults:
+  run:
+    working-directory: gemfury
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test new version of the action
+        uses: ./gemfury/install
+      - name: Verify fury was installed
+        run: fury --help
