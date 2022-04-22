@@ -1,0 +1,12 @@
+name: "Install fury"
+description: "Install fury CLI tool on ubuntu"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install gemfury
+      run: |
+        sudo sh -c "echo 'deb [trusted=yes] https://cli.gemfury.com/apt/ /' > /etc/apt/sources.list.d/fury-cli.list"
+        sudo apt update
+        sudo apt install gemfury
+      shell: bash
