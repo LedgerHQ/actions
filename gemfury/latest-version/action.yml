@@ -6,12 +6,20 @@ inputs:
     description: "Name of the feature to target"
     required: false
     default: ""
+outputs:
+  last-version:
+    description: "Last version found of the package"
+    value: ${{ steps.version.outputs.last-version }}
+  next-feature-tag:
+    description: "Next feature flag to use"
+    value: ${{ steps.version.outputs.next-feature-tag }}
 
 runs:
   using: "composite"
   steps:
     - uses: LedgerHQ/actions/gemfury/install@main
     - name: Get version data
+      id: version
       run: |
         feature_name=${{ inputs.feature-name }}
         if [[ -n "${feature_name}" ]]; then
@@ -28,7 +36,10 @@ runs:
           last_version=${last_version%+*}
           # remove everything before and including rc
           last_rc_number=${last_version#*rc}
-          feature_tag="rc$((last_rc_number+1))+${feature_name}"
-          echo "::set-output name=next-feature-tag::${feature_tag}"
+          next_feature_tag="rc$((last_rc_number+1))+${feature_name}"
+          echo "::set-output name=next-feature-tag::${next_feature_tag}"
         fi
+      shell: bash
+    - name: Display output
+      run: echo "${{ toJson(steps.version.outputs) }}"
       shell: bash

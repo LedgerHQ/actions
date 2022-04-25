@@ -6,8 +6,10 @@ runs:
   steps:
     - name: Push to GemFury
       run: |
-        python setup.py sdist
         package_file=$(find dist -type f -name "*.tar.gz")
+        if [[ "$package_file" == "" ]]; then
+          package_file=$(find dist -type f -name "*.whl")
+        fi
         echo "Publishing package: ${package_file}"
-        curl --fail -F package=@${package_file} https://${{ env.DEPLOY_TOKEN }}@push.fury.io/ledger/
+        curl --fail -F package=@${package_file} https://${{ env.PUSH_TOKEN }}@push.fury.io/ledger/
       shell: bash
