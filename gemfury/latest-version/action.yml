@@ -2,24 +2,37 @@ name: "Get latest package version"
 description: "Get latest package version from gemfury"
 
 inputs:
+  package-name:
+    description: "Name of the package"
+    required: true
   feature-name:
     description: "Name of the feature to target"
     required: false
     default: ""
+outputs:
+  last-version:
+    description: "Last version found of the package"
+    value: ${{ steps.version.outputs.last-version }}
+  next-feature-tag:
+    description: "Next feature flag to use"
+    value: ${{ steps.version.outputs.next-feature-tag }}
 
 runs:
   using: "composite"
   steps:
     - uses: LedgerHQ/actions/gemfury/install@main
     - name: Get version data
+      id: version
       run: |
         feature_name=${{ inputs.feature-name }}
         if [[ -n "${feature_name}" ]]; then
-          dotted_feature_name=${feature_name//-/.}
+          dotted_feature_name=${feature_name//[-_]/.}
           grep_filter="rc[0-9]+\+${dotted_feature_name}"
         fi
 
-        last_version=$(fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} vault-proto | grep -E ".*${grep_filter}" | head -n 1 | awk '{print $1}')
+        # This `versions` command can only be executed by a PYPI_FULL_ACCESS_TOKEN
+        matching_versions=$((fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} ${{ inputs.package-name }} | grep -E ".*${grep_filter}") || echo "")
+        last_version=$(echo $matching_versions | awk '{print $1}')
         echo "::set-output name=last-version::${last_version}"
 
         if [[ -n "${feature_name}" ]]; then
@@ -27,7 +40,10 @@ runs:
           last_version=${last_version%+*}
           # remove everything before and including rc
           last_rc_number=${last_version#*rc}
-          feature_tag="rc$((last_rc_number+1))+${feature_name}"
-          echo "::set-output name=next-feature-tag::${feature_tag}"
+          next_feature_tag="rc$((last_rc_number+1))+${feature_name}"
+          echo "::set-output name=next-feature-tag::${next_feature_tag}"
         fi
+      shell: bash
+    - name: Display output
+      run: echo "${{ toJson(steps.version.outputs) }}"
       shell: bash

@@ -67,6 +67,19 @@ need a *deploy* token for test
     public: true
 ```
 
+If you want your feature branches to be published as rc versions on gemfury, you
+will need to provide a `PYPI_FULL_ACCESS_TOKEN`, required to be able to fetch
+existing versions of packages on gemfury:
+
+```yaml
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
+  with:
+    public: true
+```
+
 ## Requirements
 
 Beside chosing the version of python to run, this action does not allow the
@@ -78,6 +91,7 @@ a few conditions to use this action:
 - Use `main` as your base branch.
 - Don't rely on `pipenv` for listing and locking deps. We want `pipenv` to
 be used by services, and simple `setup.py` + `requirements.txt` for libs.
+- Define your version in `setup.py` as a variable `__version__ = "1.2.3"`
 - If you have multiple extra requirement sets, define a `tests` set which
 combines all your deps (see [this example](https://github.com/LedgerHQ/python-ledgercommon/blob/main/setup.py#L35)).
 Essentially running `pip install .[tests]` should install all the lib deps

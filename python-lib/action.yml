@@ -9,7 +9,7 @@ inputs:
   public:
     description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -19,6 +19,7 @@ runs:
         python-version: ${{ inputs.python-version }}
       env:
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
+        PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
     - uses: LedgerHQ/actions/python-lib/check-version@main
       with:
         python-version: ${{ inputs.python-version }}
@@ -29,3 +30,4 @@ runs:
       env:
         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
         PYPI_PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
+        PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
