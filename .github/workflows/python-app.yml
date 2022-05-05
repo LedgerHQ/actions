@@ -32,5 +32,5 @@ jobs:
         with:
           token: ${{ secrets.CI_BOT_TOKEN }}
           repository : LedgerHQ/test-actions
-          event-type: test-build
+          event-type: build-app
           client-payload : '{"ref": "${{ github.ref }}", "sha": "${{ github.sha}}"}'
