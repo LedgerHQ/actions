@@ -6,14 +6,17 @@ inputs:
     description: "Version of python to use"
     required: false
     default: "3.9"
+  CI_BOT_TOKEN:
+    required: false
+    type: string
 
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v3
       with:
-        token: ${{ env.GITHUB_TOKEN }}
-        submodules: recursive
+        token: ${{ inputs.CI_BOT_TOKEN }}
+        submodules: ${{ inpus.CI_BOT_TOKEN && 'recursive' || false }}
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.python-version }}
