@@ -8,7 +8,7 @@ inputs:
     default: "3.9"
   CI_BOT_TOKEN:
     required: false
-    type: string
+    default: ""
 
 runs:
   using: "composite"
