@@ -16,7 +16,7 @@ runs:
     - uses: actions/checkout@v3
       with:
         token: ${{ inputs.CI_BOT_TOKEN }}
-        submodules: ${{ inpus.CI_BOT_TOKEN && 'recursive' || false }}
+        submodules: ${{ inputs.CI_BOT_TOKEN && 'recursive' || false }}
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ inputs.python-version }}
