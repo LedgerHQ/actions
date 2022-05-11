@@ -10,6 +10,10 @@ inputs:
     description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
     required: false
     default: "false"
+  CI_BOT_TOKEN:
+    description: "if specified will be used to checkout submodules recursively in check-version"
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -23,6 +27,7 @@ runs:
     - uses: LedgerHQ/actions/python-lib/check-version@main
       with:
         python-version: ${{ inputs.python-version }}
+        CI_BOT_TOKEN: ${{ inputs.CI_BOT_TOKEN }}
     - uses: LedgerHQ/actions/python-lib/publish@main
       with:
         python-version: ${{ inputs.python-version }}
