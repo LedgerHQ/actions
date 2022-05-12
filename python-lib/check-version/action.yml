@@ -15,7 +15,8 @@ runs:
   steps:
     - uses: actions/checkout@v3
       with:
-        token: ${{ inputs.CI_BOT_TOKEN }}
+        # CI_BOT_TOKEN is used to be able to pull submodules recursively
+        token: ${{ inputs.CI_BOT_TOKEN && inputs.CI_BOT_TOKEN || env.GITHUB_TOKEN }}
         submodules: ${{ inputs.CI_BOT_TOKEN && 'recursive' || false }}
     - uses: actions/setup-python@v2
       with:
