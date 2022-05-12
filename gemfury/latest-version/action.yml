@@ -27,7 +27,7 @@ runs:
         feature_name=${{ inputs.feature-name }}
         if [[ -n "${feature_name}" ]]; then
           dotted_feature_name=${feature_name//[-_]/.}
-          grep_filter="rc[0-9]+\+${dotted_feature_name}"
+          grep_filter=$(echo "rc[0-9]+\+${dotted_feature_name}" | tr '[:upper:]' '[:lower:]')
         fi
 
         # This `versions` command can only be executed by a PYPI_FULL_ACCESS_TOKEN
