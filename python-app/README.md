@@ -9,8 +9,8 @@ on:
   push:
     branches:
       - main
-	tags:
-	  - "*"
+    tags:
+      - "*"
   pull_request:
   workflow_dispatch:
 
