@@ -20,6 +20,12 @@ runs:
         SRC: ${{ inputs.src-path }}
       shell: bash
 
+    - name: Figure out where mypy is coming from
+      run: |
+        python -c "import mypy"
+        pipenv run python -c "import mypy"
+        pipenv run pip freeze
+
     - name: Optionally run mypy
       run: |
         if $(pipenv run python -c "import mypy" 2> /dev/null); then
