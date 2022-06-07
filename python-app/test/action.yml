@@ -19,6 +19,12 @@ runs:
       env:
         SRC: ${{ inputs.src-path }}
       shell: bash
+  
+    - name: Figure out where mypy is coming from
+      run: |
+        python -c "import mypy"
+        pipenv run python -c "import mypy"
+        pipenv run pip freeze
 
     - name: Optionally run mypy
       run: |
