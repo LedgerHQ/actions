@@ -18,7 +18,7 @@ For a simple validation + publish on push to main, you can simply use:
     python-version: 3.9
 ```
 
-If however you need to do som more complex stuff (e.g. run the tests
+If however you need to do some more complex stuff (e.g. run the tests
 for two versions of python followed by a single publish), then you can
 call the sub-actions separately as such:
 
@@ -42,7 +42,9 @@ call the sub-actions separately as such:
     python-version: 3.9
 ```
 
-You can also choose to publish your package publicly
+### Publish to public pypi
+
+You can choose to publish your package publicly
 
 ```yaml
 - uses: LedgerHQ/actions/python-lib@main
@@ -54,7 +56,9 @@ You can also choose to publish your package publicly
     public: true
 ```
 
-if your package depends on another hosted on our private repo, you will also
+### Private dependencies
+
+If your package depends on another hosted on our private repo, you will also
 need a *deploy* token for test
 
 ```yaml
@@ -67,17 +71,27 @@ need a *deploy* token for test
     public: true
 ```
 
-If you want your feature branches to be published as rc versions on gemfury, you
-will need to provide a `PYPI_FULL_ACCESS_TOKEN`, required to be able to fetch
-existing versions of packages on gemfury:
+### Deploying feature branches
+
+If you want your feature branches to be published as rc versions on gemfury,
+you will need to:
+
+- Trigger the CI on push to `feature/*` branches
+- Make sure `public` is set to `false` (we don't publish features to pypi yet)
+- Provide a `PYPI_FULL_ACCESS_TOKEN` (required to be able to fetch
+existing versions of packages on gemfury)
 
 ```yaml
+on:
+  push:
+    branches: [ main, feature/* ]
+
+...
+
 - uses: LedgerHQ/actions/python-lib@main
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
-  with:
-    public: true
 ```
 
 ## Requirements
