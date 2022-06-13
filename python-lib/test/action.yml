@@ -14,7 +14,6 @@ runs:
     - uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
-        cache: 'pip'
     - name: Set env vars
       run: |
         echo "PACKAGE_NAME=$(python -c 'import setuptools;print(setuptools.find_packages(exclude=["tests", "tests.*"])[0])')" >> $GITHUB_ENV
