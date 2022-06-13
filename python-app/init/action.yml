@@ -15,7 +15,7 @@ runs:
 
     - name: setup python
       # version is not important yet
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: 3.9
 
@@ -35,9 +35,10 @@ runs:
       shell: bash
 
     - name: setup python with parsed version
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ steps.parse-python-version.outputs.python-version }}
+        cache: 'pipenv'
 
     - name: Install pipenv
       run: |
