@@ -10,16 +10,17 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
+        cache: 'pip'
     - name: Set env vars
       run: |
         echo "PACKAGE_NAME=$(python -c 'import setuptools;print(setuptools.find_packages(exclude=["tests", "tests.*"])[0])')" >> $GITHUB_ENV
       shell: bash
     - name: Lint
-      uses: pre-commit/action@v2.0.3
+      uses: pre-commit/action@v3.0.0
     - name: Install dependencies
       run: |
         pip install --extra-index-url https://${{ env.PYPI_DEPLOY_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}:@pypi.fury.io/ledger -r requirements-dev.txt
