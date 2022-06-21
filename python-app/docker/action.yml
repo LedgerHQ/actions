@@ -14,7 +14,8 @@ runs:
     - name: Check if step is needed
       id: check-docker
       run: |
-        echo "::set-output name=is-docker-needed::${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.head_ref, 'feature/') || github.ref == 'refs/heads/main' }}"
+        #echo "::set-output name=is-docker-needed::${{ startsWith(github.ref, 'refs/tags/') || startsWith(github.head_ref, 'feature/') || github.ref == 'refs/heads/main' }}"
+        echo "::set-output name=is-docker-needed::true"
       shell: bash
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
