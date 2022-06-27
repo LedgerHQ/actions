@@ -14,6 +14,11 @@ inputs:
     required: false
     default: ""
 
+  ignore-mypy:
+    description: "Force ignoring Mypy step"
+    required: false
+    default: "false"
+
   docker-build-args:
     description: "args to pass to docker build"
     required: false
@@ -27,6 +32,7 @@ runs:
     - uses: LedgerHQ/actions/python-app/test@main
       with:
         src-path: ${{ inputs.src-path }}
+        ignore-mypy: ${{ inputs.ignore-mypy }}
 
     - uses: LedgerHQ/actions/python-app/goss@main
       with:
