@@ -22,6 +22,10 @@ runs:
 
     - name: Optionally run mypy
       run: |
+        if [[ "${{ inputs.ignore-mypy }}" == "true" ]]; then
+          echo "Ignoring Mypy as specified in action inputs"
+          exit 0
+        fi
         if $(pipenv run python -c "import mypy" 2> /dev/null); then
           echo "run mypy on ${SRC}"
           pipenv run mypy --install-types --non-interactive ${SRC}
