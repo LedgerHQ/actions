@@ -1,0 +1,138 @@
+name: ec2-linux-runner
+description: On-demand self-hosted AWS EC2 runner
+
+inputs:
+  mode:
+    description: Start or stop ec2 runner
+    required: true
+
+  ami-name-filter:
+    description: Get AMI ID by name
+    required: false
+    default: ledger-live-runner
+
+  project:
+    description: Project ID for Tagging AWS resources
+    required: true
+
+  instance-type:
+    description: EC2 Instance Type
+    required: false
+    type: string
+    default: t3.medium
+
+  instance-volume-size:
+    description: Volume size for EC2 Instance
+    required: false
+    type: number
+    default: 8
+
+  subnet-id:
+    description: VPC Subnet Id
+    required: false
+    type: string
+    default: subnet-009c04af0177247e8
+
+  security-group-id:
+    description: Security Group ID
+    required: false
+    type: string
+    default: sg-010daba499648d1e7
+
+  github-token:
+    description: GitHub Token
+    type: string
+    required: true
+
+  label:
+    description: EC2 Runner Label
+    required: false
+    type: string
+    default: 
+
+  ec2-instance-id:
+    description: EC2 Runner ID
+    required: false
+    type: string
+    default: 
+
+  aws-nfs-logging:
+    description: Flag for enabling or disabling NFS logging
+    required: false
+    type: boolean
+    default: false
+
+  aws-nfs-host:
+    description: NFS host in AWS for logging
+    required: false
+    type: string
+    default: fs-0f9f29caae5ade69c.efs.eu-west-1.amazonaws.com
+
+  github-runner-version:
+    description: GitHub runner releases version
+    required: false
+    type: string
+    default: 2.296.2
+
+outputs:
+  label:
+    description: EC2 Runner Label
+    value: ${{ steps.start-ec2-runner.outputs.label }}
+
+  ec2-instance-id:
+    description: EC2 Runner ID
+    value: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+
+runs:
+  using: "composite"
+  steps:
+    - id: random-number-generator
+      if: inputs.mode == 'start'
+      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+      shell: bash
+
+    - id: get-ami-id
+      if: inputs.mode == 'start'
+      run: echo "::set-output name=ami-id::$(aws ec2 describe-images --filters 'Name=name,Values=${{ inputs.ami-name-filter }}' --query 'Images[*].ImageId' --output text)"
+      shell: bash
+
+    - id: start-ec2-runner
+      if: inputs.mode == 'start'
+      uses: LedgerHQ/ec2-github-runner@main
+      with:
+        mode: start
+        github-token: ${{ inputs.github-token }}
+        ec2-image-id: ${{ steps.get-ami-id.outputs.ami-id }}
+        ec2-instance-type: ${{ inputs.instance-type }}
+        subnet-id: ${{ inputs.subnet-id }}
+        security-group-id: ${{ inputs.security-group-id }}
+        aws-nfs-logging: ${{ inputs.aws-nfs-logging }}
+        aws-nfs-host: ${{ inputs.aws-nfs-host }}
+        github-runner-version: ${{ inputs.github-runner-version }}
+        aws-resource-tags: >
+          [
+            {"Key": "Name", "Value": "ec2-github-runner"},
+            {"Key": "project", "Value": "${{ inputs.project }}"},
+            {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
+          ]
+
+    - id: get-volume-id
+      if: inputs.instance-volume-size > 8
+      run: echo "::set-output name=volume-id::$(aws ec2 describe-instances --instance-ids ${{ steps.start-ec2-runner.outputs.ec2-instance-id }} --query 'Reservations[*].Instances[*].BlockDeviceMappings[*].Ebs.VolumeId' --output text)"
+      shell: bash
+
+    - id: resize-rootfs
+      if: inputs.instance-volume-size > 8
+      env:
+        VOLUME_ID: ${{ steps.get-volume-id.outputs.volume-id }}
+      run: aws ec2 modify-volume --size ${{ inputs.instance-volume-size }} --volume-id $VOLUME_ID
+      shell: bash
+
+    - id: stop-ec2-runner
+      if: inputs.mode == 'stop'
+      uses: LedgerHQ/ec2-github-runner@main
+      with:
+        mode: stop
+        github-token: ${{ inputs.github-token }}
+        label: ${{ inputs.label }}
+        ec2-instance-id: ${{ inputs.ec2-instance-id }}
