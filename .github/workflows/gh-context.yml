@@ -1,0 +1,22 @@
+name: Test gh-context action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ gh-context/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ gh-context/** ]
+
+defaults:
+  run:
+    working-directory: gh-context
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test new version of the action
+        uses: ./gh-context

@@ -1,0 +1,17 @@
+name: "Github Context"
+description: "Log context of parent action"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Log github context
+      run: |
+        echo '${{ toJSON(github.event) }}'
+        echo '## Context' >> $GITHUB_STEP_SUMMARY
+        echo '### Base branch' >> $GITHUB_STEP_SUMMARY
+        echo '`${{ github.event.ref }}`' >> $GITHUB_STEP_SUMMARY
+        echo '### Inputs' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        echo '${{ toJSON(github.event.inputs) }}' >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+      shell: bash
