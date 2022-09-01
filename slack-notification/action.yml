@@ -1,0 +1,63 @@
+name: "Notify"
+description: "Notify on slack with possibility to ping"
+inputs:
+  SLACK_WEBHOOK_URL:
+    description: "Slack webhook url. Specific for each channel"
+    required: true
+  SLACK_CUSTOM_PAYLOAD:
+    description: "Payload of the message that will be sent to the channel"
+    required: true
+  SLACK_API_TOKEN:
+    description: "Slack API token that allow you to associate ledger's email address with persons (currently only those that are in #vault-pi-x--xxx)"
+    required: false
+  SLACK_MEMBER_ID:
+    description: "Slack member ID of the person that will be pinged"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: clone repo
+      uses: actions/checkout@v3
+      with:
+       fetch-depth: 0
+
+    - name: fill the baddies
+      id: baddies-email
+      run: |
+       LOWERCASED_NAME=$(git log -s -n1 --pretty='format:%an' $(git diff --name-only) | awk '{print tolower($0)}' | tr ' ' .)
+       BIG_BADDIES_EMAIL="${LOWERCASED_NAME}@ledger.fr"
+       echo '::set-output name=BIG_BADDIES_EMAIL::'"${BIG_BADDIES_EMAIL}"
+      shell: bash
+
+    - name: Find Slack user
+      id: find-slack-user
+      uses: scribd/find-slack-user-action@v1
+      with:
+        email: ${{ steps.baddies-email.outputs.BIG_BADDIES_EMAIL }}
+        slack-token: ${{ env.SLACK_API_TOKEN }}
+
+    - name: Get MEMBER_ID
+      if: ${{ !env.SLACK_MEMBER_ID }}
+      run: |
+       SLACK_MEMBER_ID=${{ steps.find-slack-user.outputs.member-id }}
+       echo "SLACK_MEMBER_ID=$SLACK_MEMBER_ID" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set MEMBER_ID in payload
+      id: member-id-in-payload
+      # We escape \n \r and space because ::set-output creates conflict with Ilshidur/action-slack
+      run: |
+        custom_payload_with_member_id="${SLACK_CUSTOM_PAYLOAD//SLACK_MEMBER_ID/$SLACK_MEMBER_ID}"
+        custom_payload_with_member_id=`echo "${custom_payload_with_member_id}" | tr -d '\n'`
+        custom_payload_with_member_id="${custom_payload_with_member_id//'%'/'%25'}"
+        custom_payload_with_member_id="${custom_payload_with_member_id//$'\r'/'%0D'}"
+        echo "::set-output name=SLACK_CUSTOM_PAYLOAD::$custom_payload_with_member_id"
+      shell: bash
+
+    - name: Notify Slack
+      uses: Ilshidur/action-slack@2.1.0
+      continue-on-error: true
+      env:
+        SLACK_WEBHOOK: ${{ env.SLACK_WEBHOOK_URL }}
+        SLACK_CUSTOM_PAYLOAD:  ${{ steps.member-id-in-payload.outputs.SLACK_CUSTOM_PAYLOAD }}
