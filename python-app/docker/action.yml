@@ -29,7 +29,10 @@ runs:
       run: |
         # lowercase image name
         echo IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-        echo VERSION=$(git describe --tags) >> $GITHUB_ENV
+        # fetching all tags, latest on top
+        git tag --sort=-authordate >> tags$
+        # getting the first one that's <number>.<unmber>.<number>
+        echo VERSION=$(grep -m 1 '^[0-9]*\.[0-9]*\.[0-9]*$' tags) >> $GITHUB_ENV
       shell: bash
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
