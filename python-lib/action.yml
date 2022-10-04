@@ -7,7 +7,7 @@ inputs:
     required: false
     default: "3.9"
   public:
-    description: "if true, push to public python package index pypi.org, otherwise use our private fury.io"
+    description: "if true, push to public python package index pypi.org, otherwise push to our private Gemfury and our internal Nexus"
     required: false
     default: "false"
 
@@ -18,6 +18,9 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
       env:
+        GREEN_NEXUS_HOST: ${{ env.GREEN_NEXUS_HOST }}
+        GREEN_NEXUS_USER: ${{ env.GREEN_NEXUS_USER }}
+        GREEN_NEXUS_PASSWORD: ${{ env.GREEN_NEXUS_PASSWORD }}
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
         PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
     - uses: LedgerHQ/actions/python-lib/check-version@main
@@ -29,5 +32,8 @@ runs:
         public: ${{ inputs.public }}
       env:
         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+        GREEN_NEXUS_HOST: ${{ env.GREEN_NEXUS_HOST }}
+        GREEN_NEXUS_USER: ${{ env.GREEN_NEXUS_USER }}
+        GREEN_NEXUS_PASSWORD: ${{ env.GREEN_NEXUS_PASSWORD }}
         PYPI_PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
         PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}

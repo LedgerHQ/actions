@@ -22,8 +22,12 @@ runs:
       uses: pre-commit/action@v3.0.0
     - name: Install dependencies
       run: |
-        pip install --extra-index-url https://${{ env.PYPI_DEPLOY_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}:@pypi.fury.io/ledger -r requirements-dev.txt
-        pip install --extra-index-url https://${{ env.PYPI_DEPLOY_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}:@pypi.fury.io/ledger .[tests]
+        pip install -r requirements-dev.txt
+        pip install .[tests]
+      env:
+        PIP_EXTRA_INDEX_URL: >-
+          https://${{ env.GREEN_NEXUS_USER }}:${{ env.GREEN_NEXUS_PASSWORD }}@${{ env.GREEN_NEXUS_HOST }}/repository/pypi-group/simple
+          https://${{ env.PYPI_DEPLOY_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}:@pypi.fury.io/ledger
       shell: bash
     - name: Test
       run: |
@@ -35,4 +39,3 @@ runs:
         fi
         codecov
       shell: bash
-

@@ -1,0 +1,45 @@
+name: "Get latest RC version"
+description: "Get the latest release candidate version from our internal Nexus"
+
+inputs:
+  package-name:
+    description: "Name of the package"
+    required: true
+  feature-name:
+    description: "Name of the feature to target"
+    required: false
+    default: ""
+outputs:
+  last-version:
+    description: "Last version found of the package"
+    value: ${{ steps.version.outputs.last-version }}
+  next-feature-tag:
+    description: "Next feature flag to use"
+    value: ${{ steps.version.outputs.next-feature-tag }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Get latest version
+      id: version
+      run: |
+        feature_name="${{ inputs.feature-name }}"
+        search_expr="."
+        if [ -n "${feature_name}" ]; then
+          search_expr="rc[[:digit:]]+\+$(echo "${feature_name}" | sed -r 's/[[:upper:]]+/\L&/g ; s/[-_]/./g')"
+        fi
+
+        last_version="$(pip index versions "${{ inputs.package-name }}" --disable-pip-version-check --no-color | \
+          awk --assign search_exp="${search_exp}" '/Available versions:/ { for (i=3; i<=NF; i++) { if ("test+1" ~ search_exp) { print "ok" ; break } } }')"
+        echo "last-version=${last_version}" >> $GITHUB_OUTPUT
+
+        if [ -n "${feature_name}" ]; then
+          next_rc_number="$(echo "${last_version}" | sed -r 's/.*rc([[:digit:]]+)\+.*/echo $((\1+1))/e')"
+          echo "next-feature-tag=rc${next_rc_number}+${feature_name}" >> $GITHUB_OUTPUT
+        fi
+      env:
+        PIP_INDEX_URL: https://${{ env.GREEN_NEXUS_USER }}:${{ env.GREEN_NEXUS_PASSWORD }}@${{ env.GREEN_NEXUS_HOST }}/repository/pypi-group/simple
+      shell: bash
+    - name: Display output
+      run: echo "${{ toJson(steps.version.outputs) }}"
+      shell: bash
