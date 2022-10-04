@@ -104,6 +104,7 @@ runs:
         github-token: ${{ inputs.github-token }}
         ec2-image-id: ${{ steps.get-ami-id.outputs.ami-id }}
         ec2-instance-type: ${{ inputs.instance-type }}
+        instance-volume-size: ${{ inputs.instance-volume-size }}
         subnet-id: ${{ inputs.subnet-id }}
         security-group-id: ${{ inputs.security-group-id }}
         aws-nfs-logging: ${{ inputs.aws-nfs-logging }}
@@ -115,18 +116,6 @@ runs:
             {"Key": "project", "Value": "${{ inputs.project }}"},
             {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
           ]
-
-    - id: get-volume-id
-      if: inputs.instance-volume-size > 8
-      run: echo "::set-output name=volume-id::$(aws ec2 describe-instances --instance-ids ${{ steps.start-ec2-runner.outputs.ec2-instance-id }} --query 'Reservations[*].Instances[*].BlockDeviceMappings[*].Ebs.VolumeId' --output text)"
-      shell: bash
-
-    - id: resize-rootfs
-      if: inputs.instance-volume-size > 8
-      env:
-        VOLUME_ID: ${{ steps.get-volume-id.outputs.volume-id }}
-      run: aws ec2 modify-volume --size ${{ inputs.instance-volume-size }} --volume-id $VOLUME_ID
-      shell: bash
 
     - id: stop-ec2-runner
       if: inputs.mode == 'stop'
