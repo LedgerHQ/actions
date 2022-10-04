@@ -34,6 +34,12 @@ runs:
         feature-name: ${{ steps.feature.outputs.feature-name }}
       env:
         FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
+    - uses: LedgerHQ/actions/nexus/latest-version@main
+      if: inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+      id: nexus
+      with:
+        package-name: ${{ steps.feature.outputs.package-name }}
+        feature-name: ${{ steps.feature.outputs.feature-name }}
     - name: Set release name env var
       run: |
         if [[ -n "${{ steps.fury.outputs.next-feature-tag }}" ]]; then
@@ -64,8 +70,11 @@ runs:
       uses: LedgerHQ/actions/gemfury/publish@main
       env:
         PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
-    - name: Push to Pypi
-      if: ${{ inputs.public == 'true' && startsWith(github.ref, 'refs/heads/main') && github.event_name == 'push' }}
+    - name: Push to our internal Nexus
+      if: inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '')
+      uses: LedgerHQ/actions/nexus/publish@main
+    - name: Push to pypi.org
+      if: inputs.public == 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
