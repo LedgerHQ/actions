@@ -34,6 +34,9 @@ runs:
       run: |
         fetch https://raw.githubusercontent.com/LedgerHQ/actions/${{ inputs.lib-version }}/setup-nu/github.nu | save github.nu
       shell: nu {0}
+    - name: Check environment
+      run: ls
+      shell: nu {0}
     - name: Load plugins
       run: |
         source github.nu
