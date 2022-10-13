@@ -1,0 +1,44 @@
+name: "Setup Nushell"
+description: 'Setup a Nushell Environment to Run Nu Scripts or Commands'
+
+branding:
+  icon: 'terminal'
+  color: 'purple'
+
+inputs:
+  version:
+    default: '*'
+    required: false
+    description: 'A valid semver specifier of nushell version to install.'
+  check-latest:
+    default: false
+    required: false
+    description: 'Set this option if you want the action to check for the latest available version.'
+  plugins:  # TODO: Not support yet
+    required: false
+    description: 'Specify the plugins you want to register'
+  lib-version:
+    default: "main"
+    required: false
+    description: "Version of LedgerHQ GitHub Actions extensions for Nushell"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: hustcer/setup-nu@v2.1
+      with:
+        version: ${{ inputs.version }}
+        check-latest: ${{ inputs.check-latest }}
+        plugins: ${{ inputs.plugins }}
+    - name: Download plugins
+      run: |
+        fetch https://raw.githubusercontent.com/LedgerHQ/actions/${{ inputs.lib-version }}/setup-nu/github.nu | save github.nu
+      shell: nu {0}
+    - name: Load plugins
+      run: |
+        source github.nu
+      shell: nu {0}
+
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
