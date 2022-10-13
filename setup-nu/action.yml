@@ -38,7 +38,3 @@ runs:
       run: |
         source github.nu
       shell: nu {0}
-
-runs:
-  using: 'node16'
-  main: 'dist/index.js'
