@@ -32,12 +32,7 @@ runs:
         plugins: ${{ inputs.plugins }}
     - name: Download plugins
       run: |
-        fetch https://raw.githubusercontent.com/LedgerHQ/actions/${{ inputs.lib-version }}/setup-nu/github.nu | save github.nu
+        let github_module = (fetch https://raw.githubusercontent.com/LedgerHQ/actions/${{ inputs.lib-version }}/setup-nu/github.nu)
+        $github_module | save $nu.config-path --append
       shell: nu {0}
-    - name: Check environment
-      run: ls
-      shell: nu {0}
-    - name: Load plugins
-      run: |
-        source github.nu
-      shell: nu {0}
+
