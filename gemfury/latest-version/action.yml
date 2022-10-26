@@ -24,13 +24,18 @@ runs:
     - name: Get version data
       id: version
       run: |
+        # This `versions` command can only be executed by a PYPI_FULL_ACCESS_TOKEN
+        if [[ -z "${{ env.FULL_ACCESS_TOKEN }}" ]]; then
+            echo "env.FULL_ACCESS_TOKEN is required to generate the new feature version"
+            exit 1
+        fi
+
         feature_name=${{ inputs.feature-name }}
         if [[ -n "${feature_name}" ]]; then
           dotted_feature_name=${feature_name//[-_]/.}
           grep_filter=$(echo "rc[0-9]+\+${dotted_feature_name}" | tr '[:upper:]' '[:lower:]')
         fi
 
-        # This `versions` command can only be executed by a PYPI_FULL_ACCESS_TOKEN
         matching_versions=$((fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} ${{ inputs.package-name }} | grep -E ".*${grep_filter}") || echo "")
         last_version=$(echo $matching_versions | awk '{print $1}')
         echo "::set-output name=last-version::${last_version}"
