@@ -7,11 +7,18 @@ inputs:
     required: false
     default: "src"
 
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
 runs:
   using: "composite"
   steps:
     - name: pipenv
       uses: LedgerHQ/actions/python-app/init@main
+      with:
+        python-version: ${{ inputs.python-version }}
 
     - name: Run unittest
       run: |

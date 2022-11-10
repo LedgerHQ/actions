@@ -7,6 +7,11 @@ inputs:
     required: false
     default: true
 
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
 runs:
   using: "composite"
   steps:
@@ -17,7 +22,7 @@ runs:
       # version is not important yet
       uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: ${{ inputs.python-version }}
 
     - name: install tools to parse python version
       run: |
@@ -29,7 +34,7 @@ runs:
       run: |
         version=$(toml get --toml-path Pipfile requires.python_version)
         if [[ $? != 0 || -z $version ]]; then
-          version=3.9
+          version=${{ inputs.python-version }}
         fi
         echo "::set-output name=python-version::$version"
       shell: bash
@@ -37,7 +42,7 @@ runs:
     - name: setup python with parsed version
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ steps.parse-python-version.outputs.python-version }}
+        python-version: ${{ inputs.python-version }}
         cache: 'pipenv'
 
     - name: Install pipenv
