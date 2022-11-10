@@ -9,6 +9,11 @@ inputs:
     required: false
     default: ""
 
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
 runs:
   using: "composite"
 
@@ -22,6 +27,8 @@ runs:
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       name: pipenv
       uses: LedgerHQ/actions/python-app/init@main
+      with:
+        python-version: ${{ inputs.python-version }}
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       name: Generate openapi
