@@ -24,15 +24,23 @@ inputs:
     required: false
     default: ""
 
+  python-version:
+    description: "Version of python to use"
+    required: false
+    default: "3.9"
+
 runs:
   using: "composite"
   steps:
     - uses: LedgerHQ/actions/python-app/lint@main
+      with:
+        python-version: ${{ inputs.python-version }}
 
     - uses: LedgerHQ/actions/python-app/test@main
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
+        python-version: ${{ inputs.python-version }}
 
     - uses: LedgerHQ/actions/python-app/goss@main
       with:
