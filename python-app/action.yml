@@ -37,25 +37,25 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/python-app/lint@${ inputs.worflow-version }
+    - uses: ./lint
       with:
         python-version: ${{ inputs.python-version }}
 
-    - uses: LedgerHQ/actions/python-app/test@${ inputs.worflow-version }
+    - uses: ./test
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
         python-version: ${{ inputs.python-version }}
 
-    - uses: LedgerHQ/actions/python-app/goss@${ inputs.worflow-version }
+    - uses: ./goss
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@${ inputs.worflow-version }
+    - uses: ./docker
       with:
         build-args: ${{ inputs.docker-build-args }}
 
-    - uses: LedgerHQ/actions/python-app/doc@${ inputs.worflow-version }
+    - uses: ./doc
       with:
         redocly-project: ${{ inputs.redocly-project }}
