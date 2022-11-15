@@ -7,7 +7,7 @@ Actions for the creation and destroying on-demand self-hosted AWS EC2 runners
 ### Start AWS EC2 Runner
 
 ```yaml
-- uses: LedgerHQ/actions/ec2-linux-runner@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/ec2-linux-runner@${ inputs.worflow-version }
   with:
     mode: start
     github-token: ${{ secrets.CI_BOT_TOKEN }}
@@ -17,7 +17,7 @@ Actions for the creation and destroying on-demand self-hosted AWS EC2 runners
 ### Stop AWS EC2 Runner
 
 ```yaml
-- uses: LedgerHQ/actions/ec2-linux-runner@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/ec2-linux-runner@${ inputs.worflow-version }
   with:
     mode: stop
     github-token: ${{ secrets.CI_BOT_TOKEN }}

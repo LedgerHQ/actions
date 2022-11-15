@@ -15,7 +15,7 @@ jobs:
     name: Compute metadata
     runs-on: ubuntu-latest
     steps:
-      - uses: LedgerHQ/actions/gh-metadata@${{ inputs.worflow-version }}
+      - uses: LedgerHQ/actions/gh-metadata@${ inputs.worflow-version }
         id: metadata
     outputs:
       refs: ${{ toJson(steps.metadata.outputs) }}

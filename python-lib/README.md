@@ -7,7 +7,7 @@ Github action to build, test, and publish new versions of a python library.
 For a simple validation + publish on push to main, you can simply use:
 
 ```yaml
-- uses: LedgerHQ/actions/python-lib@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib@${ inputs.worflow-version }
   env:
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,15 +23,15 @@ for two versions of python followed by a single publish), then you can
 call the sub-actions separately as such:
 
 ```yaml
-- uses: LedgerHQ/actions/python-lib/test@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib/test@${ inputs.worflow-version }
   with:
     # Version of python to use, defaults to 3.9
     python-version: 3.9
-- uses: LedgerHQ/actions/python-lib/check-version@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib/check-version@${ inputs.worflow-version }
   with:
     # Version of python to use, defaults to 3.9
     python-version: 3.9
-- uses: LedgerHQ/actions/python-lib/publish@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib/publish@${ inputs.worflow-version }
   env:
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,7 +47,7 @@ call the sub-actions separately as such:
 You can choose to publish your package publicly
 
 ```yaml
-- uses: LedgerHQ/actions/python-lib@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib@${ inputs.worflow-version }
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     # Token used to push the new version to pypi.org
@@ -62,7 +62,7 @@ If your package depends on another hosted on our private repo, you will also
 need a *deploy* token for test
 
 ```yaml
-- uses: LedgerHQ/actions/python-lib@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib@${ inputs.worflow-version }
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
@@ -88,7 +88,7 @@ on:
 
 ...
 
-- uses: LedgerHQ/actions/python-lib@${{ inputs.worflow-version }}
+- uses: LedgerHQ/actions/python-lib@${ inputs.worflow-version }
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}

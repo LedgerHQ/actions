@@ -18,16 +18,16 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/python-lib/test@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-lib/test@${ inputs.worflow-version }
       with:
         python-version: ${{ inputs.python-version }}
       env:
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
         PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
-    - uses: LedgerHQ/actions/python-lib/check-version@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-lib/check-version@${ inputs.worflow-version }
       with:
         python-version: ${{ inputs.python-version }}
-    - uses: LedgerHQ/actions/python-lib/publish@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-lib/publish@${ inputs.worflow-version }
       with:
         python-version: ${{ inputs.python-version }}
         public: ${{ inputs.public }}

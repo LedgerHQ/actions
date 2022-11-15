@@ -41,21 +41,21 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
 
-    - uses: LedgerHQ/actions/python-app/test@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-app/test@${ inputs.worflow-version }
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
         python-version: ${{ inputs.python-version }}
 
-    - uses: LedgerHQ/actions/python-app/goss@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-app/goss@${ inputs.worflow-version }
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-app/docker@${ inputs.worflow-version }
       with:
         build-args: ${{ inputs.docker-build-args }}
 
-    - uses: LedgerHQ/actions/python-app/doc@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-app/doc@${ inputs.worflow-version }
       with:
         redocly-project: ${{ inputs.redocly-project }}
