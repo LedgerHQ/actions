@@ -28,34 +28,29 @@ inputs:
     description: "Version of python to use"
     required: false
     default: "3.9"
-  
-  worflow-version:
-    description: "Version of your actions"
-    required: false
-    default: "add_trivy_docker_scan"
 
 runs:
   using: "composite"
   steps:
-    - uses: ./lint
+    - uses: ./python-app/lint
       with:
         python-version: ${{ inputs.python-version }}
 
-    - uses: ./test
+    - uses: ./python-app/test
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
         python-version: ${{ inputs.python-version }}
 
-    - uses: ./goss
+    - uses: ./python-app/goss
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: ./docker
+    - uses: ./python-app/docker
       with:
         build-args: ${{ inputs.docker-build-args }}
 
-    - uses: ./doc
+    - uses: ./python-app/doc
       with:
         redocly-project: ${{ inputs.redocly-project }}
