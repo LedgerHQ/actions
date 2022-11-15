@@ -15,7 +15,7 @@ jobs:
     name: Log Github Context
     runs-on: ubuntu-latest
     steps:
-      - uses: LedgerHQ/actions/gh-context@main
+      - uses: LedgerHQ/actions/gh-context@${{ inputs.worflow-version }}
 ```
 
 ## Contribute

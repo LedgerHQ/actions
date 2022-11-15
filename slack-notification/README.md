@@ -15,7 +15,7 @@ Github action to send a Slack-notification to a specific channel.
 ## Action usage
 
 ```yaml
-- uses: LedgerHQ/actions/slack-notification@main
+- uses: LedgerHQ/actions/slack-notification@${{ inputs.worflow-version }}
   env:
     # Token used to send a message on a specific channel 
     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

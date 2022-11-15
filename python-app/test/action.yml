@@ -16,7 +16,7 @@ runs:
   using: "composite"
   steps:
     - name: pipenv
-      uses: LedgerHQ/actions/python-app/init@main
+      uses: LedgerHQ/actions/python-app/init@${{ inputs.worflow-version }}
       with:
         python-version: ${{ inputs.python-version }}
 

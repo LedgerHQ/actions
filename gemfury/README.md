@@ -30,7 +30,7 @@ Outputs:
 ### Install fury CLI
 
 ```yaml
-- uses: LedgerHQ/actions/gemfury/install@main
+- uses: LedgerHQ/actions/gemfury/install@${{ inputs.worflow-version }}
 ```
 
 ## Contribute

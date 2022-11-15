@@ -26,7 +26,7 @@ runs:
         echo "::set-output name=package-name::$(python setup.py --name)"
         echo "::set-output name=feature-name::${ref#refs/heads/feature/}"
       shell: bash
-    - uses: LedgerHQ/actions/gemfury/latest-version@main
+    - uses: LedgerHQ/actions/gemfury/latest-version@${{ inputs.worflow-version }}
       if: ${{ inputs.public == 'false' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') }}
       id: fury
       with:
@@ -61,7 +61,7 @@ runs:
       shell: bash
     - name: Push to GemFury
       if: ${{ inputs.public == 'false' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.fury.outputs.next-feature-tag != '') }}
-      uses: LedgerHQ/actions/gemfury/publish@main
+      uses: LedgerHQ/actions/gemfury/publish@${{ inputs.worflow-version }}
       env:
         PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
     - name: Push to Pypi

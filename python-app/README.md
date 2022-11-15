@@ -18,7 +18,7 @@ jobs:
   build-test-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: LedgerHQ/actions/python-app@main
+      - uses: LedgerHQ/actions/python-app@${{ inputs.worflow-version }}
         with:
           redocly-project: "@ledger/Vault Notification Center@v1"
         env:

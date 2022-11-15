@@ -20,7 +20,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/gemfury/install@main
+    - uses: LedgerHQ/actions/gemfury/install@${{ inputs.worflow-version }}
     - name: Get version data
       id: version
       run: |
