@@ -37,7 +37,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/python-app/lint@${{ inputs.worflow-version }}
+    - uses: LedgerHQ/actions/python-app/lint@${ inputs.worflow-version }
       with:
         python-version: ${{ inputs.python-version }}
 
