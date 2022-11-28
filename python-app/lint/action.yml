@@ -1,17 +1,12 @@
 name: "lint"
 description: "run pre-commit hooks"
 
-inputs:
-  python-version:
-    description: "Version of python to use"
-    required: false
-    default: "3.9"
-
 runs:
   using: "composite"
   steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-python@v4
       with:
-        python-version: ${{ inputs.python-version }}
+        # pre-commit works only with 3.9
+        python-version: 3.9
     - uses: pre-commit/action@v3.0.0
