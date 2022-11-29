@@ -22,12 +22,18 @@ runs:
       uses: pre-commit/action@v3.0.0
     - name: Install dependencies
       run: |
+        export PIP_EXTRA_INDEX_URL
+        if [ -n "${GREEN_NEXUS_USER}" -a -n "${GREEN_NEXUS_PASSWORD}" -a -n "${GREEN_NEXUS_HOST}" ]; then
+          PIP_EXTRA_INDEX_URL+="https://${GREEN_NEXUS_USER}:${GREEN_NEXUS_PASSWORD}@${GREEN_NEXUS_HOST}/repository/pypi-group/simple "
+        fi
+        if [ -n "${PYPI_DEPLOY_TOKEN}" ]; then
+          PIP_EXTRA_INDEX_URL+="https://${PYPI_DEPLOY_TOKEN}:@pypi.fury.io/ledger "
+        elif [ -n "${PYPI_FULL_ACCESS_TOKEN}" ]; then
+          PIP_EXTRA_INDEX_URL+="https://${PYPI_FULL_ACCESS_TOKEN}:@pypi.fury.io/ledger "
+        fi
+
         pip install -r requirements-dev.txt
         pip install .[tests]
-      env:
-        PIP_EXTRA_INDEX_URL: >-
-          https://${{ env.GREEN_NEXUS_USER }}:${{ env.GREEN_NEXUS_PASSWORD }}@${{ env.GREEN_NEXUS_HOST }}/repository/pypi-group/simple
-          https://${{ env.PYPI_DEPLOY_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}:@pypi.fury.io/ledger
       shell: bash
     - name: Test
       run: |

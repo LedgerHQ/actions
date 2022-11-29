@@ -17,12 +17,6 @@ runs:
     - uses: LedgerHQ/actions/python-lib/test@main
       with:
         python-version: ${{ inputs.python-version }}
-      env:
-        GREEN_NEXUS_HOST: ${{ env.GREEN_NEXUS_HOST }}
-        GREEN_NEXUS_USER: ${{ env.GREEN_NEXUS_USER }}
-        GREEN_NEXUS_PASSWORD: ${{ env.GREEN_NEXUS_PASSWORD }}
-        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
-        PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
     - uses: LedgerHQ/actions/python-lib/check-version@main
       with:
         python-version: ${{ inputs.python-version }}
@@ -30,10 +24,3 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         public: ${{ inputs.public }}
-      env:
-        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
-        GREEN_NEXUS_HOST: ${{ env.GREEN_NEXUS_HOST }}
-        GREEN_NEXUS_USER: ${{ env.GREEN_NEXUS_USER }}
-        GREEN_NEXUS_PASSWORD: ${{ env.GREEN_NEXUS_PASSWORD }}
-        PYPI_PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN }}
-        PYPI_FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
