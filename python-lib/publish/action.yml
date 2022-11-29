@@ -27,7 +27,9 @@ runs:
         echo "::set-output name=feature-name::${ref#refs/heads/feature/}"
       shell: bash
     - uses: LedgerHQ/actions/gemfury/latest-version@main
-      if: ${{ inputs.public == 'false' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') }}
+      if: >-
+        inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') &&
+        env.FULL_ACCESS_TOKEN != null
       id: fury
       with:
         package-name: ${{ steps.feature.outputs.package-name }}
@@ -35,7 +37,9 @@ runs:
       env:
         FULL_ACCESS_TOKEN: ${{ env.PYPI_FULL_ACCESS_TOKEN }}
     - uses: LedgerHQ/actions/nexus/latest-version@main
-      if: inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+      if: >-
+        inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') &&
+        env.GREEN_NEXUS_USER != null && env.GREEN_NEXUS_PASSWORD != null && env.GREEN_NEXUS_HOST != null
       id: nexus
       with:
         package-name: ${{ steps.feature.outputs.package-name }}
@@ -66,12 +70,16 @@ runs:
       run: python setup.py sdist
       shell: bash
     - name: Push to GemFury
-      if: ${{ inputs.public == 'false' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.fury.outputs.next-feature-tag != '') }}
+      if: >-
+        inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '') &&
+        env.PUSH_TOKEN != null
       uses: LedgerHQ/actions/gemfury/publish@main
       env:
         PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
     - name: Push to our internal Nexus
-      if: inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '')
+      if: >-
+        inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '') &&
+        env.GREEN_NEXUS_USER != null && env.GREEN_NEXUS_PASSWORD != null && env.GREEN_NEXUS_HOST != null
       uses: LedgerHQ/actions/nexus/publish@main
     - name: Push to pypi.org
       if: inputs.public == 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
