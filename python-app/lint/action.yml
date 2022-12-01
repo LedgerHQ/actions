@@ -4,9 +4,4 @@ description: "run pre-commit hooks"
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        # pre-commit works only with 3.9
-        python-version: 3.9
     - uses: pre-commit/action@v3.0.0

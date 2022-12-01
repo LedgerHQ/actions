@@ -13,21 +13,11 @@ runs:
     - name: clone repo
       uses: actions/checkout@v3
 
-    - name: setup python
-      # version is not important yet
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-
-    - name: install tools to parse python version
-      run: |
-        pip install toml-cli
-      shell: bash
-
     - name: parse python version
       id: parse-python-version
       run: |
-        version=$(toml get --toml-path Pipfile requires.python_version)
+        version=$(cat Pipfile | grep python_version | grep -oE '[0-9]+\.[0-9]+')
+        echo $version
         if [[ $? != 0 || -z $version ]]; then
           version=3.9
         fi
