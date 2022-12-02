@@ -29,11 +29,11 @@ runs:
           search_expr="rc[[:digit:]]+\+$(echo "${feature_name}" | sed -r 's/[[:upper:]]+/\L&/g ; s/[-_]/./g')"
         fi
 
-        last_version="$(pip index versions "${{ inputs.package-name }}" --disable-pip-version-check --no-color | \
-          awk --assign search_exp="${search_exp}" '/Available versions:/ { for (i=3; i<=NF; i++) { if ("test+1" ~ search_exp) { print "ok" ; break } } }')"
+        last_version="$(pip index versions --pre --disable-pip-version-check --no-color "${{ inputs.package-name }}" | \
+          awk -v search_exp="${search_exp}" -F "[ ,]" '/Available versions:/ { for (i=3; i<=NF; i++) { if ($i ~ search_exp) { print $i ; break } } }')"
         echo "last-version=${last_version}" >> $GITHUB_OUTPUT
 
-        if [ -n "${feature_name}" ]; then
+        if [ -n "${feature_name}" ] && echo "${last_version}" | grep -Eq "rc[[:digit:]]+\+"; then
           next_rc_number="$(echo "${last_version}" | sed -r 's/.*rc([[:digit:]]+)\+.*/echo $((\1+1))/e')"
           echo "next-feature-tag=rc${next_rc_number}+${feature_name}" >> $GITHUB_OUTPUT
         fi

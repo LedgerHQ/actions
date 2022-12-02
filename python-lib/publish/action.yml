@@ -23,13 +23,13 @@ runs:
       id: feature
       run: |
         ref="${{ github.ref }}"
-        echo "::set-output name=package-name::$(python setup.py --name)"
-        echo "::set-output name=feature-name::${ref#refs/heads/feature/}"
+        echo "package-name=$(python setup.py --name)" >> $GITHUB_OUTPUT
+        echo "feature-name=${ref#refs/heads/feature/}" >> $GITHUB_OUTPUT
       shell: bash
     - uses: LedgerHQ/actions/gemfury/latest-version@main
       if: >-
         inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') &&
-        env.FULL_ACCESS_TOKEN != null
+        env.FULL_ACCESS_TOKEN != ''
       id: fury
       with:
         package-name: ${{ steps.feature.outputs.package-name }}
@@ -39,17 +39,17 @@ runs:
     - uses: LedgerHQ/actions/nexus/latest-version@main
       if: >-
         inputs.public != 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') &&
-        env.GREEN_NEXUS_USER != null && env.GREEN_NEXUS_PASSWORD != null && env.GREEN_NEXUS_HOST != null
+        env.GREEN_NEXUS_USER != '' && env.GREEN_NEXUS_PASSWORD != '' && env.GREEN_NEXUS_HOST != ''
       id: nexus
       with:
         package-name: ${{ steps.feature.outputs.package-name }}
         feature-name: ${{ steps.feature.outputs.feature-name }}
-    - name: Set release name env var
+    - name: Set RELEASE_NAME
       run: |
-        if [[ -n "${{ steps.fury.outputs.next-feature-tag }}" ]]; then
+        if [[ -n "${{ steps.nexus.outputs.next-feature-tag }}" ]]; then
           if [[ $(grep -E ' +version=".+",' setup.py | wc -l) == 1 ]]; then
-            echo "Temporarily updating version with feature tag ${{ steps.fury.outputs.next-feature-tag }}."
-            sed -i 's/\( \+\)version="\(.\+\)",/\1version="\2${{ steps.fury.outputs.next-feature-tag }}",/' setup.py
+            echo "Temporarily updating version with feature tag ${{ steps.nexus.outputs.next-feature-tag }}."
+            sed -i 's/\( \+\)version="\(.\+\)",/\1version="\2${{ steps.nexus.outputs.next-feature-tag }}",/' setup.py
           else
             echo "Can't find a version to update in setup.py"
             exit 1
@@ -58,7 +58,7 @@ runs:
         echo "RELEASE_NAME=$(python setup.py --fullname)" >> $GITHUB_ENV
       shell: bash
     - name: Create Release
-      if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main') }}
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
@@ -66,23 +66,23 @@ runs:
         tag_name: ${{ env.RELEASE_NAME }}
         release_name: ${{ env.RELEASE_NAME }}
     - name: Build dist
-      if: ${{ inputs.public == 'false' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.fury.outputs.next-feature-tag != '') }}
+      if: inputs.public != 'true' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.fury.outputs.next-feature-tag != '')
       run: python setup.py sdist
       shell: bash
     - name: Push to GemFury
       if: >-
-        inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '') &&
-        env.PUSH_TOKEN != null
+        inputs.public != 'true' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.fury.outputs.next-feature-tag != '') &&
+        env.PUSH_TOKEN != ''
       uses: LedgerHQ/actions/gemfury/publish@main
       env:
         PUSH_TOKEN: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
     - name: Push to our internal Nexus
       if: >-
-        inputs.public != 'true' && github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/main') || steps.nexus.outputs.next-feature-tag != '') &&
-        env.GREEN_NEXUS_USER != null && env.GREEN_NEXUS_PASSWORD != null && env.GREEN_NEXUS_HOST != null
+        inputs.public != 'true' && github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.nexus.outputs.next-feature-tag != '') &&
+        env.GREEN_NEXUS_USER != '' && env.GREEN_NEXUS_PASSWORD != '' && env.GREEN_NEXUS_HOST != ''
       uses: LedgerHQ/actions/nexus/publish@main
     - name: Push to pypi.org
-      if: inputs.public == 'true' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+      if: inputs.public == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ env.PYPI_PUSH_TOKEN || env.PYPI_FULL_ACCESS_TOKEN }}
