@@ -22,6 +22,5 @@ runs:
       run: |
         echo "Checking that tag ${{ env.RELEASE_NAME }} does not already exist."
         git fetch --recurse-submodules=no --tags
-        git tag ${{ env.RELEASE_NAME }}
-        git tag -d ${{ env.RELEASE_NAME }}
+        ! git tag -l | grep -w ${{ env.RELEASE_NAME }}
       shell: bash
