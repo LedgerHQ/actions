@@ -13,9 +13,6 @@ runs:
   using: "composite"
 
   steps:
-    - name: Clone
-      uses: actions/checkout@v3
-
     - name: check for goss file
       id: goss_file
       run: |
