@@ -9,7 +9,7 @@ inputs:
   ami-name-filter:
     description: Get AMI ID by name
     required: false
-    default: infra-gha-runner
+    default: ledger-live-runner
 
   project:
     description: Project ID for Tagging AWS resources
