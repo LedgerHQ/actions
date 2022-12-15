@@ -15,7 +15,7 @@ For a simple validation + publish on push to main, you can simply use:
     PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
   with:
     # Version of python to use, defaults to 3.9
-    python-version: 3.9
+    python-version: "3.9"
 ```
 
 If however you need to do some more complex stuff (e.g. run the tests
@@ -26,11 +26,11 @@ call the sub-actions separately as such:
 - uses: LedgerHQ/actions/python-lib/test@main
   with:
     # Version of python to use, defaults to 3.9
-    python-version: 3.9
+    python-version: "3.9"
 - uses: LedgerHQ/actions/python-lib/check-version@main
   with:
     # Version of python to use, defaults to 3.9
-    python-version: 3.9
+    python-version: "3.9"
 - uses: LedgerHQ/actions/python-lib/publish@main
   env:
     # Token used to push the new tag
@@ -39,7 +39,7 @@ call the sub-actions separately as such:
     PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
   with:
     # Version of python to use, defaults to 3.9
-    python-version: 3.9
+    python-version: "3.9"
 ```
 
 ### Publish to public pypi
