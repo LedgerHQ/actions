@@ -2,116 +2,6 @@
 
 Github action to build, test, and publish new versions of a python library.
 
-## Action usage
-
-For a simple validation + publish on push to main, you can simply use:
-
-```yaml
-- uses: LedgerHQ/actions/python-lib@main
-  env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
-    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
-    # Token used to push the new tag
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    # Token used to push the new version to our internal repository
-    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
-  with:
-    # Version of python to use, defaults to 3.9
-    python-version: "3.9"
-```
-
-If however you need to do some more complex stuff (e.g. run the tests
-for two versions of python followed by a single publish), then you can
-call the sub-actions separately as such:
-
-```yaml
-- uses: LedgerHQ/actions/python-lib/test@main
-  with:
-    # Version of python to use, defaults to 3.9
-    python-version: "3.9"
-  env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
-    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
-    PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
-    PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
-- uses: LedgerHQ/actions/python-lib/check-version@main
-  with:
-    # Version of python to use, defaults to 3.9
-    python-version: "3.9"
-- uses: LedgerHQ/actions/python-lib/publish@main
-  env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
-    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
-    # Token used to push the new tag
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    # Token used to push the new version to our internal repository
-    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
-  with:
-    # Version of python to use, defaults to 3.9
-    python-version: "3.9"
-```
-
-### Publish to public pypi
-
-You can choose to publish your package publicly
-
-```yaml
-- uses: LedgerHQ/actions/python-lib@main
-  env:
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    # Token used to push the new version to pypi.org
-    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUBLIC_API_TOKEN }}
-  with:
-    public: true
-```
-
-### Private dependencies
-
-If your package depends on another hosted on our private repo, you will also
-need a *deploy* token for test
-
-```yaml
-- uses: LedgerHQ/actions/python-lib@main
-  env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
-    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
-    PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
-  with:
-    public: true
-```
-
-### Deploying feature branches
-
-If you want your feature branches to be published as rc versions on gemfury,
-you will need to:
-
-- Trigger the CI on push to `feature/*` branches
-- Make sure `public` is set to `false` (we don't publish features to pypi yet)
-- Provide a `PYPI_FULL_ACCESS_TOKEN` (required to be able to fetch
-existing versions of packages on gemfury)
-
-```yaml
-on:
-  push:
-    branches: [ main, feature/* ]
-
-...
-
-- uses: LedgerHQ/actions/python-lib@main
-  env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
-    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
-    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
-```
-
 ## Requirements
 
 Beside chosing the version of python to run, this action does not allow the
@@ -134,6 +24,113 @@ to have at least one test.
   - Required dev packages: `codecov`, `pre-commit`, `pytest`, `pytest-cov`
   - Optional dev packages: `mypy`
 - Have a `.pre-commit-config.yaml` at your root (see [this example](https://github.com/LedgerHQ/python-ledgercommon/blob/main/.pre-commit-config.yaml)).
+
+## Action usage
+
+This action publishes your python libraries to an internal repository, protected by VPN.
+For this reason, you should run the CI on our own github runners using
+
+```yaml
+runs-on: [self-hosted, shared]
+```
+
+For a simple validation + publish on push to main, you can use:
+
+```yaml
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
+    # Token used to push the new tag
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    # Version of python to use, defaults to 3.9
+    python-version: "3.9"
+```
+
+If however you need to do some more complex stuff (e.g. run the tests
+for two versions of python followed by a single publish), then you can
+call the sub-actions separately as such:
+
+```yaml
+- uses: LedgerHQ/actions/python-lib/test@main
+  with:
+    # Version of python to use, defaults to 3.9
+    python-version: "3.9"
+  env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
+- uses: LedgerHQ/actions/python-lib/check-version@main
+  with:
+    # Version of python to use, defaults to 3.9
+    python-version: "3.9"
+- uses: LedgerHQ/actions/python-lib/publish@main
+  env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
+    # Token used to push the new tag
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    # Version of python to use, defaults to 3.9
+    python-version: "3.9"
+```
+
+### Publish to public pypi
+
+You can choose to publish your package publicly
+
+```yaml
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    # Token used to push the new tag
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Token used to push the new version to pypi.org
+    PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUBLIC_API_TOKEN }}
+  with:
+    public: true
+```
+
+### Deploying feature branches
+
+If you want your feature branches to be published as rc versions on gemfury,
+you will need to:
+
+- Trigger the CI on push to `feature/*` branches
+- Make sure `public` is set to `false` (we don't publish features to pypi yet)
+
+```yaml
+on:
+  push:
+    branches: [ main, feature/* ]
+
+...
+
+- uses: LedgerHQ/actions/python-lib@main
+  env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  with:
+    public: false
+```
+
+## Secrets and local setup
+
+This action depends on the following 3 secrets:
+
+- `GREEN_NEXUS_USER`: Your username to login on https://nexus.green.ledgerlabs.net/
+- `GREEN_NEXUS_PASSWORD`: Your password to login 
+- `GREEN_NEXUS_HOST`
+
+On github, these secrets are defined at org level.
+Locally you will need to set them up in your personal env:
+
+- Use your username and password for https://nexus.green.ledgerlabs.net/
+- The nexus host to use is `nexus.green.ledgerlabs.net/repository/pypi-group/simple`
 
 ## Contribute
 
