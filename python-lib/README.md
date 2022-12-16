@@ -9,6 +9,9 @@ For a simple validation + publish on push to main, you can simply use:
 ```yaml
 - uses: LedgerHQ/actions/python-lib@main
   env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     # Token used to push the new version to our internal repository
@@ -27,12 +30,21 @@ call the sub-actions separately as such:
   with:
     # Version of python to use, defaults to 3.9
     python-version: "3.9"
+  env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
+    PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
+    PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
 - uses: LedgerHQ/actions/python-lib/check-version@main
   with:
     # Version of python to use, defaults to 3.9
     python-version: "3.9"
 - uses: LedgerHQ/actions/python-lib/publish@main
   env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
     # Token used to push the new tag
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     # Token used to push the new version to our internal repository
@@ -64,6 +76,9 @@ need a *deploy* token for test
 ```yaml
 - uses: LedgerHQ/actions/python-lib@main
   env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     PYPI_PUSH_TOKEN: ${{ secrets.PYPI_PUSH_TOKEN }}
     PYPI_DEPLOY_TOKEN: ${{ secrets.PYPI_DEPLOY_TOKEN }}
@@ -90,6 +105,9 @@ on:
 
 - uses: LedgerHQ/actions/python-lib@main
   env:
+    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     PYPI_FULL_ACCESS_TOKEN: ${{ secrets.PYPI_FULL_ACCESS_TOKEN }}
 ```
