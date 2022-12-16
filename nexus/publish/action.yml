@@ -1,0 +1,20 @@
+name: "Publish new release"
+description: "Publish a new release to Nexus"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install requirements
+      run: pip install build twine
+      shell: bash
+    - name: Build the package
+      run: python -m build
+      shell: bash
+    - name: Publish to Nexus
+      run: twine upload dist/*
+      env:
+        TWINE_REPOSITORY_URL: https://${{ env.GREEN_NEXUS_HOST }}/repository/pypi-internal/
+        TWINE_USERNAME: ${{ env.GREEN_NEXUS_USER }}
+        TWINE_PASSWORD: ${{ env.GREEN_NEXUS_PASSWORD }}
+        TWINE_NON_INTERACTIVE: "1"
+      shell: bash
