@@ -29,7 +29,8 @@ runs:
           search_expr="rc[[:digit:]]+\+$(echo "${feature_name}" | sed -r 's/[[:upper:]]+/\L&/g ; s/[-_]/./g')"
         fi
 
-        last_version="$(pip index versions --pre --disable-pip-version-check --no-color "${{ inputs.package-name }}" | \
+        matching_version=$((pip index versions --pre --disable-pip-version-check --no-color "${{ inputs.package-name }}") || echo "")
+        last_version="$(echo $matching_versions | \
           awk -v search_exp="${search_exp}" -F "[ ,]" '/Available versions:/ { for (i=3; i<=NF; i++) { if ($i ~ search_exp) { print $i ; break } } }')"
         echo "last-version=${last_version}" >> $GITHUB_OUTPUT
 
