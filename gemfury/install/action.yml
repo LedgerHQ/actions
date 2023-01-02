@@ -8,5 +8,5 @@ runs:
       run: |
         sudo sh -c "echo 'deb [trusted=yes] https://cli.gemfury.com/apt/ /' > /etc/apt/sources.list.d/fury-cli.list"
         sudo apt update
-        sudo apt install gemfury
+        sudo apt install -y gemfury
       shell: bash
