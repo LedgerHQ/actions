@@ -88,12 +88,12 @@ runs:
   steps:
     - id: random-number-generator
       if: inputs.mode == 'start'
-      run: echo "::set-output name=random-id::$(echo $RANDOM)"
+      run: echo "random-id=$(echo $RANDOM)" >> $GITHUB_OUTPUT
       shell: bash
 
     - id: get-ami-id
       if: inputs.mode == 'start'
-      run: echo "::set-output name=ami-id::$(aws ec2 describe-images --filters 'Name=name,Values=${{ inputs.ami-name-filter }}' --query 'Images[*].ImageId' --output text)"
+      run: echo "ami-id=$(aws ec2 describe-images --filters 'Name=name,Values=${{ inputs.ami-name-filter }}' --query 'Images[*].ImageId' --output text)" >> $GITHUB_OUTPUT
       shell: bash
 
     - id: start-ec2-runner
