@@ -51,10 +51,10 @@ runs:
 
     - name: Set RELEASE_NAME
       run: |
-        if [[ -n "${{ steps.nexus.outputs.next-feature-tag }}" ]]; then
+        if [[ -n "${{ steps.fury.outputs.next-feature-tag }}" ]]; then
           if [[ $(grep -E ' +version=".+",' setup.py | wc -l) == 1 ]]; then
-            echo "Temporarily updating version with feature tag ${{ steps.nexus.outputs.next-feature-tag }}."
-            sed -i 's/\( \+\)version="\(.\+\)",/\1version="\2${{ steps.nexus.outputs.next-feature-tag }}",/' setup.py
+            echo "Temporarily updating version with feature tag ${{ steps.fury.outputs.next-feature-tag }}."
+            sed -i 's/\( \+\)version="\(.\+\)",/\1version="\2${{ steps.fury.outputs.next-feature-tag }}",/' setup.py
           else
             echo "Can't find a version to update in setup.py"
             exit 1
