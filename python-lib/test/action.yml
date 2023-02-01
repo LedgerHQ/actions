@@ -43,5 +43,4 @@ runs:
         else
             echo "mypy not installed, skipping";
         fi
-        codecov
       shell: bash
