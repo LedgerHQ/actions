@@ -28,9 +28,9 @@ runs:
   using: "composite"
   steps:
     - name: pipenv
-      uses: LedgerHQ/actions/python-app/init@main
+      uses: LedgerHQ/actions/python-app/init@decommission-old-lint-job
 
-    - uses: LedgerHQ/actions/python-app/test@main
+    - uses: LedgerHQ/actions/python-app/test@decommission-old-lint-job
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
