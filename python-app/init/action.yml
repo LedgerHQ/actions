@@ -55,8 +55,6 @@ runs:
 
     - name: lint
       run: |
-        pipenv install 'poetry-core>=1.5.0'
-        pipenv install 'isort>=5.12.0'
         pipenv install pre-commit
         pipenv run pre-commit run --show-diff-on-failure --all-files
       shell: bash
