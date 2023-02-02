@@ -52,3 +52,9 @@ runs:
       env:
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
       shell: bash
+
+    - name: lint
+      run: |
+        pip install pre-commit
+        pre-commit run --show-diff-on-failure --all-files
+      shell: bash

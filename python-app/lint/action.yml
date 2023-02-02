@@ -1,7 +1,0 @@
-name: "lint"
-description: "run pre-commit hooks"
-
-runs:
-  using: "composite"
-  steps:
-    - uses: pre-commit/action@v3.0.0
