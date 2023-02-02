@@ -55,6 +55,7 @@ runs:
 
     - name: lint
       run: |
+        pipenv run pip freeze
         pipenv install pre-commit
         pipenv run pre-commit run --show-diff-on-failure --all-files
       shell: bash
