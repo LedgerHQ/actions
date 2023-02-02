@@ -37,12 +37,6 @@ runs:
         python --version ; pip --version ; pipenv --version
       shell: bash
 
-    - name: lint
-      run: |
-        pip install pre-commit
-        pre-commit run --show-diff-on-failure --all-files
-      shell: bash
-
     - if: ${{ inputs.sync-dev == 'true' }}
       name: Install package in dev mode
       run: |
@@ -57,4 +51,11 @@ runs:
         pipenv sync
       env:
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
+      shell: bash
+
+    - name: lint
+      run: |
+        pipenv shell
+        pip install pre-commit
+        pre-commit run --show-diff-on-failure --all-files
       shell: bash
