@@ -55,8 +55,8 @@ runs:
 
     - name: lint
       run: |
-        pip install 'poetry-core>=1.5.0'
-        pip install 'isort>=5.12.0'
-        pip install pre-commit
+        pipenv install 'poetry-core>=1.5.0'
+        pipenv install 'isort>=5.12.0'
+        pipenv install pre-commit
         pre-commit run --show-diff-on-failure --all-files
       shell: bash
