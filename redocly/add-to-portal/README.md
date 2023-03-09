@@ -1,13 +1,13 @@
-# redocly/new-api
+# redocly/add-to-portal
 
-Github action to add a new API to redocly.
+Github action to add a new API to a Redocly Portal.
 
 This should only be used in Redocly Portal repositories, such as [Internal LES API Portal](https://github.com/LedgerHQ/internal-les-api-portal).
 
 ## Action usage
 
 ```yaml
-- uses: LedgerHQ/actions/redocly/new-api@main
+- uses: LedgerHQ/actions/redocly/add-to-portal@main
   env:
     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   with:
