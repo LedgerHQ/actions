@@ -1,0 +1,15 @@
+name: 'Add API to portal'
+description: 'Add a new API version to a redocly portal'
+inputs:
+  name:
+    description: "Full name of your API"
+    required: true
+  version:
+    description: "Version of your API, in semver"
+    required: true
+  spec-url:
+    description: "URL of your API spec"
+    required: true
+runs:
+  using: 'node16'
+  main: 'dist/index.js'

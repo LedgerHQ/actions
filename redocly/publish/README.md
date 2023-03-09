@@ -1,6 +1,6 @@
-# redocly
+# redocly/publish
 
-Github action to interact with Redocly.
+Github action to publish a new version of an API spec to redocly.
 
 ## Action usage
 
