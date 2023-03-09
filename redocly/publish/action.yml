@@ -1,0 +1,41 @@
+name: "Publish"
+description: "Publish a new spec to Redocly"
+
+inputs:
+  spec-path:
+    description: "Path to the spec to publish"
+    required: true
+    default: openapi/spec.json
+  api-name:
+    description: "Name of the API to publish on"
+    required: true
+  api-version:
+    description: "Version of the API to publish on"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14
+    - name: Push to dev portal
+      env:
+        REDOCLY_AUTHORIZATION: ${{ env.REDOCLY_AUTHORIZATION }}
+      run: |
+        npx @redocly/openapi-cli@latest push ${{ inputs.spec-path }} "@ledger/${{ inputs.api-name }}@${{ inputs.api-version }}" > output
+        # The redocly tool does not provide a simple way to know if it has succeeded or not.
+        # We have to grep its output.
+        if [[ $(grep "is successfully pushed to Redocly API Registry") ]]; then
+          echo "Successfully pushed ${{ inputs.spec-path }} to '@ledger/${{ inputs.api-name }}@${{ inputs.api-version }}'";
+        else
+          echo "Failed to push ${{ inputs.spec-path }} to '@ledger/${{ inputs.api-name }}@${{ inputs.api-version }}'";
+          cat output
+          if [[ $(grep "Copy your API key" output) ]]; then
+            echo "Failed to authenticate: env.REDOCLY_AUTHORIZATION may be empty or incorrect.";
+          fi
+          exit 1;
+        fi
+      shell: bash
