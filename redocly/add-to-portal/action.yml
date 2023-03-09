@@ -1,5 +1,5 @@
 name: 'Add API to portal'
-description: 'Add a new API version to a redocly portal'
+description: 'Add a new API version to a Redocly Portal'
 
 inputs:
   name:
