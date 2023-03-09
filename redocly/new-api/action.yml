@@ -1,0 +1,42 @@
+name: 'Add API to portal'
+description: 'Add a new API version to a redocly portal'
+
+inputs:
+  name:
+    description: "Full name of your API"
+    required: true
+  version:
+    description: "Version of your API, in semver"
+    required: true
+  spec-url:
+    description: "URL of your API spec"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/actions/redocly/add-to-portal/update-config@main
+      with:
+        name: ${{ inputs.name }}
+        version: ${{ inputs.version }}
+        spec-url: ${{ inputs.spec-url }}
+    - name: Create Pull Request
+      id: cpr
+      uses: peter-evans/create-pull-request@v3
+      with:
+        token: ${{ env.GITHUB_TOKEN }}
+        commit-message: Add new version ${{ inputs.version }} of API ${{ inputs.name }}
+        committer: GitHub <noreply@github.com>
+        author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+        branch: add-api
+        branch-suffix: timestamp
+        delete-branch: true
+        title: "[New API] Add new version ${{ inputs.version }} of API ${{ inputs.name }}"
+        body: |
+            Add new version ${{ inputs.version }} of API ${{ inputs.name }}.
+            The spec can be found at ${{ inputs.spec-url }}.
+    - name: Check outputs
+      run: |
+        echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+        echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
+      shell: bash
