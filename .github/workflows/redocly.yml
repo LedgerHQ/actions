@@ -1,0 +1,22 @@
+name: Test redocly action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ redocly/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ redocly/** ]
+
+defaults:
+  run:
+    working-directory: redocly
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Test new version of the action
+        run: echo "Nothing to do"
