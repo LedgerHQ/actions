@@ -2,6 +2,8 @@
 
 Github action to add a new API to redocly.
 
+This should only be used in Redocly Portal repositories, such as [Internal LES API Portal](https://github.com/LedgerHQ/internal-les-api-portal).
+
 ## Action usage
 
 ```yaml
