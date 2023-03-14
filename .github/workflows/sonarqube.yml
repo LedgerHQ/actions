@@ -1,0 +1,97 @@
+name: SonarQube complete workflow
+description: Run sonarQube analysis on green zone
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+        description: TBD
+      # Project ID for Tagging AWS resources https://ledgerhq.atlassian.net/wiki/spaces/MS/pages/1372193291/2xxx+AWS+Data+Center
+      project_id:
+        type: number
+        required: true
+        description: Project ID for Tagging AWS resources 
+    secrets:
+      CI_BOT_TOKEN:
+        required: true
+        description: Github token
+      SONAR_TOKEN_GREEN:
+        required: true
+        description: Sonar project token
+      SONAR_HOST_URL:
+        required: true
+        description: Sonar host url
+jobs:
+  start-runner:
+    name: Start self-hosted EC2 runner
+    runs-on: [self-hosted, shared-ec2]
+    outputs:
+      label: ${{ steps.start-ec2-linux-runner.outputs.label }}
+      instance-id: ${{ steps.start-ec2-linux-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Start EC2 Linux Runner
+        id: start-ec2-linux-runner
+        uses: LedgerHQ/actions/ec2-linux-runner@main
+        with:
+          mode: start
+          subnet-id: subnet-03b7b4dff904e0142
+          github-token: ${{ secrets.CI_BOT_TOKEN }}
+          project: ${{ inputs.project_id }}
+          aws-nfs-logging: false
+          ami-name-filter: infra-gha-runner
+          instance-volume-size: 30
+
+  sonarqube:
+    name: SonarQube Analysis
+    runs-on: [self-hosted, "${{ needs.start-runner.outputs.label }}"]
+    needs:
+      - start-runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/download-artifact@v3
+        with:
+          name: coverage_reports # retrieve the coverage reports from previous job
+          path: ./coverage/
+      - name: Fix coverage path in coverage reports
+        run: |
+          # point the source path of all reports to the /github/workspace local directory of the sonarcloud container
+          cd coverage && find . -type f -name '*.xml' -exec sed -i".backup" 's/<source>.*<\/source>/<source>\/github\/workspace\/api<\/source>/g' {} \;
+          for file in $(find . -type f -name "*.xml"); do
+            diff -u ${file}.backup ${file} || true
+            rm ${file}.backup
+          done
+      - name: Configure SonarQube (coverage report paths)
+        run: |
+          # for debugging purposes: list all coverage reports
+          ls ./coverage/
+          # transform this list into a string (paths separated with non-trailing ',')
+          coverage_files=$(find ./coverage/ -type f -maxdepth 1 | tr '\n' ',' | sed 's%,*$%%')
+          cp sonar-project.properties sonar-project.properties.backup
+          echo sonar.python.coverage.reportPaths=${coverage_files} >> sonar-project.properties
+          echo ${coverage_files}
+          diff -u sonar-project.properties.backup sonar-project.properties || true
+          rm sonar-project.properties.backup
+      - uses: sonarsource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_GREEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+  stop-runner:
+    name: Stop self-hosted EC2 runner
+    needs: [start-runner, sonarqube]
+    runs-on: [self-hosted, shared-ec2]
+    if: ${{ always() }}
+    steps:
+      - name: Stop EC2 Linux Runner
+        uses: LedgerHQ/actions/ec2-linux-runner@main
+        with:
+          mode: stop
+          github-token: ${{ secrets.CI_BOT_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.instance-id }}
