@@ -1,10 +1,21 @@
 name: SonarQube complete workflow
+description: Run sonarQube analysis on green zone
+
+inputs:
+  project:
+    description: Project ID for Tagging AWS resources
+    required: true
+
 on:
   workflow_call:
     inputs:
       ref:
         required: true
         type: string
+      # Project ID for Tagging AWS resources https://ledgerhq.atlassian.net/wiki/spaces/MS/pages/1372193291/2xxx+AWS+Data+Center
+      project_id:
+        type: number
+        required: true
     secrets:
       CI_BOT_TOKEN:
         required: true
@@ -29,7 +40,7 @@ jobs:
           mode: start
           subnet-id: subnet-03b7b4dff904e0142
           github-token: ${{ secrets.CI_BOT_TOKEN }}
-          project: 2165
+          project: ${{ inputs.project_id }}
           aws-nfs-logging: false
           ami-name-filter: infra-gha-runner
           instance-volume-size: 30
@@ -70,7 +81,6 @@ jobs:
       - uses: sonarsource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-          #SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_GREEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
