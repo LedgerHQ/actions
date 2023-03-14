@@ -1,30 +1,28 @@
 name: SonarQube complete workflow
 description: Run sonarQube analysis on green zone
 
-inputs:
-  project:
-    description: Project ID for Tagging AWS resources
-    required: true
-
 on:
   workflow_call:
     inputs:
       ref:
         required: true
         type: string
+        description: TBD
       # Project ID for Tagging AWS resources https://ledgerhq.atlassian.net/wiki/spaces/MS/pages/1372193291/2xxx+AWS+Data+Center
       project_id:
         type: number
         required: true
+        description: Project ID for Tagging AWS resources 
     secrets:
       CI_BOT_TOKEN:
         required: true
-      SONAR_TOKEN:
-        required: false
+        description: Github token
       SONAR_TOKEN_GREEN:
         required: true
+        description: Sonar project token
       SONAR_HOST_URL:
         required: true
+        description: Sonar host url
 jobs:
   start-runner:
     name: Start self-hosted EC2 runner
