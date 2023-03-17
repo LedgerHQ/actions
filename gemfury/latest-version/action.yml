@@ -38,7 +38,7 @@ runs:
 
         matching_versions=$((fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} ${{ inputs.package-name }} | grep -E ".*${grep_filter}") || echo "")
         last_version=$(echo $matching_versions | awk '{print $1}')
-        echo "::set-output name=last-version::${last_version}"
+        echo "last-version=${last_version}" >> $GITHUB_OUTPUT
 
         if [[ -n "${feature_name}" ]]; then
           # remove everything after the rcX
@@ -46,7 +46,7 @@ runs:
           # remove everything before and including rc
           last_rc_number=${last_version#*rc}
           next_feature_tag="rc$((last_rc_number+1))+${feature_name}"
-          echo "::set-output name=next-feature-tag::${next_feature_tag}"
+          echo "next-feature-tag=${next_feature_tag}" >> $GITHUB_OUTPUT
         fi
       shell: bash
     - name: Display output

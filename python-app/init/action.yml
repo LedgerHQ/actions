@@ -21,7 +21,7 @@ runs:
         if [[ $? != 0 || -z $version ]]; then
           version=3.9
         fi
-        echo "::set-output name=python-version::$version"
+        echo "python-version=$version" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: setup python with parsed version

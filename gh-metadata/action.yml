@@ -21,11 +21,11 @@ runs:
       id: refs
       run: |
         if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
-          echo "::set-output name=target::origin/${GITHUB_BASE_REF#refs/heads/}"
+          echo "target=origin/${GITHUB_BASE_REF#refs/heads/}" >> $GITHUB_OUTPUT
         elif  [[ $GITHUB_REF == refs/heads/feature/* ]]; then
-          echo "::set-output name=target::main"
+          echo "target=main" >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=target::HEAD^"
+          echo "target=HEAD^" >> $GITHUB_OUTPUT
         fi
 
         if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
@@ -40,13 +40,13 @@ runs:
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           # It's a tag aka. a semver dotted release (X.Y.Z assuming no v prefix)
           version=${GITHUB_REF#refs/tags/}
-          echo "::set-output name=branch::${version}"
-          echo "::set-output name=version::${version}"
-          echo "::set-output name=sha::${{ github.sha }}"
+          echo "branch=${version}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
         elif [[ ! -z "$branch" ]]; then
-          echo "::set-output name=branch::${branch}"
-          echo "::set-output name=version::${branch//\//-}-$(git rev-parse --short HEAD)"
-          echo "::set-output name=sha::${sha}"
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
+          echo "version=${branch//\//-}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "sha=${sha}" >> $GITHUB_OUTPUT
         else
           echo "::error ::Unkown case: current build is neither a tag, a branch or a pull request"
           exit 1

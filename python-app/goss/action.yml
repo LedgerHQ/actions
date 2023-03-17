@@ -17,9 +17,9 @@ runs:
       id: goss_file
       run: |
         if [[ -d ${{ inputs.GOSS_FILES_PATH }} ]]; then
-          echo "::set-output name=goss_enabled::true"
+          echo "goss_enabled=true" >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=goss_enabled::false"
+          echo "goss_enabled=false" >> $GITHUB_OUTPUT
         fi
       shell: bash
 
