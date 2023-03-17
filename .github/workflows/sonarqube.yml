@@ -1,5 +1,4 @@
 name: SonarQube complete workflow
-description: Run sonarQube analysis on green zone
 
 on:
   workflow_call:
