@@ -27,7 +27,7 @@ runs:
       run: |
        LOWERCASED_NAME=$(git log -s -n1 --pretty='format:%an' $(git diff --name-only) | awk '{print tolower($0)}' | tr ' ' .)
        BIG_BADDIES_EMAIL="${LOWERCASED_NAME}@ledger.fr"
-       echo '::set-output name=BIG_BADDIES_EMAIL::'"${BIG_BADDIES_EMAIL}"
+       echo 'BIG_BADDIES_EMAIL='"${BIG_BADDIES_EMAIL}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Find Slack user
@@ -52,7 +52,7 @@ runs:
         custom_payload_with_member_id=`echo "${custom_payload_with_member_id}" | tr -d '\n'`
         custom_payload_with_member_id="${custom_payload_with_member_id//'%'/'%25'}"
         custom_payload_with_member_id="${custom_payload_with_member_id//$'\r'/'%0D'}"
-        echo "::set-output name=SLACK_CUSTOM_PAYLOAD::$custom_payload_with_member_id"
+        echo "SLACK_CUSTOM_PAYLOAD=$custom_payload_with_member_id" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Notify Slack
