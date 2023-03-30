@@ -15,7 +15,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/redocly/new-api/update-config@main
+    - uses: LedgerHQ/actions/redocly/add-to-portal/update-config@main
       with:
         name: ${{ inputs.name }}
         version: ${{ inputs.version }}
