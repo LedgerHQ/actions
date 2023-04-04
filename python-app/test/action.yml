@@ -6,15 +6,18 @@ inputs:
     description: "path to src directory"
     required: false
     default: "src"
+  report-format:
+    required: false
 
 runs:
   using: "composite"
   steps:
     - name: Run unittest
       run: |
-        pipenv run pytest -s --cov=./${SRC}
+        pipenv run pytest -s --cov=./${SRC} --cov-report=${FORMAT}
       env:
         SRC: ${{ inputs.src-path }}
+        FORMAT: ${{ inputs.report-format }}
       shell: bash
 
     - name: Optionally run mypy
