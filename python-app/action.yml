@@ -6,6 +6,9 @@ inputs:
     description: "path to src directory"
     required: false
     default: "src"
+  report-format:
+    description: "report format"
+    required: false
 
   redocly-project:
     description: |
@@ -35,6 +38,7 @@ runs:
     - uses: LedgerHQ/actions/python-app/test@main
       with:
         src-path: ${{ inputs.src-path }}
+        report-format: ${{ inputs.report-format }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
 
     - uses: LedgerHQ/actions/python-app/goss@main
