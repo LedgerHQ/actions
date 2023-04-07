@@ -1,10 +1,11 @@
 name: SonarQube complete workflow
+description: Run sonarQube analysis on green zone
 
 on:
   workflow_call:
     inputs:
       ref:
-        required: false
+        required: true
         type: string
         description: TBD
       # Project ID for Tagging AWS resources https://ledgerhq.atlassian.net/wiki/spaces/MS/pages/1372193291/2xxx+AWS+Data+Center
