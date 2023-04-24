@@ -5,6 +5,10 @@ on:
       ref:
         required: false
         type: string
+      project_id:
+        type: number
+        required: true
+        description: Project ID for Tagging AWS resources 
     secrets:
       CI_BOT_TOKEN:
         required: true
