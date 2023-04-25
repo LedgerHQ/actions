@@ -5,14 +5,16 @@ on:
       ref:
         required: false
         type: string
+      project_id:
+        type: number
+        required: true
+        description: Project ID for Tagging AWS resources 
     secrets:
       CI_BOT_TOKEN:
         required: true
-      SONAR_TOKEN:
-        required: false
-      SONAR_TOKEN_GREEN:
+      GREEN_SONAR_TOKEN:
         required: true
-      SONAR_HOST_URL:
+      GREEN_SONAR_HOST_URL:
         required: true
 jobs:
   start-runner:
@@ -70,9 +72,8 @@ jobs:
       - uses: sonarsource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
-          #SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN_GREEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
 
   stop-runner:
     name: Stop self-hosted EC2 runner
