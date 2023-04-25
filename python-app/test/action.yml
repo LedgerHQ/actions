@@ -24,6 +24,11 @@ runs:
         SRC: ${{ inputs.src-path }}
         FORMAT: ${{ inputs.report-format }}
       shell: bash
+    - name: Cache coverage report
+      uses: actions/upload-artifact@v3
+      with:
+         name: coverage_reports
+         path: ./coverage/
 
     - name: Optionally run mypy
       run: |
