@@ -15,6 +15,10 @@ runs:
     - name: Run unittest
       run: |
         pipenv run pytest --cov=./${SRC} --cov-report=${FORMAT}
+        filename_postfix="file"
+        report_path="./coverage/coverage-${filename_postfix}.xml"
+        # 3. copy the report to the ad hoc report path
+        cp ./coverage.xml $report_path
       env:
         SRC: ${{ inputs.src-path }}
         FORMAT: ${{ inputs.report-format }}
