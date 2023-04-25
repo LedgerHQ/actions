@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Run unittest
       run: |
-        pipenv run pytest -s --cov=./${SRC} --cov-report=${FORMAT}
+        pipenv run pytest --cov=./${SRC} --cov-report=${FORMAT}
       env:
         SRC: ${{ inputs.src-path }}
         FORMAT: ${{ inputs.report-format }}
