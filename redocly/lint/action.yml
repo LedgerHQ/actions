@@ -1,0 +1,22 @@
+name: "Lint OpenAPI"
+description: "Lint OpenAPI specifications using Redocly CLI"
+
+inputs:
+  specs:
+    description: "Path to the OpenAPI specifications to lint"
+    required: true
+    default: openapi.json
+
+runs:
+  using: "composite"
+  steps:
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 14
+    - name: Lint OpenAPI specifications
+      run: npx @redocly/cli@latest lint ${{ inputs.specs }}
+      shell: bash
+    - name: Gives some statistics about these OpenAPI specifications
+      run: npx @redocly/cli@latest stats ${{ inputs.specs }}
+      shell: bash
