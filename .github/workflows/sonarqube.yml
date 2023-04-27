@@ -50,14 +50,6 @@ jobs:
         with:
           name: coverage_reports # retrieve the coverage reports from previous job
           path: ./coverage/
-      - name: Fix coverage path in coverage reports
-        run: |
-          # point the source path of all reports to the /github/workspace local directory of the sonarcloud container
-          cd coverage && find . -type f -name '*.xml' -exec sed -i".backup" 's/<source>.*<\/source>/<source>\/github\/workspace\/api<\/source>/g' {} \;
-          for file in $(find . -type f -name "*.xml"); do
-            diff -u ${file}.backup ${file} || true
-            rm ${file}.backup
-          done
       - name: Configure SonarQube (coverage report paths)
         run: |
           # for debugging purposes: list all coverage reports
