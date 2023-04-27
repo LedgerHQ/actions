@@ -12,6 +12,10 @@ inputs:
   api-version:
     description: "Version of the API to publish on"
     required: true
+  branch:
+    description: "Branch to publish on"
+    required: true
+    default: "main" # The CLI default
 
 runs:
   using: "composite"
@@ -24,7 +28,7 @@ runs:
       env:
         REDOCLY_AUTHORIZATION: ${{ env.REDOCLY_AUTHORIZATION }}
       run: |
-        npx @redocly/openapi-cli@latest push ${{ inputs.spec-path }} "@ledger/${{ inputs.api-name }}@${{ inputs.api-version }}" > output
+        npx @redocly/cli@latest push ${{ inputs.spec-path }} "@ledger/${{ inputs.api-name }}@${{ inputs.api-version }} --branch "{{ inputs.branch }}" > output
         # The redocly tool does not provide a simple way to know if it has succeeded or not.
         # We have to grep its output.
         if [[ $(grep "is successfully pushed to Redocly API Registry" output) ]]; then

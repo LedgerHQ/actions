@@ -20,6 +20,13 @@ If your spec is located elsewhere you can
     spec-path: "account-reader/tooling/openapi/spec.json"
 ```
 
+By default we publish the spec at the path to the `main` branch.
+If you want to publish to a custom branchm provide the `branch` parameter:
+
+```yaml
+    branch: "feature/test"
+```
+
 ## Contribute
 
 Open a PR to contribute, the CI and reviewer will take care of the rest.
