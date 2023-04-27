@@ -35,5 +35,5 @@ runs:
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       name: Publish to redocly
-      run: npx @redocly/openapi-cli@latest push doc/api-spec.yaml "${{ inputs.redocly-project }}"
+      run: npx @redocly/cli@latest push doc/api-spec.yaml "${{ inputs.redocly-project }}"
       shell: bash
