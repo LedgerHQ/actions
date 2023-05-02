@@ -72,7 +72,7 @@ inputs:
     description: GitHub runner releases version
     required: false
     type: string
-    default: 2.296.2
+    default: 2.304.0
 
 outputs:
   label:
