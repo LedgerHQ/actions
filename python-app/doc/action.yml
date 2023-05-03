@@ -37,6 +37,7 @@ runs:
         VERSION=$(echo "${{ inputs.redocly-project }}" | cut cut -d'@' -f3)
         echo "name=${NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
+      shell: bash
     
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
       uses: LedgerHQ/actions/redocly/publish@main
