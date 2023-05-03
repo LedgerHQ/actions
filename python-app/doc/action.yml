@@ -30,10 +30,17 @@ runs:
       shell: bash
 
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
-      name: Setup Node.js
-      uses: actions/setup-node@v2
-
+      id: redocly-metadata
+      name: Extract Redocly identifiers
+      run: |
+        NAME=$(echo "${{ inputs.redocly-project }}" | cut cut -d'@' -f2)
+        VERSION=$(echo "${{ inputs.redocly-project }}" | cut cut -d'@' -f3)
+        echo "name=${NAME}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+    
     - if: ${{ steps.check-doc.outputs.is-doc-needed == 'true' }}
-      name: Publish to redocly
-      run: npx @redocly/cli@latest push doc/api-spec.yaml "${{ inputs.redocly-project }}"
-      shell: bash
+      uses: LedgerHQ/actions/redocly/publish@main
+      with:
+        api-name: ${{ steps.redocly-metadata.outputs.name }}
+        api-version: ${{ steps.redocly-metadata.outputs.version }}
+        api-spec: doc/api-spec.yaml
