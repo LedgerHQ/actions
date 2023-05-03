@@ -12,6 +12,7 @@ inputs:
   api-version:
     description: "Version of the API to publish on"
     required: true
+    default: "latest" # The CLI default
   branch:
     description: "Branch to publish on"
     required: true
