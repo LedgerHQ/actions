@@ -44,6 +44,7 @@ jobs:
           ref: ${{ inputs.ref }}
       - uses: actions/download-artifact@v3
         with:
+          continue-on-error: true
           name: coverage_reports # retrieve the coverage reports from previous job
           path: ./coverage/
       - name: Fix coverage path in coverage reports
@@ -66,6 +67,7 @@ jobs:
           diff -u sonar-project.properties.backup sonar-project.properties || true
           rm sonar-project.properties.backup
       - uses: sonarsource/sonarqube-scan-action@master
+        if: ${{ always() }}
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
           SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
