@@ -33,8 +33,8 @@ runs:
       id: redocly-metadata
       name: Extract Redocly identifiers
       run: |
-        NAME=$(echo "${{ inputs.redocly-project }}" | cut -d'@' -f2)
-        VERSION=$(echo "${{ inputs.redocly-project }}" | cut -d'@' -f3)
+        NAME=$(echo "${{ inputs.redocly-project }}" | cut cut -d'@' -f2)
+        VERSION=$(echo "${{ inputs.redocly-project }}" | cut cut -d'@' -f3)
         echo "name=${NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
       shell: bash
