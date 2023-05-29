@@ -15,7 +15,7 @@ on:
 jobs:
   start-runner:
     name: Start self-hosted EC2 runner
-    runs-on: [self-hosted, shared-ec2]
+    runs-on: [self-hosted, shared-small]
     outputs:
       label: ${{ steps.start-ec2-linux-runner.outputs.label }}
       instance-id: ${{ steps.start-ec2-linux-runner.outputs.ec2-instance-id }}
