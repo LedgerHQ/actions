@@ -8,17 +8,28 @@ inputs:
     default: "src"
   report-format:
     required: false
+    default: "xml"
 
 runs:
   using: "composite"
   steps:
     - name: Run unittest
       run: |
-        pipenv run pytest -s --cov=./${SRC} --cov-report=${FORMAT}
+        pipenv run pytest --cov=./${SRC} --cov-report=${FORMAT}
+        mkdir coverage
+        filename_postfix="file"
+        report_path="./coverage/coverage-${filename_postfix}.${FORMAT}"
+        # 3. copy the report to the ad hoc report path
+        cp ./coverage.${FORMAT} $report_path
       env:
         SRC: ${{ inputs.src-path }}
         FORMAT: ${{ inputs.report-format }}
       shell: bash
+    - name: Cache coverage report
+      uses: actions/upload-artifact@v3
+      with:
+         name: coverage_reports
+         path: ./coverage/
 
     - name: Optionally run mypy
       run: |

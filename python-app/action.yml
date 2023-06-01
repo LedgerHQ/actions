@@ -14,6 +14,10 @@ inputs:
     required: false
     default: ""
 
+  test-report-format:
+    description: "format of the report test generated"
+    required: false
+
   ignore-mypy:
     description: "Force ignoring Mypy step"
     required: false
