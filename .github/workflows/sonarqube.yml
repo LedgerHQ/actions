@@ -5,6 +5,10 @@ on:
       ref:
         required: false
         type: string
+      source_folder:
+        type: string
+        required: false
+        default: "api"
     secrets:
       CI_BOT_TOKEN:
         required: true
@@ -29,7 +33,7 @@ jobs:
       - name: Fix coverage path in coverage reports
         run: |
           # point the source path of all reports to the /github/workspace local directory of the sonarcloud container
-          cd coverage && find . -type f -name '*.xml' -exec sed -i".backup" 's/<source>.*<\/source>/<source>\/github\/workspace\/api<\/source>/g' {} \;
+          cd coverage && find . -type f -name '*.xml' -exec sed -i".backup" 's/<source>.*<\/source>/<source>\/github\/workspace\/${{ inputs.source_folder }}<\/source>/g' {} \;
           for file in $(find . -type f -name "*.xml"); do
             diff -u ${file}.backup ${file} || true
             rm ${file}.backup
