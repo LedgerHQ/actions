@@ -6,6 +6,13 @@ inputs:
     description: "path to src directory"
     required: false
     default: "src"
+  python-version: 
+    required: false
+    default: "3.10"
+  report-format: 
+    description: "test report format"
+    required: false
+    default: "xml"
 
   redocly-project:
     description: |
@@ -13,6 +20,10 @@ inputs:
       if empty, step is skipped
     required: false
     default: ""
+
+  test-report-format:
+    description: "format of the report test generated"
+    required: false
 
   ignore-mypy:
     description: "Force ignoring Mypy step"
