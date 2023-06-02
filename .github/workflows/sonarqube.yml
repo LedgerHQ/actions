@@ -27,7 +27,6 @@ jobs:
           ref: ${{ inputs.ref }}
       - uses: actions/download-artifact@v3
         with:
-          continue-on-error: true
           name: coverage_reports # retrieve the coverage reports from previous job
           path: ./coverage/
       - name: Fix coverage path in coverage reports
