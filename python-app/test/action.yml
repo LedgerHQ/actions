@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Run unittest
       run: |
-        pipenv run pytest --cov=./${SRC} --cov-report=${FORMAT}
+        pipenv run pytest -q --cov=./${SRC} --cov-report=${FORMAT}
         mkdir coverage
         filename_postfix="file"
         report_path="./coverage/coverage-${filename_postfix}.xml"
