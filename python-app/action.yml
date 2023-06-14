@@ -6,7 +6,7 @@ inputs:
     description: "path to src directory"
     required: false
     default: "src"
-  python-version: 
+  python-version:
     required: false
     default: "3.10"
   report-format: 
@@ -39,24 +39,24 @@ runs:
   using: "composite"
   steps:
     - name: pipenv
-      uses: LedgerHQ/actions/python-app/init@main
+      uses: LedgerHQ/actions/python-app/init@secret-support
 
-    - uses: LedgerHQ/actions/python-app/lint@main
+    - uses: LedgerHQ/actions/python-app/lint@secret-support
 
-    - uses: LedgerHQ/actions/python-app/test@main
+    - uses: LedgerHQ/actions/python-app/test@secret-support
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
 
-    - uses: LedgerHQ/actions/python-app/goss@main
+    - uses: LedgerHQ/actions/python-app/goss@secret-support
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@main
+    - uses: LedgerHQ/actions/python-app/docker@secret-support
       with:
         build-args: ${{ inputs.docker-build-args }}
 
-    - uses: LedgerHQ/actions/python-app/doc@main
+    - uses: LedgerHQ/actions/python-app/doc@secret-support
       with:
         redocly-project: ${{ inputs.redocly-project }}
