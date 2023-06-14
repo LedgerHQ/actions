@@ -39,12 +39,12 @@ runs:
       with:
         tags: ${{ inputs.GOSS_IMAGE }}
         load: true
+        # See: https://docs.docker.com/build/ci/github-actions/secrets/
+        # `Dockerfile` can mount and use the secret at: /run/secrets/PYPI_DEPLOY_TOKEN
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
         build-args: |
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
-      env:
-        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Install Goss

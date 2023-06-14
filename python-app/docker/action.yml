@@ -69,9 +69,7 @@ runs:
       with:
         context: .
         # See: https://docs.docker.com/build/ci/github-actions/secrets/
-        # Pass the token as a secret. Inside `Dockerfile` it will be accessible via:
-        #
-        # RUN --mount=type=secret,id=PYPI_DEPLOY_TOKEN cat /run/secrets/PYPI_DEPLOY_TOKEN
+        # `Dockerfile` can mount and use the secret at: /run/secrets/PYPI_DEPLOY_TOKEN
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
         build-args: |
@@ -81,5 +79,3 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         push: true
-      env:
-        PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
