@@ -6,7 +6,7 @@ inputs:
     description: "path to src directory"
     required: false
     default: "src"
-  python-version: 
+  python-version:
     required: false
     default: "3.10"
   report-format: 

@@ -65,9 +65,13 @@ runs:
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
       id: docker_build
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v4
       with:
         context: .
+        # See: https://docs.docker.com/build/ci/github-actions/secrets/
+        # `Dockerfile` can mount and use the secret at: /run/secrets/PYPI_DEPLOY_TOKEN
+        secrets: |
+          PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
         build-args: |
           ${{ inputs.build-args }}
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
