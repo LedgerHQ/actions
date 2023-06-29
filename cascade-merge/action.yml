@@ -77,8 +77,8 @@ runs:
         # Loop through all release versions
         for VERSION in $RELEASE_VERSIONS; do
           echo "Comparing versions $VERSION and $ORIGINAL_VERSION"
-          compare_versions "$VERSION" "$ORIGINAL_VERSION"
           RESULT=$(compare_versions "$VERSION" "$ORIGINAL_VERSION")
+          echo "Comparison result between versions $VERSION and $ORIGINAL_VERSION: $RESULT"
           # If the version in the loop is greater than the original version, add it to the target versions
           if [[ $RESULT -eq 1 ]]; then
             TARGET_VERSIONS="$TARGET_VERSIONS $VERSION"
