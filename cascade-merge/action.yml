@@ -40,7 +40,7 @@ runs:
       id: create_prs
       run: |
         # Enables the shell to print all executed commands and exit if any command fails
-        set -ex
+        set +e
         
         # A function to compare semantic version numbers. Echoes 1 if the first is greater, 2 if the second is greater, 0 if they are equal
         compare_versions() {
