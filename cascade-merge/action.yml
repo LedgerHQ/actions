@@ -89,7 +89,11 @@ runs:
 
         NEW_PR_URLS=""
 
-        TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
+        if [[ $TARGET_VERSION == "${{ inputs.default-branch }}" ]]; then
+            TARGET_BRANCH="${{ inputs.default-branch }}"
+        else
+            TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
+        fi
 
         # Attempt a local merge
         git checkout $ORIGINAL_BRANCH
