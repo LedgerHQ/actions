@@ -76,8 +76,12 @@ runs:
         RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
 
         CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
-        NEXT_INDEX=$((CURRENT_INDEX - 1))
-        TARGET_VERSION=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | sed -n "${NEXT_INDEX}p")
+        if [ "$CURRENT_INDEX" -eq 1 ]; then
+          TARGET_VERSION="${{ inputs.default-branch }}"
+        else
+          NEXT_INDEX=$((CURRENT_INDEX - 1))
+          TARGET_VERSION=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | sed -n "${NEXT_INDEX}p")
+        fi
 
         if [ -z "$TARGET_VERSION" ]; then
           TARGET_VERSION="${{ inputs.default-branch }}"
