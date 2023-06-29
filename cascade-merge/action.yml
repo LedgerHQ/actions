@@ -106,7 +106,7 @@ runs:
         if [ $? -ne 0 ]; then
             echo_green "Merge conflict detected. Creating conflict resolution branch and PR."
             git merge --abort
-            CONFLICT_BRANCH="conflict-when-merging-$ORIGINAL_BRANCH_CLEAN-to-$TARGET_BRANCH_CLEAN-$DATETIME"
+            CONFLICT_BRANCH="conflict-when-merging-$ORIGINAL_BRANCH-to-$TARGET_BRANCH"
             git checkout -b $CONFLICT_BRANCH
             git push origin $CONFLICT_BRANCH
             NEW_PR_URL=$(gh pr create --title "Resolve conflicts from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Conflict resolution needed" --base $TARGET_BRANCH --head $CONFLICT_BRANCH --repo ${{ github.repository }} --draft)
