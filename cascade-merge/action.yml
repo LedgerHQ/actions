@@ -34,7 +34,7 @@ runs:
       shell: bash
 
     - name: Install GH CLI
-      uses: dev-hanz-ops/install-gh-cli-action
+      uses: dev-hanz-ops/install-gh-cli-action@master
 
     - name: Create PR
       id: create_prs
