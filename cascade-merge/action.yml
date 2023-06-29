@@ -89,7 +89,9 @@ runs:
 
         # Attempt a local merge
         git checkout $ORIGINAL_BRANCH
-        git merge $TARGET_BRANCH --no-commit --no-ff
+        
+        # Create a local branch that tracks the origin branch
+        git branch $TARGET_BRANCH origin/$TARGET_BRANCH
 
         if [ $? -ne 0 ]; then
             echo_green "Merge conflict detected. Creating conflict resolution branch and PR."
