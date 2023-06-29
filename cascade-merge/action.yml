@@ -33,6 +33,9 @@ runs:
         git config user.email "github-actions@github.com"
       shell: bash
 
+    - name: Install GH CLI
+      uses: dev-hanz-ops/install-gh-cli-action
+
     - name: Create PR
       id: create_prs
       run: |
