@@ -92,6 +92,8 @@ runs:
         
         # Create a local branch that tracks the origin branch
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
+        
+        git merge $TARGET_BRANCH --no-commit --no-ff
 
         if [ $? -ne 0 ]; then
             echo_green "Merge conflict detected. Creating conflict resolution branch and PR."
