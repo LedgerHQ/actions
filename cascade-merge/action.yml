@@ -40,6 +40,24 @@ runs:
     - name: Install GH CLI
       uses: dev-hanz-ops/install-gh-cli-action@master
 
+    - name: Detect conflicts
+      run: |
+        CASCADE_BRANCHES=( $(git for-each-ref --format="%(refname)" refs/remotes/origin/release | sed 's%refs/remotes/origin/%%g') )
+        CASCADE_BRANCHES[${#CASCADE_BRANCHES[@]}]="main"
+
+        # create the first branch
+        git checkout ${CASCADE_BRANCHES[0]}
+        for step in $(seq 0 $((${#CASCADE_BRANCHES[@]} - 2)))
+        do
+            src=${CASCADE_BRANCHES[${step}]}
+            dest=${CASCADE_BRANCHES[$((${step}+1))]}
+            git checkout $dest
+            msg="$dest <= $src"
+            git merge -m "$msg" $src || (echo " === $msg KO ==="; exit 1)
+            echo " === $msg OK ==="
+        done
+      shell: bash
+
     - name: Skip cascade merge
       run: |
         function echo_green {
@@ -53,7 +71,6 @@ runs:
 
     - name: Create PR
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
-      id: create_prs
       run: |
         # Enables the shell to print all executed commands and exit if any command fails
         set +e
