@@ -15,10 +15,10 @@ inputs:
     default: 'main'
   slack-webhook-url:
     description: 'SLACK_WEBHOOK_URL'
-    required: true
+    required: false
   slack-api-token:
     description: 'SLACK_API_TOKEN'
-    required: true
+    required: false
 
 runs:
   using: "composite"
