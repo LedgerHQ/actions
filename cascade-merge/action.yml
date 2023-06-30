@@ -13,10 +13,14 @@ inputs:
     description: 'Default branch name (e.g., main or master)'
     required: true
     default: 'main'
-  auto-merge:
+  auto-merge-pr:
     description: 'Whether to auto-merge the pull requests or not. true/false'
     required: true
     default: 'false'
+  create-pr:
+    description: '`true` to create PR or `false` to directly merge'
+    required: true
+    default: 'true'
 
 runs:
   using: "composite"
@@ -106,14 +110,14 @@ runs:
         else
             TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
         fi
-
-        # Attempt a local merge
-        git checkout $ORIGINAL_BRANCH
         
         # Create a local branch that tracks the origin branch
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         
-        git merge $TARGET_BRANCH --no-commit --no-ff
+        # Attempt a local merge
+        git checkout $TARGET_BRANCH
+
+        git merge $ORIGINAL_BRANCH --no-commit --no-ff
 
         if [ $? -ne 0 ]; then
             echo_green "Merge conflict detected. Creating conflict resolution branch and PR."
@@ -134,14 +138,21 @@ runs:
             fi
         else
             git merge --abort
-            echo_green "No merge conflicts detected. Creating a pull request to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-            NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
-            if [[ $PR_CREATION_STATUS -ne 0 ]]; then
-                echo_red "PR creation failed."
+            if [ "${{ inputs.create-pr }}" == "true" ]; then
+              echo_green "No merge conflicts detected. Creating a pull request to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
+              NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
+              if [[ $PR_CREATION_STATUS -ne 0 ]]; then
+                  echo_red "PR creation failed."
+              else
+                  echo_green "PR is created $NEW_PR_URL"
+                  gh pr ready "${NEW_PR_URL##*/}"
+                  echo_green "PR is marked as ready $NEW_PR_URL"
+              fi
             else
-                echo_green "PR is created $NEW_PR_URL"
-                gh pr ready "${NEW_PR_URL##*/}"
-                echo_green "PR is marked as ready $NEW_PR_URL"
+                echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
+                git checkout $TARGET_BRANCH
+                git merge $ORIGINAL_BRANCH --no-ff
+                git push origin $TARGET_BRANCH
             fi
         fi
 
