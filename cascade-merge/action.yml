@@ -31,14 +31,22 @@ runs:
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
+    - name: Skip cascade merge
+      run: |
+        function echo_green {
+            echo -e "\e[32m$1\e[0m"
+        }
+        echo_green "The job was skipped because the commit message contains '[skip cascade merge]'"
+      if: contains(env.COMMIT_MSG, '[skip cascade merge]')
+      shell: bash
+      env:
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
+
     - name: Configure Git
       run: |
         git config user.name "GitHub Actions"
         git config user.email "github-actions@github.com"
       shell: bash
-
-    - name: Install GH CLI
-      uses: dev-hanz-ops/install-gh-cli-action@master
 
     - name: Detect conflicts
       run: |
@@ -53,21 +61,16 @@ runs:
             dest=${CASCADE_BRANCHES[$((${step}+1))]}
             git checkout $dest
             msg="$dest <= $src"
-            git merge -m "$msg" $src --no-commit --no-ff || (echo " === $msg KO ==="; exit 1)
+            git merge -m "$msg" $src || (echo " === $msg KO ==="; exit 1)
             echo " === $msg OK ==="
         done
       shell: bash
 
-    - name: Skip cascade merge
-      run: |
-        function echo_green {
-            echo -e "\e[32m$1\e[0m"
-        }
-        echo_green "The job was skipped because the commit message contains '[skip cascade merge]'"
-      if: contains(env.COMMIT_MSG, '[skip cascade merge]')
-      shell: bash
-      env:
-        COMMIT_MSG: ${{ github.event.head_commit.message }}
+    // checkout again to clean all local merges done in previous step
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # fetch all history so we can push to other branches
 
     - name: Create PR
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
@@ -94,7 +97,7 @@ runs:
         for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | head -n $((CURRENT_INDEX - 1))); do
         
             TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
-                
+        
             # Create a local branch that tracks the origin branch
             git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         
@@ -108,7 +111,7 @@ runs:
                 exit 1
             else
                 git merge --abort
-         
+        
             echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
             git checkout $TARGET_BRANCH
             git merge $ORIGINAL_BRANCH --no-ff
