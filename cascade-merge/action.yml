@@ -178,4 +178,4 @@ runs:
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
       shell: bash
-      if: ${{ inputs.auto-merge == 'true' }}
+      if: ${{ inputs.auto-merge-pr == 'true' }}
