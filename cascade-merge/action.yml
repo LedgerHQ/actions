@@ -36,15 +36,8 @@ runs:
     - name: Install GH CLI
       uses: dev-hanz-ops/install-gh-cli-action@master
 
-    - name: Check commit message
-      id: commit
-      run: |
-        COMMIT_MSG=$(git log --format=%B -n 1)
-        echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_ENV
-      shell: bash
-
     - name: Create PR
-#      if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
+      if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       id: create_prs
       run: |
         echo COMMIT_MSG
@@ -150,6 +143,7 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
+        COMMIT_MSG: ${{ github.event.head_commit.message }}
 
     - name: Merge PRs
       run: |        
