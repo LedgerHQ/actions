@@ -53,7 +53,7 @@ runs:
             dest=${CASCADE_BRANCHES[$((${step}+1))]}
             git checkout $dest
             msg="$dest <= $src"
-            git merge -m "$msg" $src || (echo " === $msg KO ==="; exit 1)
+            git merge -m "$msg" $src --no-commit --no-ff || (echo " === $msg KO ==="; exit 1)
             echo " === $msg OK ==="
         done
       shell: bash
