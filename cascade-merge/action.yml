@@ -56,7 +56,7 @@ runs:
       id: create_prs
       run: |
         # Enables the shell to print all executed commands and exit if any command fails
-        set +e
+        set -ex
         
         BACKPORT_TARGET_BRANCH_PATTERN="release/"
         ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
