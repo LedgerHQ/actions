@@ -66,7 +66,7 @@ runs:
         done
       shell: bash
 
-    // checkout again to clean all local merges done in previous step
+    # checkout again to clean all local merges done in previous step
     - name: Checkout code
       uses: actions/checkout@v3
       with:
