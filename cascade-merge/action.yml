@@ -147,6 +147,7 @@ runs:
                   echo_green "PR is created $NEW_PR_URL"
                   gh pr ready "${NEW_PR_URL##*/}"
                   echo_green "PR is marked as ready $NEW_PR_URL"
+                  NEW_PR_URLS="$NEW_PR_URLS $NEW_PR_URL"
               fi
             else
                 echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
@@ -155,8 +156,6 @@ runs:
                 git push origin $TARGET_BRANCH
             fi
         fi
-
-        NEW_PR_URLS="$NEW_PR_URLS $NEW_PR_URL"
 
         echo "new_pr_urls=$NEW_PR_URLS" >> $GITHUB_ENV
       shell: bash
