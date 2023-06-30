@@ -58,123 +58,37 @@ runs:
         # Enables the shell to print all executed commands and exit if any command fails
         set +e
         
-        # A function to compare semantic version numbers. Echoes 1 if the first is greater, 2 if the second is greater, 0 if they are equal
-        compare_versions() {
-            IFS='.' read -ra VERSION1 <<< "$1"
-            IFS='.' read -ra VERSION2 <<< "$2"
-        
-            for i in {0..2}; do
-                PART1=${VERSION1[i]:-0}
-                PART2=${VERSION2[i]:-0}
-                if (( PART1 > PART2 )); then
-                    echo 1
-                    return
-                elif (( PART1 < PART2 )); then
-                    echo 2
-                    return
-                fi
-            done
-            echo 0
-        }
-        
-        # beautify the message by coloring it to a green color
-        function echo_green {
-            echo -e "\e[32m$1\e[0m"
-        }
-        function echo_red {
-            echo -e "\e[31m$1\e[0m"
-        }
-
         BACKPORT_TARGET_BRANCH_PATTERN="release/"
         ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
         ORIGINAL_VERSION="${ORIGINAL_BRANCH#"$BACKPORT_TARGET_BRANCH_PATTERN"}"
-
-        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
+        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -V)
 
         CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
-        if [ "$CURRENT_INDEX" -eq 1 ]; then
-          TARGET_VERSION="${{ inputs.default-branch }}"
-        else
-          NEXT_INDEX=$((CURRENT_INDEX - 1))
-          TARGET_VERSION=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | sed -n "${NEXT_INDEX}p")
+        LAST_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | wc -l)
+
+        # if the commit is on a release branch, adjust the original branch for the next iteration
+        if [[ $CURRENT_INDEX -ne "" ]]; then
+          NEXT_INDEX=$((CURRENT_INDEX + 1))
+          ORIGINAL_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$(echo $RELEASE_VERSIONS | tr ' ' '\n' | sed -n "${NEXT_INDEX}p")"
         fi
 
-        if [ -z "$TARGET_VERSION" ]; then
-          TARGET_VERSION="${{ inputs.default-branch }}"
-        fi
+        for i in $(seq $NEXT_INDEX 1 $LAST_INDEX); do
+          CURRENT_TARGET_VERSION=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | sed -n "${i}p")
 
-        NEW_PR_URLS=""
+          if [[ $i -eq $LAST_INDEX ]]; then
+            CURRENT_TARGET_BRANCH="${{ inputs.default-branch }}"
+          else
+            CURRENT_TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$CURRENT_TARGET_VERSION"
+          fi
 
-        if [[ $TARGET_VERSION == "${{ inputs.default-branch }}" ]]; then
-            TARGET_BRANCH="${{ inputs.default-branch }}"
-        else
-            TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
-        fi
-        
-        # Create a local branch that tracks the origin branch
-        git branch $TARGET_BRANCH origin/$TARGET_BRANCH
-        
-        # Attempt a local merge
-        git checkout $TARGET_BRANCH
+          git checkout $CURRENT_TARGET_BRANCH
+          git pull origin $CURRENT_TARGET_BRANCH
+          git merge --no-ff $ORIGINAL_BRANCH || { echo "Merge conflict detected, aborting"; exit 1; }
+          git push origin $CURRENT_TARGET_BRANCH
 
-        git merge $ORIGINAL_BRANCH --no-commit --no-ff
-
-        if [ $? -ne 0 ]; then
-            echo_green "Merge conflict detected. Creating conflict resolution branch and PR."
-            git merge --abort
-            CONFLICT_BRANCH="conflict-merging-$ORIGINAL_BRANCH-to-$TARGET_BRANCH"
-            git checkout -b $CONFLICT_BRANCH
-            git push origin $CONFLICT_BRANCH
-            NEW_PR_URL=$(gh pr create --title "Resolve conflicts from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Conflict resolution needed" --base $TARGET_BRANCH --head $CONFLICT_BRANCH --repo ${{ github.repository }} --draft)
-            if [[ $PR_CREATION_STATUS -ne 0 ]]; then
-                echo_red "PR creation failed. Deleting branch."
-                git checkout $ORIGINAL_BRANCH
-                git branch -d $CONFLICT_BRANCH
-                git push origin --delete $CONFLICT_BRANCH
-            else
-                echo_green "PR is created $NEW_PR_URL"
-                gh pr ready "${NEW_PR_URL##*/}"
-                echo_green "PR is marked as ready $NEW_PR_URL"
-            fi
-        else
-            git merge --abort
-            if [ "${{ inputs.create-pr }}" == "true" ]; then
-              echo_green "No merge conflicts detected. Creating a pull request to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-              NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
-              if [[ $PR_CREATION_STATUS -ne 0 ]]; then
-                  echo_red "PR creation failed."
-              else
-                  echo_green "PR is created $NEW_PR_URL"
-                  gh pr ready "${NEW_PR_URL##*/}"
-                  echo_green "PR is marked as ready $NEW_PR_URL"
-                  NEW_PR_URLS="$NEW_PR_URLS $NEW_PR_URL"
-              fi
-            else
-                echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-                git checkout $TARGET_BRANCH
-                git merge $ORIGINAL_BRANCH --no-ff
-                git push origin $TARGET_BRANCH
-            fi
-        fi
-
-        echo "new_pr_urls=$NEW_PR_URLS" >> $GITHUB_ENV
+          ORIGINAL_BRANCH=$CURRENT_TARGET_BRANCH
+        done
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
         COMMIT_MSG: ${{ github.event.head_commit.message }}
-
-    - name: Merge PRs
-      run: |        
-        # beautify the message by coloring it to a green color
-        function echo_green {
-            echo -e "\e[32m$1\e[0m"
-        }
-
-        for PR_URL in $new_pr_urls; do
-          gh pr merge $PR_URL --auto --merge
-          echo_green "PR $PR_URL merged successfully"
-        done
-      env:
-        GH_TOKEN: ${{ inputs.gh-token }}
-      shell: bash
-      if: ${{ inputs.auto-merge-pr == 'true' }}
