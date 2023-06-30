@@ -106,6 +106,7 @@ runs:
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         git checkout $TARGET_BRANCH
         git merge $ORIGINAL_BRANCH --no-ff
+        git push origin $TARGET_BRANCH
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
