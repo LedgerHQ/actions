@@ -101,7 +101,9 @@ runs:
         done
         
         # After looping through all release branches, merge back to main branch
+        ORIGINAL_BRANCH=$TARGET_BRANCH
         TARGET_BRANCH="${{ inputs.default-branch }}"
+        git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         git checkout $TARGET_BRANCH
         git merge $ORIGINAL_BRANCH --no-commit
       shell: bash
