@@ -73,8 +73,7 @@ runs:
         RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
         
         CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
-        
-        
+
         for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | head -n $((CURRENT_INDEX - 1))); do
         
             TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
@@ -89,7 +88,7 @@ runs:
             if [ $? -ne 0 ]; then
                 echo_red "Merge conflict detected. Skipping branch $TARGET_BRANCH."
                 git merge --abort
-                break
+                exit 1
             else
                 git merge --abort
          
@@ -97,11 +96,11 @@ runs:
             git checkout $TARGET_BRANCH
             git merge $ORIGINAL_BRANCH --no-ff
             git push origin $TARGET_BRANCH
+            ORIGINAL_BRANCH=$TARGET_BRANCH
             fi
         done
         
         # After looping through all release branches, merge back to main branch
-        ORIGINAL_BRANCH=$TARGET_BRANCH
         TARGET_BRANCH="${{ inputs.default-branch }}"
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         git checkout $TARGET_BRANCH
