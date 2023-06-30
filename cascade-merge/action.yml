@@ -104,6 +104,9 @@ runs:
         TARGET_BRANCH="${{ inputs.default-branch }}"
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         git checkout $TARGET_BRANCH
+        echo "DEBUG ORIGINAL_BRANCH"
+        echo $ORIGINAL_BRANCH
+        echo "DEBUG"
         git merge $ORIGINAL_BRANCH --no-commit
       shell: bash
       env:
