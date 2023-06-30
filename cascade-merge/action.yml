@@ -189,4 +189,4 @@ runs:
         -H 'Authorization: token ${{ inputs.gh-token }}' \
         --data '{"event_type": "merge_commit_pushed"}'
       shell: bash
-      if: env.there_was_merge == 'true'
+#      if: env.there_was_merge == 'true'
