@@ -37,7 +37,11 @@ runs:
       uses: dev-hanz-ops/install-gh-cli-action@master
 
     - name: Skip cascade merge
-      run: echo "The job was skipped because the commit message contains '[skip cascade merge]'"
+      run: |
+        function echo_green {
+            echo -e "\e[32m$1\e[0m"
+        }
+        echo_green "The job was skipped because the commit message contains '[skip cascade merge]'"
       if: contains(env.COMMIT_MSG, '[skip cascade merge]')
       shell: bash
       env:
@@ -47,9 +51,6 @@ runs:
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       id: create_prs
       run: |
-        echo COMMIT_MSG
-        echo $COMMIT_MSG
-        
         # Enables the shell to print all executed commands and exit if any command fails
         set +e
         
