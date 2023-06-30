@@ -114,7 +114,7 @@ runs:
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
-    - name: Create PR
+    - name: Cascade merge
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       run: |
         # Enables the shell to print all executed commands and exit if any command fails
