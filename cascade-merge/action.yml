@@ -104,7 +104,6 @@ runs:
         fi
 
         NEW_PR_URLS=""
-        THERE_WAS_MERGE_PUSH=""
 
         if [[ $TARGET_VERSION == "${{ inputs.default-branch }}" ]]; then
             TARGET_BRANCH="${{ inputs.default-branch }}"
@@ -150,7 +149,6 @@ runs:
                   echo_green "PR is marked as ready $NEW_PR_URL"
                   NEW_PR_URLS="$NEW_PR_URLS $NEW_PR_URL"
               fi
-            THERE_WAS_MERGE_PUSH="true"
             else
                 echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
                 git checkout $TARGET_BRANCH
@@ -160,7 +158,6 @@ runs:
         fi
 
         echo "new_pr_urls=$NEW_PR_URLS" >> $GITHUB_ENV
-        echo "there_was_merge=$THERE_WAS_MERGE_PUSH" >> $GITHUB_ENV
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.gh-token }}
@@ -181,12 +178,3 @@ runs:
         GH_TOKEN: ${{ inputs.gh-token }}
       shell: bash
       if: ${{ inputs.auto-merge-pr == 'true' }}
-
-    - name: Trigger repository dispatch event
-      run: |
-        curl -X POST https://api.github.com/repos/${{ github.repository }}/dispatches \
-        -H 'Accept: application/vnd.github.everest-preview+json' \
-        -H 'Authorization: token ${{ inputs.gh-token }}' \
-        --data '{"event_type": "merge_commit_pushed"}'
-      shell: bash
-#      if: env.there_was_merge == 'true'
