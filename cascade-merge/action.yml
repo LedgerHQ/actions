@@ -19,10 +19,10 @@ inputs:
   slack-api-token:
     description: 'SLACK_API_TOKEN'
     required: false
-  create-pr:
-    description: 'create PR '
-    required: true
-    default: 'true'
+  auto-merge:
+    description: 'Automatically merge branch instead of creating PR'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -122,10 +122,10 @@ runs:
     - name: Cascade merge
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       run: |
-        # Enables the shell to print all executed commands and exit if any command fails
+        # Set Bash to print all commands and stop executing on any error
         set +e
-        
-        # beautify the message by coloring it to a green color
+
+        # Define helper functions to echo messages in color
         function echo_green {
             echo -e "\e[32m$1\e[0m"
         }
@@ -133,80 +133,63 @@ runs:
             echo -e "\e[31m$1\e[0m"
         }
         
-        BACKPORT_TARGET_BRANCH_PATTERN="release/"
-        ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
-        ORIGINAL_VERSION="${ORIGINAL_BRANCH#"$BACKPORT_TARGET_BRANCH_PATTERN"}"
-        
-        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
-        
-        CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
+        # Define function to handle PR creation
+        function handle_pr_creation {
+          echo_green "Creating PR to cascade merge from $1 to $2"
+          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $2 --head $1 --repo ${{ github.repository }})
+          PR_CREATION_STATUS=$?
 
+          if [[ $PR_CREATION_STATUS -ne 0 ]]; then
+            echo_red "PR creation failed."
+            exit 1
+          else
+            echo_green "PR is created and ready for review: $NEW_PR_URL"
+            exit 0
+          fi
+        }
+
+        # Loop through each version in the release versions list before the current index
         for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | head -n $((CURRENT_INDEX - 1))); do
+          TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
+          
+          # Create a local branch that tracks the remote branch
+          git branch $TARGET_BRANCH origin/$TARGET_BRANCH
         
-            TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
+          # Attempt to merge the original branch into the target branch
+          git checkout $TARGET_BRANCH
+          git merge $ORIGINAL_BRANCH --no-commit --no-ff
         
-            # Create a local branch that tracks the origin branch
-            git branch $TARGET_BRANCH origin/$TARGET_BRANCH
-        
-            # Attempt a local merge
-            git checkout $TARGET_BRANCH
-            git merge $ORIGINAL_BRANCH --no-commit --no-ff
-        
-            if [ $? -ne 0 ]; then
-                echo_red "Merge conflict detected. Skipping branch $TARGET_BRANCH."
-                git merge --abort
-                exit 1
+          # Check if the merge was successful
+          if [ $? -ne 0 ]; then
+            echo_red "Merge conflict detected. Skipping branch $TARGET_BRANCH."
+            git merge --abort
+            exit 1
+          else
+            git merge --abort
+            echo_green "No merge conflicts detected. Merging changes from $ORIGINAL_BRANCH to $TARGET_BRANCH"
+            # Handle PR creation if auto-merge is false
+            if [ "${{ inputs.auto-merge }}" == "false" ]; then
+              handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
             else
-                git merge --abort
-        
-            echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-            git checkout $TARGET_BRANCH
-            git merge $ORIGINAL_BRANCH --no-ff
-            
-            if [ "${{ inputs.create-pr }}" == "true" ]; then
-              echo_green "Attempting to create PR to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-              NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
-              PR_CREATION_STATUS=$?
-              if [[ $PR_CREATION_STATUS -ne 0 ]]; then
-                  echo_red "PR creation failed."
-                  exit 1
-              else
-                  echo_green "PR is created $NEW_PR_URL"
-                  gh pr ready "${NEW_PR_URL##*/}"
-                  echo_green "PR is marked as ready $NEW_PR_URL"
-                  echo_green "You need to merge the PR to be able to continue cascade merge"
-                  exit 0
-              fi
-            else
+              git checkout $TARGET_BRANCH
+              git merge $ORIGINAL_BRANCH --no-ff
               git push origin $TARGET_BRANCH
             fi
-            
-            git branch $TARGET_BRANCH origin/$TARGET_BRANCH
+        
             ORIGINAL_BRANCH=$TARGET_BRANCH
-            fi
+          fi
         done
         
-        # After looping through all release branches, merge back to main branch
+        # After processing all release branches, merge the last target branch into the default branch
         TARGET_BRANCH="${{ inputs.default-branch }}"
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
-        git checkout $TARGET_BRANCH
-        git merge $ORIGINAL_BRANCH --no-ff
-        
-        if [ "${{ inputs.create-pr }}" == "true" ]; then
-          echo_green "Attempting to create PR to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
-          NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
-          PR_CREATION_STATUS=$?
-          if [[ $PR_CREATION_STATUS -ne 0 ]]; then
-              echo_red "PR creation failed."
-              exit 1
-          else
-              echo_green "PR is created $NEW_PR_URL"
-              gh pr ready "${NEW_PR_URL##*/}"
-              echo_green "PR is marked as ready $NEW_PR_URL"
-              echo_green "You need to merge the PR to be able to continue cascade merge"
-              exit 0
-          fi
+
+        # Handle PR creation if auto-merge is false
+        if [ "${{ inputs.auto-merge }}" == "false" ]; then
+          handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
         else
+          git checkout $TARGET_BRANCH
+          git merge $ORIGINAL_BRANCH --no-ff
           git push origin $TARGET_BRANCH
         fi
       shell: bash
