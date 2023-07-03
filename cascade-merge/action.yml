@@ -22,6 +22,7 @@ inputs:
   create-pr:
     description: 'create PR '
     required: true
+    default: 'true'
 
 runs:
   using: "composite"
