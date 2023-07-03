@@ -184,6 +184,10 @@ runs:
         
         # After processing all release branches, merge the last target branch into the default branch
         TARGET_BRANCH="${{ inputs.default-branch }}"
+        # If TARGET_BRANCH is empty, default it to 'main'
+        if [ -z "$TARGET_BRANCH" ]; then
+            TARGET_BRANCH='main'
+        fi
         git branch $TARGET_BRANCH origin/$TARGET_BRANCH
 
         # Handle PR creation if auto-merge is false
