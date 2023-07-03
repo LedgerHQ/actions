@@ -11,7 +11,7 @@ inputs:
     required: true
   default-branch:
     description: 'Default branch name (e.g., `main` or `master`)'
-    required: true
+    required: false
     default: 'main'
   slack-webhook-url:
     description: 'SLACK_WEBHOOK_URL'
