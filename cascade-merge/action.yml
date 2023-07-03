@@ -1,6 +1,6 @@
 # more info on https://ledgerhq.atlassian.net/l/cp/Ar8F1nmM
-name: 'Auto Cascade Merge'
-description: 'Automatically cascade merge changes from one branch to others.'
+name: 'Cascade merge'
+description: 'Automatically cascade merge changes from one branch to others'
 branding:
   icon: 'git-pull-request'
   color: 'purple'
@@ -10,7 +10,7 @@ inputs:
     description: 'pass GITHUB_TOKEN'
     required: true
   default-branch:
-    description: 'Default branch name (e.g., main or master)'
+    description: 'Default branch name (e.g., `main` or `master`)'
     required: true
     default: 'main'
   slack-webhook-url:
@@ -68,6 +68,8 @@ runs:
         done
       shell: bash
 
+#   waiting for slack secrets to be shared as organization secrets:
+#    https://ledgerhq.atlassian.net/servicedesk/customer/portal/14/ACCESS-3920?created=true
 #    - name: Notify failing merge
 #      if: failure()
 #      uses: LedgerHQ/actions/slack-notification@main
