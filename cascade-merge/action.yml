@@ -19,6 +19,9 @@ inputs:
   slack-api-token:
     description: 'SLACK_API_TOKEN'
     required: false
+  create-pr:
+    description: 'create PR '
+    required: true
 
 runs:
   using: "composite"
@@ -158,7 +161,22 @@ runs:
             echo_green "No merge conflicts detected. Changes are directly merged from $ORIGINAL_BRANCH to $TARGET_BRANCH"
             git checkout $TARGET_BRANCH
             git merge $ORIGINAL_BRANCH --no-ff
-            git push origin $TARGET_BRANCH
+            
+            if [ "${{ inputs.create-pr }}" == "true" ]; then
+              echo_green "Attempting to create PR to cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH"
+              NEW_PR_URL=$(gh pr create --title "Cascade merge from $ORIGINAL_BRANCH to $TARGET_BRANCH" --body "Automated cascade merge" --base $TARGET_BRANCH --head $ORIGINAL_BRANCH --repo ${{ github.repository }} --draft)
+              PR_CREATION_STATUS=$?
+              if [[ $PR_CREATION_STATUS -ne 0 ]]; then
+                  echo_red "PR creation failed."
+              else
+                  echo_green "PR is created $NEW_PR_URL"
+                  gh pr ready "${NEW_PR_URL##*/}"
+                  echo_green "PR is marked as ready $NEW_PR_URL"
+              fi
+            else
+              git push origin $TARGET_BRANCH
+            fi
+            
             git branch $TARGET_BRANCH origin/$TARGET_BRANCH
             ORIGINAL_BRANCH=$TARGET_BRANCH
             fi
