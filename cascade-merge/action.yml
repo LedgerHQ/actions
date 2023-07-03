@@ -64,49 +64,50 @@ runs:
         done
       shell: bash
 
-    - name: Notify failing merge
-      if: failure()
-      uses: LedgerHQ/actions/slack-notification@main
-      env:
-        SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
-        SLACK_API_TOKEN: ${{ inputs.slack-api-token }}
-        SLACK_CUSTOM_PAYLOAD: |-
-          {
-            "blocks": [
-              {
-                "type": "header",
-                "text": {
-                  "type": "plain_text",
-                  "text": ":boom: Merge conflict :boom:",
-                  "emoji": true
-                }
-              },
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "<@SLACK_MEMBER_ID> please fix it :iamwatchingyou:"
-                }
-              },
-              {
-                "type": "actions",
-                "elements": [
-                  {
-                    "type": "button",
-                    "text": {
-                      "type": "plain_text",
-                      "text": ":github: Github build",
-                      "emoji": true
-                    },
-                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-                  }
-                ]
-              },
-              {
-                "type": "divider"
-              }
-            ]
-          }
+#    - name: Notify failing merge
+#      if: failure()
+#      uses: LedgerHQ/actions/slack-notification@main
+#      env:
+#        SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
+#        SLACK_API_TOKEN: ${{ inputs.slack-api-token }}
+#        SLACK_CUSTOM_PAYLOAD: |-
+#          {
+#            "blocks": [
+#              {
+#                "type": "header",
+#                "text": {
+#                  "type": "plain_text",
+#                  "text": ":boom: Merge conflict :boom:",
+#                  "emoji": true
+#                }
+#              },
+#              {
+#                "type": "section",
+#                "text": {
+#                  "type": "mrkdwn",
+#                  "text": "<@SLACK_MEMBER_ID> please fix it :iamwatchingyou:"
+#                }
+#              },
+#              {
+#                "type": "actions",
+#                "elements": [
+#                  {
+#                    "type": "button",
+#                    "text": {
+#                      "type": "plain_text",
+#                      "text": ":github: Github build",
+#                      "emoji": true
+#                    },
+#                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+#                  }
+#                ]
+#              },
+#              {
+#                "type": "divider"
+#              }
+#            ]
+#          }
+#
 
     # checkout again to clean all local merges done in previous step
     - name: Checkout code
