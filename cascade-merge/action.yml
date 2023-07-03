@@ -129,10 +129,10 @@ runs:
 
         # Define helper functions to echo messages in color
         function echo_green {
-            echo -e "\e[32m$1\e[0m"
+            echo -e "\e[32m$1\e[0m" >> $GITHUB_STEP_SUMMARY
         }
         function echo_red {
-            echo -e "\e[31m$1\e[0m"
+            echo -e "\e[31m$1\e[0m" >> $GITHUB_STEP_SUMMARY
         }
         
         # Define function to handle PR creation
