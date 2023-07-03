@@ -182,7 +182,6 @@ runs:
             exit 1
           else
             git merge --abort
-            echo_green "No merge conflicts detected. Merging changes from $ORIGINAL_BRANCH to $TARGET_BRANCH"
             # Handle PR creation if auto-merge is false
             if [ "${{ inputs.auto-merge }}" == "false" ]; then
               handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
@@ -190,6 +189,7 @@ runs:
               git checkout $TARGET_BRANCH
               git merge $ORIGINAL_BRANCH --no-ff
               git push origin $TARGET_BRANCH
+              echo_green "Changes from $ORIGINAL_BRANCH have been merged into $TARGET_BRANCH and pushed to the repository."
             fi
             ORIGINAL_BRANCH=$TARGET_BRANCH
           fi
@@ -205,6 +205,7 @@ runs:
           git checkout $TARGET_BRANCH
           git merge $ORIGINAL_BRANCH --no-ff
           git push origin $TARGET_BRANCH
+          echo_green "Changes from $ORIGINAL_BRANCH have been merged into $TARGET_BRANCH and pushed to the repository."
         fi
       shell: bash
       env:
