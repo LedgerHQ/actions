@@ -149,6 +149,18 @@ runs:
             exit 0
           fi
         }
+        
+        # Constants
+        BACKPORT_TARGET_BRANCH_PATTERN="release/"
+        
+        # Extract original branch and version
+        ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
+        ORIGINAL_VERSION="${ORIGINAL_BRANCH#"$BACKPORT_TARGET_BRANCH_PATTERN"}"
+        
+        # Get release versions from remote branches
+        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
+        CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
+
 
         # Loop through each version in the release versions list before the current index
         for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | head -n $((CURRENT_INDEX - 1))); do
@@ -177,23 +189,17 @@ runs:
               git merge $ORIGINAL_BRANCH --no-ff
               git push origin $TARGET_BRANCH
             fi
-        
             ORIGINAL_BRANCH=$TARGET_BRANCH
           fi
         done
         
         # After processing all release branches, merge the last target branch into the default branch
         TARGET_BRANCH="${{ inputs.default-branch }}"
-        # If TARGET_BRANCH is empty, default it to 'main'
-        if [ -z "$TARGET_BRANCH" ]; then
-            TARGET_BRANCH='main'
-        fi
-        git branch $TARGET_BRANCH origin/$TARGET_BRANCH
-
         # Handle PR creation if auto-merge is false
         if [ "${{ inputs.auto-merge }}" == "false" ]; then
           handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
         else
+          git branch $TARGET_BRANCH origin/$TARGET_BRANCH
           git checkout $TARGET_BRANCH
           git merge $ORIGINAL_BRANCH --no-ff
           git push origin $TARGET_BRANCH
