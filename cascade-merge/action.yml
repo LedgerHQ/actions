@@ -170,29 +170,18 @@ runs:
           
           # Create a local branch that tracks the remote branch
           git branch $TARGET_BRANCH origin/$TARGET_BRANCH
-        
-          # Attempt to merge the original branch into the target branch
-          git checkout $TARGET_BRANCH
-          git merge $ORIGINAL_BRANCH --no-commit --no-ff
-        
-          # Check if the merge was successful
-          if [ $? -ne 0 ]; then
-            echo_red "Merge conflict detected. Skipping branch $TARGET_BRANCH."
-            git merge --abort
-            exit 1
+
+          # Handle PR creation if auto-merge is false
+          if [ "${{ inputs.auto-merge }}" == "false" ]; then
+            handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
           else
-            git merge --abort
-            # Handle PR creation if auto-merge is false
-            if [ "${{ inputs.auto-merge }}" == "false" ]; then
-              handle_pr_creation $ORIGINAL_BRANCH $TARGET_BRANCH
-            else
-              git checkout $TARGET_BRANCH
-              git merge $ORIGINAL_BRANCH --no-ff
-              git push origin $TARGET_BRANCH
-              echo_green "Changes from $ORIGINAL_BRANCH have been merged into $TARGET_BRANCH and pushed to the repository."
-            fi
-            ORIGINAL_BRANCH=$TARGET_BRANCH
+            git checkout $TARGET_BRANCH
+            git merge $ORIGINAL_BRANCH --no-ff
+            git push origin $TARGET_BRANCH
+            echo_green "Changes from $ORIGINAL_BRANCH have been merged into $TARGET_BRANCH and pushed to the repository."
           fi
+          ORIGINAL_BRANCH=$TARGET_BRANCH
+
         done
         
         # After processing all release branches, merge the last target branch into the default branch
