@@ -44,4 +44,4 @@ runs:
       with:
         api-name: ${{ steps.redocly-metadata.outputs.name }}
         api-version: ${{ steps.redocly-metadata.outputs.version }}
-        api-spec: doc/api-spec.yaml
+        spec-path: doc/api-spec.yaml
