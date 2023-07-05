@@ -159,6 +159,14 @@ runs:
             source_branch=$dedicated_branch  # Make the PR from the dedicated branch
           fi
           
+          # Check if there are new commits to be merged
+          git fetch
+          commits=$(git log $target_branch..$source_branch)
+          if [ -z "$commits" ]; then
+            echo_green "The $target_branch branch is up to date with $source_branch. No PR is needed."
+            exit 0
+          fi
+
           echo_green "Creating PR to cascade merge from $source_branch to $target_branch"
           NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }})
           PR_CREATION_STATUS=$?
