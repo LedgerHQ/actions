@@ -146,7 +146,7 @@ runs:
           source_branch=$1
           target_branch=$2
           
-          if [ "${{ inputs.dedicated-branch-on-pr-creation }}" == "false" ]; then
+          if [ "${{ inputs.dedicated-branch-on-pr-creation }}" == "true" ]; then
             # Create a dedicated branch for the PR
             dedicated_branch="auto-cascade-merge-${source_branch}-to-${target_branch}"
             git checkout -b $dedicated_branch $source_branch
