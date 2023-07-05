@@ -151,20 +151,20 @@ runs:
           source_branch=$1
           target_branch=$2
           
+          # Check if there are new commits to be merged
+          git fetch
+          commits=$(git log origin/$target_branch..origin/$source_branch)
+          if [ -z "$commits" ]; then
+            echo_green "The $target_branch branch is up to date with $source_branch. No PR is needed."
+            exit 0
+          fi
+
           if [ "${{ inputs.dedicated-branch-on-pr-creation }}" == "true" ]; then
             # Create a dedicated branch for the PR
             dedicated_branch="auto-cascade-merge-${source_branch}-to-${target_branch}"
             git checkout -b $dedicated_branch $source_branch
             git push origin $dedicated_branch
             source_branch=$dedicated_branch  # Make the PR from the dedicated branch
-          fi
-          
-          # Check if there are new commits to be merged
-          git fetch
-          commits=$(git log $target_branch..$source_branch)
-          if [ -z "$commits" ]; then
-            echo_green "The $target_branch branch is up to date with $source_branch. No PR is needed."
-            exit 0
           fi
 
           echo_green "Creating PR to cascade merge from $source_branch to $target_branch"
