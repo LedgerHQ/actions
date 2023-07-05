@@ -23,6 +23,10 @@ inputs:
     description: 'Automatically merge branch instead of creating PR'
     required: false
     default: 'false'
+  dedicated-branch-on-pr-creation:
+    description: 'create dedicated branch for PR creation to avoid updating source branch'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -121,6 +125,11 @@ runs:
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
+    - name: Install GH CLI
+      uses: dev-hanz-ops/install-gh-cli-action@v0.1.0
+      with:
+        gh-cli-version: 2.14.2 # optional, see action.yml for current default
+
     - name: Cascade merge
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       run: |
@@ -139,8 +148,27 @@ runs:
         
         # Define function to handle PR creation
         function handle_pr_creation {
-          echo_green "Creating PR to cascade merge from $1 to $2"
-          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $2 --head $1 --repo ${{ github.repository }})
+          source_branch=$1
+          target_branch=$2
+          
+          # Check if there are new commits to be merged
+          git fetch
+          commits=$(git log origin/$target_branch..origin/$source_branch)
+          if [ -z "$commits" ]; then
+            echo_green "The $target_branch branch is up to date with $source_branch. No PR is needed."
+            exit 0
+          fi
+
+          if [ "${{ inputs.dedicated-branch-on-pr-creation }}" == "true" ]; then
+            # Create a dedicated branch for the PR
+            dedicated_branch="auto-cascade-merge-${source_branch}-to-${target_branch}"
+            git checkout -b $dedicated_branch $source_branch
+            git push origin $dedicated_branch
+            source_branch=$dedicated_branch  # Make the PR from the dedicated branch
+          fi
+
+          echo_green "Creating PR to cascade merge from $source_branch to $target_branch"
+          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }})
           PR_CREATION_STATUS=$?
 
           if [[ $PR_CREATION_STATUS -ne 0 ]]; then
