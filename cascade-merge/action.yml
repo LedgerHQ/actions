@@ -126,7 +126,7 @@ runs:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
     - name: Install GH CLI
-      uses: dev-hanz-ops/install-gh-cli-action
+      uses: dev-hanz-ops/install-gh-cli-action@v0.1.0
       with:
         gh-cli-version: 2.14.2 # optional, see action.yml for current default
 
