@@ -125,6 +125,11 @@ runs:
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
+    - name: Install GH CLI
+      uses: dev-hanz-ops/install-gh-cli-action
+      with:
+        gh-cli-version: 2.14.2 # optional, see action.yml for current default
+
     - name: Cascade merge
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       run: |
@@ -155,7 +160,7 @@ runs:
           fi
           
           echo_green "Creating PR to cascade merge from $source_branch to $target_branch"
-          NEW_PR_URL=$(gh pr create --title "Cascade merge from $source_branch to $target_branch" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }})
+          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }})
           PR_CREATION_STATUS=$?
 
           if [[ $PR_CREATION_STATUS -ne 0 ]]; then
