@@ -15,9 +15,11 @@ inputs:
     default: 'main'
   slack-webhook-url:
     description: 'SLACK_WEBHOOK_URL'
+    default: ''
     required: false
   slack-api-token:
     description: 'SLACK_API_TOKEN'
+    default: ''
     required: false
   auto-merge:
     description: 'Automatically merge branch instead of creating PR'
@@ -54,6 +56,11 @@ runs:
         git config user.email "github-actions@github.com"
       shell: bash
 
+    - name: Conditional Step
+      if: ${{ inputs.slack-webhook-url }} && ${{ inputs.slack-api-token }}
+      run: echo "Both inputs are provided! before failing"
+      shell: bash
+
     - name: Detect conflicts
       run: |
         CASCADE_BRANCHES=( $(git for-each-ref --format="%(refname)" refs/remotes/origin/release | sed 's%refs/remotes/origin/%%g') )
@@ -67,13 +74,21 @@ runs:
             dest=${CASCADE_BRANCHES[$((${step}+1))]}
             git checkout $dest
             msg="$dest <= $src"
-            git merge -m "$msg" $src || (echo " === $msg KO ==="; exit 1)
+            git merge -m "$msg" $src || (echo " === $msg KO ==="; echo "SOME_CONFLICTS=true" >> $GITHUB_ENV)
             echo " === $msg OK ==="
         done
       shell: bash
 
+    - name: Check if slack creds are provided
+      if: always()
+      run: |
+        if [ "${{ env.SOME_CONFLICTS }}" == "true" ] && [ "${{ inputs.slack-webhook-url }}" != "" ]; then
+          echo "SHOULD_SEND_SLACK_NOTIF=true" >> $GITHUB_ENV
+        fi
+      shell: bash
+
     - name: Notify failing merge
-      if: failure() && github.event.inputs.slack-webhook-url && github.event.inputs.slack-api-token
+      if: ${{ env.SHOULD_SEND_SLACK_NOTIF == 'true' }}
       uses: LedgerHQ/actions/slack-notification@main
       env:
         SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
@@ -116,6 +131,11 @@ runs:
             ]
           }
 
+
+    - name: Fail in case of conflicts
+      if: ${{ env.SOME_CONFLICTS == 'true' }}
+      run: exit 1
+      shell: bash
 
     # checkout again to clean all local merges done in previous step
     - name: Checkout code
