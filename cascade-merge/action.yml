@@ -56,11 +56,6 @@ runs:
         git config user.email "github-actions@github.com"
       shell: bash
 
-    - name: Conditional Step
-      if: ${{ inputs.slack-webhook-url }} && ${{ inputs.slack-api-token }}
-      run: echo "Both inputs are provided! before failing"
-      shell: bash
-
     - name: Detect conflicts
       run: |
         CASCADE_BRANCHES=( $(git for-each-ref --format="%(refname)" refs/remotes/origin/release | sed 's%refs/remotes/origin/%%g') )
