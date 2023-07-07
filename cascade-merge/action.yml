@@ -15,9 +15,11 @@ inputs:
     default: 'main'
   slack-webhook-url:
     description: 'SLACK_WEBHOOK_URL'
+    default: ''
     required: false
   slack-api-token:
     description: 'SLACK_API_TOKEN'
+    default: ''
     required: false
   auto-merge:
     description: 'Automatically merge branch instead of creating PR'
@@ -67,57 +69,68 @@ runs:
             dest=${CASCADE_BRANCHES[$((${step}+1))]}
             git checkout $dest
             msg="$dest <= $src"
-            git merge -m "$msg" $src || (echo " === $msg KO ==="; exit 1)
+            git merge -m "$msg" $src || (echo " === $msg KO ==="; echo "SOME_CONFLICTS=true" >> $GITHUB_ENV)
             echo " === $msg OK ==="
         done
       shell: bash
 
-#   waiting for slack secrets to be shared as organization secrets:
-#    https://ledgerhq.atlassian.net/servicedesk/customer/portal/14/ACCESS-3920?created=true
-#    - name: Notify failing merge
-#      if: failure()
-#      uses: LedgerHQ/actions/slack-notification@main
-#      env:
-#        SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
-#        SLACK_API_TOKEN: ${{ inputs.slack-api-token }}
-#        SLACK_CUSTOM_PAYLOAD: |-
-#          {
-#            "blocks": [
-#              {
-#                "type": "header",
-#                "text": {
-#                  "type": "plain_text",
-#                  "text": ":boom: Merge conflict :boom:",
-#                  "emoji": true
-#                }
-#              },
-#              {
-#                "type": "section",
-#                "text": {
-#                  "type": "mrkdwn",
-#                  "text": "<@SLACK_MEMBER_ID> please fix it :iamwatchingyou:"
-#                }
-#              },
-#              {
-#                "type": "actions",
-#                "elements": [
-#                  {
-#                    "type": "button",
-#                    "text": {
-#                      "type": "plain_text",
-#                      "text": ":github: Github build",
-#                      "emoji": true
-#                    },
-#                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-#                  }
-#                ]
-#              },
-#              {
-#                "type": "divider"
-#              }
-#            ]
-#          }
-#
+    - name: Check if slack creds are provided
+      if: always()
+      run: |
+        if [ "${{ env.SOME_CONFLICTS }}" == "true" ] && [ "${{ inputs.slack-webhook-url }}" != "" ]; then
+          echo "SHOULD_SEND_SLACK_NOTIF=true" >> $GITHUB_ENV
+        fi
+      shell: bash
+
+    - name: Notify failing merge
+      if: ${{ env.SHOULD_SEND_SLACK_NOTIF == 'true' }}
+      uses: LedgerHQ/actions/slack-notification@main
+      env:
+        SLACK_WEBHOOK_URL: ${{ inputs.slack-webhook-url }}
+        SLACK_API_TOKEN: ${{ inputs.slack-api-token }}
+        SLACK_CUSTOM_PAYLOAD: |-
+          {
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": ":boom: Merge conflict :boom:",
+                  "emoji": true
+                }
+              },
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "<@SLACK_MEMBER_ID> please fix it :iamwatchingyou:"
+                }
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": ":github: Github build",
+                      "emoji": true
+                    },
+                    "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                  }
+                ]
+              },
+              {
+                "type": "divider"
+              }
+            ]
+          }
+
+
+    - name: Fail in case of conflicts
+      if: ${{ env.SOME_CONFLICTS == 'true' }}
+      run: exit 1
+      shell: bash
 
     # checkout again to clean all local merges done in previous step
     - name: Checkout code
