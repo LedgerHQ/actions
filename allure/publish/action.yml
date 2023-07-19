@@ -1,0 +1,72 @@
+name: "Publish allure"
+description: "Publish allure report and notify on slack"
+
+inputs:
+  allure-username:
+    description: "Allure username"
+    required: true
+  allure-password:
+    description: "Allure password"
+    required: true
+  allure-results-path:
+    description: "Path to the folder containing the `allure-results` folder"
+    required: false
+    default: "."
+  slack-title:
+    description: Title to use for the slack notification
+    required: false
+    default: ""
+  slack-webhook-url:
+    description: URL for slack notification
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Upload Allure Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: "allure-results"
+        path: ${{ inputs.allure-results-path }}/allure-results
+    - name: Publish report on Allure Server
+      id: allure-server
+      uses: LedgerHQ/send-to-allure-server-action@2.0.0
+      with:
+        allure-server-url: "https://allure-server.aws.prd.ldg-tech.com"
+        build-name: ${{ github.workflow }}
+        build-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        username: ${{ inputs.allure-username }}
+        password: ${{ inputs.allure-password }}
+        path: ${{ github.repository }}
+        allure-results: ${{ inputs.allure-results-path }}/allure-results
+    - name: Get summary
+      if: inputs.slack-webhook-url
+      run: |
+        cd ${{ inputs.allure-results-path }}
+        allure generate
+        cd allure-report/widgets
+        passedTests=$(jq '.statistic.passed' summary.json)
+        failedTests=$(jq '.statistic.failed' summary.json)
+        brokenTests=$(jq '.statistic.broken' summary.json)
+        skippedTests=$(jq '.statistic.skipped' summary.json)
+        totalTests=$(jq '.statistic.total' summary.json)
+        echo "TEST_RESULT=$passedTests passed, $failedTests failed, $brokenTests broken, $skippedTests skipped, $totalTests total" >> $GITHUB_ENV
+        if [[ "$failedTests" == "0" ]]; then
+          echo "STATUS_COLOR=good" >> $GITHUB_ENV;
+        else
+          echo "STATUS_COLOR=danger" >> $GITHUB_ENV;
+        fi
+      shell: bash
+    - name: Send notification to Slack
+      if: inputs.slack-webhook-url
+      uses: LedgerHQ/slack-action@v1.5
+      env:
+        SLACK_WEBHOOK: ${{ inputs.slack-webhook-url }}
+      with:
+        template: "./.github/templates/slack.json"
+        color: ${{ env.STATUS_COLOR }}
+        title: ${{ inputs.slack-title || format('{0}/{1}', github.repository, github.run_id) }}
+        summary: ${{ env.TEST_RESULT || 'No test results' }}
+        report_url: ${{ steps.allure-server.outputs.report-url }}
+        report_path: ${{ github.repository }}
