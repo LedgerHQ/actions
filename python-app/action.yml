@@ -38,8 +38,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: pipenv
-      uses: LedgerHQ/actions/python-app/init@main
+    - uses: LedgerHQ/actions/python-app/init@main
 
     - uses: LedgerHQ/actions/python-app/lint@main
 
