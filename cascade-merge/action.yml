@@ -147,7 +147,7 @@ runs:
       if: "! contains(env.COMMIT_MSG, '[skip cascade merge]')"  # continue only if the message does not contain '[skip cascade merge]'
       run: |
         # Set Bash to print all commands and stop executing on any error
-        # set -ex
+        set -ex
 
         # Define helper functions to echo messages in color
         function echo_green {
@@ -158,12 +158,12 @@ runs:
             echo -e "\e[31m$1\e[0m"
             echo $1 >> $GITHUB_STEP_SUMMARY
         }
-        
+
         # Define function to handle PR creation
         function handle_pr_creation {
           source_branch=$1
           target_branch=$2
-          
+
           # Check if there are new commits to be merged
           git fetch
           commits=$(git log origin/$target_branch..origin/$source_branch)
@@ -192,14 +192,14 @@ runs:
             exit 0
           fi
         }
-        
+
         # Constants
         BACKPORT_TARGET_BRANCH_PATTERN="release/"
-        
+
         # Extract original branch and version
         ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
         ORIGINAL_VERSION="${ORIGINAL_BRANCH#"$BACKPORT_TARGET_BRANCH_PATTERN"}"
-        
+
         # Get release versions from remote branches
         RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
         echo "Fetched and sorted release versions: $RELEASE_VERSIONS"
@@ -213,7 +213,7 @@ runs:
 
           TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
           echo "Currently handling target branch: $TARGET_BRANCH"
-          
+
           # Create a local branch that tracks the remote branch
           git branch $TARGET_BRANCH origin/$TARGET_BRANCH
 
@@ -229,7 +229,7 @@ runs:
           ORIGINAL_BRANCH=$TARGET_BRANCH
 
         done
-        
+
         # After processing all release branches, merge the last target branch into the default branch
         TARGET_BRANCH="${{ inputs.default-branch }}"
         # Handle PR creation if auto-merge is false
