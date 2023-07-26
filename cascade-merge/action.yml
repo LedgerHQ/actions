@@ -200,6 +200,11 @@ runs:
         ORIGINAL_BRANCH="${GITHUB_REF#refs/heads/}"
         ORIGINAL_VERSION="${ORIGINAL_BRANCH#"$BACKPORT_TARGET_BRANCH_PATTERN"}"
 
+        if [ "$ORIGINAL_BRANCH" == "main" ]; then
+          echo_green "the workflow should not be triggered against main branch, trigger it against a release branch"
+          exit 0
+        fi
+
         # Get release versions from remote branches
         RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
         echo "Fetched and sorted release versions: $RELEASE_VERSIONS"
