@@ -18,8 +18,8 @@ jobs:
       - uses: LedgerHQ/actions/docker-metadata@main
         id: docker-meta
         with:
-          - ref: ${{ steps.gh-meta.outputs.branch }}
-          - sha: ${{ steps.gh-meta.outputs.sha }}
+          ref: ${{ steps.gh-meta.outputs.branch }}
+          sha: ${{ steps.gh-meta.outputs.sha }}
     outputs:
       docker: ${{ steps.docker-meta.outputs.docker }}
       image: ${{ steps.docker-meta.outputs.image }}

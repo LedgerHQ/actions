@@ -24,7 +24,7 @@ jobs:
         uses: ./docker-metadata
         id: docker-meta
         with:
-          - ref: ${{ steps.gh-meta.outputs.branch }}
-          - sha: ${{ steps.gh-meta.outputs.sha }}
+          ref: ${{ steps.gh-meta.outputs.branch }}
+          sha: ${{ steps.gh-meta.outputs.sha }}
       - run: echo "Docker meta ${{ steps.docker-meta.outputs.docker }}"
       - run: echo "Docker image short = ${{ steps.docker-meta.outputs.image }}"

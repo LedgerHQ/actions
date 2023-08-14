@@ -30,17 +30,12 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/gh-metadata@main
-      if: inputs.ref == '' || inputs.sha == ''
-      id: metadata
     - name: Compute docker labels
       id: docker-labels
-      run: |-
-        source ${{ github.action_path }}/../helpers.sh
-
+      run: |
         # Build labels
-        labels="org.opencontainers.image.ref.name=${{ inputs.ref || metadata.outputs.branch }}
-        org.opencontainers.image.revision=${{ inputs.sha || metadata.outputs.sha }}"
+        labels="org.opencontainers.image.ref.name=${{ inputs.ref }}
+        org.opencontainers.image.revision=${{ inputs.sha }}"
 
         # Custom OCI Title
         if [[ ! -z "${{ inputs.title }}" ]]; then
