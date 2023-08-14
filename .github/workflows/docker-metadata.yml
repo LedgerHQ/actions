@@ -1,0 +1,30 @@
+name: Test docker-metadata action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ docker-metadata/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ docker-metadata/** ]
+
+defaults:
+  run:
+    working-directory: docker-metadata
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+      - uses: ./gh-metadata
+        id: gh-meta
+      - name: Test new version of the action
+        uses: ./docker-metadata
+        id: docker-meta
+        with:
+          - ref: ${{ steps.gh-meta.outputs.branch }}
+          - sha: ${{ steps.gh-meta.outputs.sha }}
+      - run: echo "Docker meta ${{ steps.docker-meta.outputs.docker }}"
+      - run: echo "Docker image short = ${{ steps.docker-meta.outputs.image }}"
