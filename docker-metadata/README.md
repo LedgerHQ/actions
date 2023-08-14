@@ -2,6 +2,8 @@
 
 Github action to generate Ledger compliant docker metadata.
 
+TEST IT
+
 Open a PR to contribute, any merge to main will trigger a republish of the
 current version (as defined in `.github/workflows/publish.yml`).
 
