@@ -13,6 +13,10 @@ outputs:
   sha:
     description: "SHA of the commit that triggered the action"
     value: ${{ steps.refs.outputs.sha }}
+  refs:
+    description: "JSON containing all the former values"
+    value: ${{ toJson(steps.refs.outputs) }}
+
 runs:
   using: "composite"
   steps:
