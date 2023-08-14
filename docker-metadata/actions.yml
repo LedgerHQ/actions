@@ -1,0 +1,94 @@
+name: "Compute docker metadata"
+description: "Compute git metadata for a PR as output"
+inputs:
+  ref:
+    description: Github ref to use when building docker metadata
+    required: true
+  sha:
+    description: SHA to use when building docker metadata
+    required: true
+  images:
+    description: The Docker images to produce (without their tags)
+    default: ghcr.io/${{ github.repository }}
+    required: false
+  title:
+    description: Override the OCI title (default to the repository name)
+    required: false
+  description:
+    description: Override the OCI description (default to the repository description)
+    required: false
+  url:
+    description: Override the OCI URL (default to the repository URL)
+    required: false
+outputs:
+  docker:
+    description: A JSON object containing the docker image complete metadata set
+    value: ${{ toJson(steps.docker.outputs) }}
+  image:
+    description: In case of multiple tag, this contain a single fully qualified `image:tag` for easy reference
+    value: ${{ steps.single.outputs.image }}
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/actions/gh-metadata@main
+      if: inputs.ref == '' || inputs.sha == ''
+      id: metadata
+    - name: Compute docker labels
+      id: docker-labels
+      run: |-
+        source ${{ github.action_path }}/../helpers.sh
+
+        # Build labels
+        labels="org.opencontainers.image.ref.name=${{ inputs.ref || metadata.outputs.branch }}
+        org.opencontainers.image.revision=${{ inputs.sha || metadata.outputs.sha }}"
+
+        # Custom OCI Title
+        if [[ ! -z "${{ inputs.title }}" ]]; then
+          labels="$labels
+          org.opencontainers.image.title=${{ inputs.title }}"
+        fi
+
+        # Custom OCI description
+        if [[ ! -z "${{ inputs.description }}" ]]; then
+          labels="$labels
+          org.opencontainers.image.description=${{ inputs.description }}"
+        fi
+
+        # Custom OCI URL
+        if [[ ! -z "${{ inputs.url }}" ]]; then
+          labels="$labels
+          org.opencontainers.image.url=${{ inputs.url }}"
+        fi
+        
+        # Clean up labels and set output
+        labels="${labels//'%'/'%25'}"
+        labels="${labels//$'\n'/'%0A'}"
+        labels="${labels//$'\r'/'%0D'}"
+        echo "labels=${labels}" >> $GITHUB_OUTPUT
+      shell: bash
+    - name: Build docker metadata
+      id: docker
+      uses: docker/metadata-action@v3
+      with:
+        images: ${{ inputs.images }}
+        flavor: latest=false
+        # Produces:
+        # :X.Y.Z on tags
+        # :X.Y on tags
+        # :my-branch for any push build on my/branch except for main
+        # :pr-xyz where xyz is the issue/pr number
+        # :feature-something for feature branches PRs
+        # :main only for main branch
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
+          type=ref,event=pr
+          type=raw,value=${{ github.head_ref }},enable=${{ startsWith('refs/heads/feature/', github.ref) }}
+          type=raw,value=main,enable=${{ github.ref == 'refs/heads/main' && !startsWith(github.event_name, 'pull_request') }}
+        labels: ${{ steps.docker-labels.outputs.labels }}
+    - name: Extract docker image to test
+      id: single
+      run: |
+        echo "image=`echo \"${{ steps.docker.outputs.tags }}\" | head -1`" >> $GITHUB_OUTPUT
+      shell: bash
