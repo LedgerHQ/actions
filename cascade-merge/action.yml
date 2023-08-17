@@ -181,7 +181,7 @@ runs:
           fi
 
           echo_green "Creating PR to cascade merge from $source_branch to $target_branch"
-          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }} 2>&1)
+          NEW_PR_URL=$(gh pr create --title "Cascade merge from $1 to $2" --body "Automated cascade merge" --base $target_branch --head $source_branch --repo ${{ github.repository }} 2>&1 || true)
           PR_CREATION_STATUS=$?
 
           if [[ $PR_CREATION_STATUS -ne 0 ]]; then
