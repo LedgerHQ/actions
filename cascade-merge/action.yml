@@ -218,7 +218,7 @@ runs:
         echo "CURRENT_INDEX: $CURRENT_INDEX"
 
         # Loop through each version in the release versions list before the current index
-        for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | head -n $((CURRENT_INDEX - 1))); do
+        for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | tail -n $((CURRENT_INDEX - 1))); do
           echo "Currently handling target version: $TARGET_VERSION"
 
           TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
