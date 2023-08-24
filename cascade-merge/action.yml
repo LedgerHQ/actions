@@ -210,15 +210,42 @@ runs:
           exit 0
         fi
 
-        # Get release versions from remote branches
-        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vr)
+        # Fetch and Sort Release Versions, breakdown of below command:        
+        # 1) git branch -r
+        #    List all remote branches.
+        # 2) grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*"
+        #    Use regular expression to extract only the part that comes after origin/release/. \\K is
+        #    used to reset the start of the match.
+        # 3) sort -Vu
+        #    Sort the versions uniquely in ascending order.
+
+        RELEASE_VERSIONS=$(git branch -r | grep -oP "origin/${BACKPORT_TARGET_BRANCH_PATTERN}\\K.*" | sort -Vu)
         echo "Fetched and sorted release versions: $RELEASE_VERSIONS"
-
-        CURRENT_INDEX=$(echo $RELEASE_VERSIONS | tr ' ' '\n' | grep -n $ORIGINAL_VERSION | cut -d: -f1)
+        
+        # Calculate the index of the original version, breakdown of below command:
+        # 1) echo "$RELEASE_VERSIONS"
+        #    Prints the space-separated list of versions.
+        # 2) tr ' ' '\n'
+        #    Translates spaces to newlines to get each version on a new line.
+        # 3) grep -n "^${ORIGINAL_VERSION}$"
+        #    Finds the line number of the original version.
+        # 4) cut -d: -f1
+        #     Extracts the line number from the grep output.
+        
+        CURRENT_INDEX=$(echo "$RELEASE_VERSIONS" | tr ' ' '\n' | grep -n "^${ORIGINAL_VERSION}$" | cut -d: -f1)
         echo "CURRENT_INDEX: $CURRENT_INDEX"
+        
+        # Loop through each version in the release versions list after the current index
+        # 1) echo "$RELEASE_VERSIONS" | tr ' ' '\n'
+        #    Same as above, this gets each version on a new line.
+        # 2) tail -n +$((CURRENT_INDEX + 1))
+        #    This uses tail to get all lines starting from the line after CURRENT_INDEX. The +$((CURRENT_INDEX + 1))
+        #    syntax is an arithmetic operation to calculate this line number.
+        # So, the loop iterates through each version in the list of release versions that appears after the
+        # original version, as specified by CURRENT_INDEX.
 
-        # Loop through each version in the release versions list before the current index
-        for TARGET_VERSION in $(echo $RELEASE_VERSIONS | tr ' ' '\n' | tail -n $((CURRENT_INDEX - 1))); do
+        for TARGET_VERSION in $(echo "$RELEASE_VERSIONS" | tr ' ' '\n' | tail -n +$((CURRENT_INDEX + 1))); do
+
           echo "Currently handling target version: $TARGET_VERSION"
 
           TARGET_BRANCH="$BACKPORT_TARGET_BRANCH_PATTERN$TARGET_VERSION"
