@@ -1,0 +1,147 @@
+name: OpenApi Diff
+description: Generate and comment OpenAPI Diff
+
+inputs:
+  base_ref:
+    description: "Base branch for the diff"
+    required: false
+    default: "main"
+  head_ref:
+    description: "Head branch for the diff"
+    required: true
+  doc_output:
+    description: "output file of the openapi generation"
+    required: true
+
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: set up python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - uses: actions/checkout@v3
+      with:
+        ref: "${{github.base_ref }}"
+
+    - name: detect dep manager
+      id: dep_manager
+      run: |
+        if test -f "Pipfile.lock"; then
+          echo "manager=pipenv" >> $GITHUB_OUTPUT
+        else
+          echo "manager=pdm" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: upgrade dependencies (pipenv)
+      if: steps.dep_manager.outputs.manager == 'pipenv'
+      run: |
+        python -m pip install --upgrade pip pipenv
+      shell: bash
+
+    - name: upgrade dependencies (pdm)
+      if: steps.dep_manager.outputs.manager == 'pdm'
+      uses: pdm-project/setup-pdm@v3
+      with:
+        python-version: "3.11"
+
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: "${{ inputs.base_ref }}"
+
+    - name: install dependencies (pipenv)
+      if: steps.dep_manager.outputs.manager == 'pipenv'
+      run: pipenv sync
+      shell: bash
+
+    - name: install dependencies (pdm)
+      if: steps.dep_manager.outputs.manager == 'pdm'
+      run: pdm sync
+      shell: bash
+
+    - name: Generate OpenAPI for base (pipenv)
+      if: steps.dep_manager.outputs.manager == 'pipenv'
+      run: |
+        pipenv run openapi
+        mkdir specs
+        cp ${{ inputs.doc_output }} ./specs/base-spec.yaml
+      shell: bash
+
+    - name: Generate OpenAPI for base (pdm)
+      if: steps.dep_manager.outputs.manager == 'pdm'
+      run: |
+        pdm run doc:openapi
+        mkdir specs
+        cp ${{ inputs.doc_output }} ./specs/base-spec.yaml
+      shell: bash
+
+    - name: Change branch
+      run: |
+        git checkout ${{ inputs.head_ref }}
+      shell: bash
+
+    - name: install dependencies (pipenv)
+      if: steps.dep_manager.outputs.manager == 'pipenv'
+      run: pipenv sync
+      shell: bash
+
+    - name: install dependencies (pdm)
+      if: steps.dep_manager.outputs.manager == 'pdm'
+      run: pdm sync
+      shell: bash
+
+    - name: Generate OpenAPI for HEAD (pipenv)
+      if: steps.dep_manager.outputs.manager == 'pipenv'
+      run: |
+        pipenv run openapi
+        cp ${{ inputs.doc_output }} ./specs/head-spec.yaml
+      shell: bash
+
+    - name: Generate OpenAPI for HEAD (pdm)
+      if: steps.dep_manager.outputs.manager == 'pdm'
+      run: |
+        pdm run doc:openapi
+        cp ${{ inputs.doc_output }} ./specs/head-spec.yaml
+      shell: bash
+
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+
+    - name: install bump CLI
+      run: |
+        npm install -g bump-cli
+      shell: bash
+
+    - name: create outputs directory
+      run: |
+        mkdir outputs
+      shell: bash
+
+    - name: generate markdown diff
+      run: |
+        # see https://github.com/bump-sh/cli/blob/main/src/flags.ts#L94
+        # the CI env variable is automatically in Github action
+        # we do not want to fails on breaking change
+        # but we want to stop if the diff fail for other reasons
+        unset CI
+        bump diff -f markdown ./specs/base-spec.yaml ./specs/head-spec.yaml > outputs/spec-diff.md
+        bump diff -f text ./specs/base-spec.yaml ./specs/head-spec.yaml > outputs/spec-diff.text
+      shell: bash
+
+    - name: Comment PR with OpenAPI diff
+      uses: thollander/actions-comment-pull-request@v2
+      if: github.event_name == 'pull_request'
+      with:
+        filePath: outputs/spec-diff.md
+        comment_tag: openapi-diff
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: openapi-diff
+        path: outputs
+        retention-days: 10
