@@ -1,0 +1,39 @@
+name: "Run Helm Chart Testing & Docs"
+description: "Run Helm Chart Testing & Docs"
+
+inputs:
+  chart-testing-config:
+    description: "Specify the path where the ct.yaml is located."
+    required: true
+    default: ".github/ct.yaml"
+  helm-docs-version:
+    description: "Specify the helm-docs version that you want to use."
+    required: true
+    default: "1.11.0"
+
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+          
+      - name: Set up chart-testing
+        uses: helm/chart-testing-action@v2.2.0
+
+      - name: Run chart-testing (lint)
+        shell: bash
+        run: ct lint --config ${{ inputs.chart-testing-config }} --check-version-increment=false
+
+      - name: Run helm-docs
+        shell: bash
+        env:
+          HELM_DOCS_VERSION: ${{ inputs.helm-docs-version }}
+          HELM_DOCS_BASE_URL: "https://github.com/norwoodj/helm-docs/releases/download"
+        run: |
+          OS=$(uname)
+          # install helm-docs
+          curl -sSfL "${HELM_DOCS_BASE_URL}/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_${OS}_x86_64.tar.gz" |
+          tar -xzf - helm-docs
+          # validate docs
+          ./helm-docs
+          git diff --exit-code

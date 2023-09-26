@@ -1,0 +1,49 @@
+name: "Publish Helm Chart on chart museum"
+description: "Publish Helm Chart on chart museum."
+
+inputs:
+  version:
+    description: "Specify the chart version to publish."
+    required: true
+  charts-path:
+    description: "Specify the path where the charts are located."
+    required: false
+    default: "./helm/charts/"
+  chartmuseum-url:
+    description: "Specify the URL of Chart Museum"
+    required: true
+  chartmuseum-user:
+    description: "Specify the user of Chart Museum"
+    required: true
+  chartmuseum-password:
+    description: "Specify the password of Chart Museum"
+    required: true
+  force:
+    description: "Replace charts if it exists"
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add chartmuseum helm repo
+        shell: bash
+        run: |
+          if ! helm plugin list | grep -q "cm-push"; then
+            helm plugin install https://github.com/chartmuseum/helm-push.git
+          fi
+          helm repo add chartmuseum --username ${{ inputs.chartmuseum-user }} --password ${{ inputs.chartmuseum-password }} ${{ inputs.chartmuseum-url }} &&
+          helm repo update
+      - name: Push chart to chartmuseum repo
+        shell: bash
+        env:
+          HELM_CHART_FOLDER: ${{ inputs.charts-path }}
+          FORCE_CHART_OVERWRITE: ${{ inputs.force }}
+          CHART_VERSION: ${{ inputs.version }}
+        run: |
+          for chart_file in ${HELM_CHART_FOLDER}/*/Chart.yaml; do
+            chart_dir=$(dirname "$chart_file")
+            helm cm-push ${{ "$FORCE_CHART_OVERWRITE" && "-f"}} "$chart_dir" chartmuseum --version "$CHART_VERSION"
+          done
