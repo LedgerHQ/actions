@@ -1,0 +1,30 @@
+name: Bake Vault
+description: Bake a Ledger Vault instance
+
+inputs:
+  url:
+    description: Vault instance base URL
+    required: true
+  salt:
+    description: Salt used to generate devices seeds
+    required: true
+    default: saltless
+  manifest:
+    description: Path to manifest file
+    required: true
+  retry:
+    description: Number of retry on error
+    default: "0"
+
+runs:
+  using: docker
+  image: docker://ghcr.io/ledgerhq/vault-cli:latest
+  args:
+    - bake
+    - --salt 
+    - ${{ inputs.salt }}
+    - --minivaultURL 
+    - ${{ inputs.url }}
+    - --retry 
+    - ${{ inputs.retry }}
+    - ${{ inputs.manifest }}

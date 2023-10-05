@@ -1,0 +1,22 @@
+name: Destroy Vault
+description: Destroy a Ledger Vault instance
+
+inputs:
+  name:
+    description: Instance name (must be unique on cluster, lowercase alphanumeric + dash)
+    required: true
+  environment:
+    description: Kubernetes environment (sbx|stg)
+    default: sbx
+
+runs:
+  using: docker
+  image: docker://ghcr.io/ledgerhq/vault-cli:latest
+  env:
+    REMOTE_URL: https://remote.minivault.ledger-${{ inputs.environment }}.com
+  args:
+    - destroy
+    - --name
+    - ${{ inputs.name }}
+    - --remoteURL
+    - ${{ env.REMOTE_URL }}

@@ -1,0 +1,45 @@
+name: Test vault actions
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ vault/** ]
+  pull_request:
+    branches: [ main ]
+    paths: [ vault/** ]
+
+defaults:
+  run:
+    working-directory: vault
+
+jobs:
+  test:
+    runs-on: [self-hosted, shared]
+    env: 
+      NAME: actions-ci-${{ github.run_number }}-${{ github.run_attempt }}
+      VAULT_URL: https://actions-ci-${{ github.run_number }}-${{ github.run_attempt }}.minivault.ledger-sbx.com
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Test deploy action
+        uses: ./vault/deploy
+        with:
+          preset: api
+          name: ${{ env.NAME }}
+          owner: actions-ci
+          expiration: 1
+          environment: sbx
+
+      - name: Test Bake action
+        uses: ./vault/bake
+        with:
+          salt: salty-ci
+          url: ${{ env.VAULT_URL }}
+          manifest: empty
+      
+      - name: Test Delete action
+        uses: ./vault/delete
+        with:
+          name: ${{ env.NAME }}
+          environment: sbx
