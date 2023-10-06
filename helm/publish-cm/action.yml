@@ -30,17 +30,17 @@ runs:
         with:
           fetch-depth: 0
 
-      - name: Add chartmuseum-prd helm repo
+      - name: Add chartmuseum helm repo
         shell: bash
         run: |
           if ! helm plugin list | grep -q push; then
             helm plugin install https://github.com/chartmuseum/helm-push.git
           fi
-          helm repo add chartmuseum-prd --username ${{ inputs.chartmuseum-user }} --password ${{ inputs.chartmuseum-password }} ${{ inputs.chartmuseum-url }} &&
+          helm repo add chartmuseum --username ${{ inputs.chartmuseum-user }} --password ${{ inputs.chartmuseum-password }} ${{ inputs.chartmuseum-url }} &&
           helm repo update
-      - name: Push chart to chartmuseum-prd repo
+      - name: Push chart to chartmuseum repo
         shell: bash
         run: |
           for chart in ${{ inputs.charts-path }}/*/; do
-            helm cm-push ${{ inputs.force && '-f'}} $chart chartmuseum-prd --version ${{ inputs.version }}
+            helm cm-push ${{ inputs.force && '-f'}} $chart chartmuseum --version ${{ inputs.version }}
           done
