@@ -37,27 +37,23 @@ jobs:
           - v1.23.0
           - v1.24.0
     steps:
-      - name: Checkout
+      - name: Run the helm conform
         uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm
         with:
           kubernetes-version: ${{ matrix.k8s }}
-          charts-path: ${{inputs.charts-path}}
+          charts-path: ${{ inputs.charts-path }}
         
   publish-chartmuseum-dev:
     name: publish-chartmuseum-dev
-    environment: chartmuseum-dev
+    environment: dev
     if: inputs.version != ''
     runs-on: [self-hosted, shared]
     needs: [lint-chart, kubeconform-chart]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Push chart to chartmuseum-prd repo
         uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
         with:
-          charts-path: ${{inputs.charts-path}}
+          charts-path: ${{ inputs.charts-path }}
           version: ${{ inputs.version }}
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
@@ -66,19 +62,15 @@ jobs:
 
   publish-chartmuseum-prd:
     name: publish-chartmuseum-prd
-    environment: chartmuseum-prd
+    environment: prd
     if: inputs.version != '' && inputs.release != false
     runs-on: [self-hosted, shared]
     needs: [publish-chartmuseum-dev]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Push chart to chartmuseum-prd repo
         uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
         with:
-          charts-path: ${{inputs.charts-path}}
+          charts-path: ${{ inputs.charts-path }}
           version: ${{ inputs.version }}
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}

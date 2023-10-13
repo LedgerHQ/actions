@@ -4,6 +4,7 @@ description: "Run Helm Chart Testing & Docs"
 inputs:
   chart-testing-config:
     description: "Specify the path where the ct.yaml is located."
+    type: string
     required: true
     default: ".github/ct.yaml"
 
@@ -12,8 +13,6 @@ runs:
   steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
           
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.2.0

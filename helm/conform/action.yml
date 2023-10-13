@@ -7,6 +7,7 @@ inputs:
     required: true
   charts-path:
     description: "Specify the path where the charts are located."
+    type: string
     required: false
     default: "./helm/charts/"
 
@@ -15,23 +16,26 @@ runs:
   steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      
-      - name: Run kubeconform
+
+      - name: Install kubeconform
         shell: bash
         env:
-          KUBERNETES_VERSION: ${{ matrix.k8s }}
+          KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
           KUBECONFORM_VERSION: "v0.4.12"
           KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
-          FILENAME_FORMAT: "{kind}-{group}-{version}"
-        run: |
+        run: | 
           set -o pipefail
           OS=$(uname)
           # install kubeconform
           curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" |
           tar -xzf - kubeconform
-          # validate changed charts
+      
+      - name: Run kubeconform
+        shell: bash
+
+          FILENAME_FORMAT: "{kind}-{group}-{version}"
+        run: |
+          set -o pipefail
           for chart in ${{ inputs.charts-path }}/*/; do
             values=$(echo "${chart}" | sed "s/charts/values/g")
             echo "Running kubeconform for folder: '${chart}'"
@@ -41,7 +45,7 @@ runs:
                 continue
             fi
 
-            helm dep up "${chart}" &&
+            helm dep up "${chart}" &&  # why helm update up ?
             for value in $(find "${values}" -type f -name "*.yaml"); do
               echo -e "▶ Validating ${chart} with values from ${value}"
               helm template --kube-version "${KUBERNETES_VERSION#v}" -f "${value}" "${chart}" |

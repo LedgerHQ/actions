@@ -4,9 +4,11 @@ description: "Publish Helm Chart on chart museum."
 inputs:
   version:
     description: "Specify the chart version to publish."
+    type: string
     required: true
   charts-path:
     description: "Specify the path where the charts are located."
+    type: string
     required: false
     default: "./helm/charts/"
   chartmuseum-url:
@@ -20,6 +22,7 @@ inputs:
     required: true
   force:
     description: "Replace charts if it exists"
+    type: boolean
     required: false
 
 runs:
@@ -27,13 +30,11 @@ runs:
   steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Add chartmuseum helm repo
         shell: bash
         run: |
-          if ! helm plugin list | grep -q push; then
+          if ! helm plugin list | grep -q "cm-push"; then
             helm plugin install https://github.com/chartmuseum/helm-push.git
           fi
           helm repo add chartmuseum --username ${{ inputs.chartmuseum-user }} --password ${{ inputs.chartmuseum-password }} ${{ inputs.chartmuseum-url }} &&
