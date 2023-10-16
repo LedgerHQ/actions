@@ -33,9 +33,11 @@ jobs:
     strategy:
       matrix:
         k8s:
-          - v1.22.4
-          - v1.23.0
-          - v1.24.0
+          - v1.27.6
+          - v1.26.9
+          - v1.25.14
+          - v1.24.17
+          - v1.23.17
     steps:
       - name: Run the helm conform
         uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm

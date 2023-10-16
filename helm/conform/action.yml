@@ -4,11 +4,23 @@ description: "Run Kubeconform againt specified K8S version."
 inputs:
   kubernetes-version:
     description: "Specify the kubernetes version that you want to test."
+    type: string
     required: true
+    default: "v1.23.17" # match Vault prod
+  kuberconform-version:
+    description: "Specify the kuberconform version that you want to use."
+    type: string
+    required: true
+    default: "v0.6.3" # currenly latest
+  schemas-path:
+    description: "Specify the path where the schemas are located."
+    type: string
+    required: true
+    default: "./helm/k8s-crds-schemas/{{.ResourceKind}}{{.KindSuffix}}.json"
   charts-path:
     description: "Specify the path where the charts are located."
     type: string
-    required: false
+    required: true
     default: "./helm/charts/"
 
 runs:
@@ -20,38 +32,29 @@ runs:
       - name: Install kubeconform
         shell: bash
         env:
-          KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
-          KUBECONFORM_VERSION: "v0.4.12"
+          KUBECONFORM_VERSION: ${{ inputs.kuberconform-version }}
           KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
         run: | 
           set -o pipefail
           OS=$(uname)
-          # install kubeconform
           curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" |
           tar -xzf - kubeconform
-      
       - name: Run kubeconform
         shell: bash
-
-          FILENAME_FORMAT: "{kind}-{group}-{version}"
+        env:
+          KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
+          HELM_SCHEMA_LOCATION:  ${{ inputs.schema-path }}
+          HELM_CHART_FOLDER: ${{ charts-path }}
         run: |
           set -o pipefail
-          for chart in ${{ inputs.charts-path }}/*/; do
-            values=$(echo "${chart}" | sed "s/charts/values/g")
-            echo "Running kubeconform for folder: '${chart}'"
-
-            if [ ! -f "Chart.yaml" ]; then
-                echo "Chart.yaml not present, skip."
-                continue
-            fi
-
-            helm dep up "${chart}" &&  # why helm update up ?
-            for value in $(find "${values}" -type f -name "*.yaml"); do
-              echo -e "▶ Validating ${chart} with values from ${value}"
-              helm template --kube-version "${KUBERNETES_VERSION#v}" -f "${value}" "${chart}" |
-              ./kubeconform -strict -ignore-missing-schemas -exit-on-error \
-                -schema-location default -schema-location 'helm/k8s-crds-schemas/{{ .ResourceKind }}{{ .KindSuffix }}.json' \
-                -kubernetes-version "${KUBERNETES_VERSION#v}" -summary -verbose -schema-location default
-            done
-
+          for chart_file in ${HELM_CHART_FOLDER}/*/Chart.yaml; do
+            echo "Running kubeconform on '${chart_file}'"
+            chart_dir="$(dirname $chart_file)"
+            # values_dir=$(echo $chart_dir | sed "s/charts/values/g")
+            # for value_file in ${values_dir}/*.yaml; do
+            # echo -e "▶ Validating ${chart_file} with values from ${value_file}"
+            values_file=${chart_dir}/values.yaml
+            helm template --kube-version $KUBERNETES_VERSION -f $value_file $chart_dir |
+            ./kubeconform -strict -exit-on-error -kubernetes-version ${KUBERNETES_VERSION#v}\
+              -schema-location $HELM_SCHEMA_LOCATION -schema-location default -ignore-missing-schemas
           done
