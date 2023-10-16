@@ -35,6 +35,12 @@ runs:
           for chart in ${{ inputs.charts-path }}/*/; do
             values=$(echo "${chart}" | sed "s/charts/values/g")
             echo "Running kubeconform for folder: '${chart}'"
+
+            if [ ! -f "${chart}/Chart.yaml" ]; then
+                echo "Chart.yaml not present, skip."
+                continue
+            fi
+
             helm dep up "${chart}" &&
             for value in $(find "${values}" -type f -name "*.yaml"); do
               echo -e "▶ Validating ${chart} with values from ${value}"
@@ -43,4 +49,5 @@ runs:
                 -schema-location default -schema-location 'helm/k8s-crds-schemas/{{ .ResourceKind }}{{ .KindSuffix }}.json' \
                 -kubernetes-version "${KUBERNETES_VERSION#v}" -summary -verbose -schema-location default
             done
+
           done
