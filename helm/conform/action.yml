@@ -35,10 +35,16 @@ runs:
           for chart in ${{ inputs.charts-path }}/*/; do
             values=$(echo "${chart}" | sed "s/charts/values/g")
             echo "Running kubeconform for this folder: '${chart}'"
-            echo "Values: '${values}'"
 
+            # Test if the directory contains Chart.yaml
             if [ ! -f "${chart}/Chart.yaml" ]; then
                 echo "Chart.yaml not present, skip."
+                continue
+            fi
+
+            # Test if the directory respects the convention  */charts & */values
+            if [ values == ${chart} -o ! -f values ]; then
+                echo "Chart/Values not present, skip."
                 continue
             fi
 
