@@ -34,7 +34,8 @@ runs:
           # validate changed charts
           for chart in ${{ inputs.charts-path }}/*/; do
             values=$(echo "${chart}" | sed "s/charts/values/g")
-            echo "Running kubeconform for folder: '${chart}'"
+            echo "Running kubeconform for this folder: '${chart}'"
+            echo "Values: '${values}'"
 
             if [ ! -f "${chart}/Chart.yaml" ]; then
                 echo "Chart.yaml not present, skip."

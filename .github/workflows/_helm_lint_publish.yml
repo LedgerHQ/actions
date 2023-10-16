@@ -18,11 +18,27 @@ on:
         type: string
         required: false
         default: "./helm/charts/"
+      dependencies-repository-url:
+        type: string
+        required: false
+      dependencies-repository-user:
+        type: string
+        required: false
+      dependencies-repository-password:
+        type: string
+        required: false
 
 jobs:
   lint-chart:
     runs-on: [self-hosted, shared]
     steps:
+      - name: Register dependencies repository
+        shell: bash
+        run: |
+          if [ ! -z "${{ secrets.PROD_CHARTMUSEUM_URL }}" ]; then
+            helm repo add chartmuseum --username ${{ secrets.PROD_CHARTMUSEUM_USER }} --password ${{ secrets.PROD_CHARTMUSEUM_PASSWORD }} ${{ secrets.PROD_CHARTMUSEUM_URL }}
+            helm repo update
+          fi
       - name: Run Chart lint
         uses: LedgerHQ/actions/helm/lint@add-reusable-workflow-helm
         with:
@@ -37,6 +53,13 @@ jobs:
           - v1.23.0
           - v1.24.0
     steps:
+      - name: Register dependencies repository
+        shell: bash
+        run: |
+          if [ ! -z "${{ secrets.PROD_CHARTMUSEUM_URL }}" ]; then
+            helm repo add chartmuseum --username ${{ secrets.PROD_CHARTMUSEUM_USER }} --password ${{ secrets.PROD_CHARTMUSEUM_PASSWORD }} ${{ secrets.PROD_CHARTMUSEUM_URL }}
+            helm repo update
+          fi
       - name: Checkout
         uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm
         with:
