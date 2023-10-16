@@ -14,6 +14,10 @@ on:
         type: string
         required: false
         default: ".github/ct.yaml"
+      charts-path:
+        type: string
+        required: false
+        default: "./helm/charts/"
 
 jobs:
   lint-chart:
@@ -37,6 +41,7 @@ jobs:
         uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm
         with:
           kubernetes-version: ${{ matrix.k8s }}
+          charts-path: ${{inputs.charts-path}}
         
   publish-chartmuseum-dev:
     name: publish-chartmuseum-dev
@@ -52,6 +57,7 @@ jobs:
       - name: Push chart to chartmuseum-prd repo
         uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
         with:
+          charts-path: ${{inputs.charts-path}}
           version: ${{ inputs.version }}
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
@@ -72,6 +78,7 @@ jobs:
       - name: Push chart to chartmuseum-prd repo
         uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
         with:
+          charts-path: ${{inputs.charts-path}}
           version: ${{ inputs.version }}
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
