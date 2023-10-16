@@ -40,7 +40,7 @@ jobs:
             helm repo update
           fi
       - name: Run Chart lint
-        uses: LedgerHQ/actions/helm/lint@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/lint@add-reusable-workflow-helm-with-deps
         with:
           chart-testing-config: ${{inputs.chart-testing-config}}
 
@@ -61,7 +61,7 @@ jobs:
             helm repo update
           fi
       - name: Checkout
-        uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm-with-deps
         with:
           kubernetes-version: ${{ matrix.k8s }}
           charts-path: ${{inputs.charts-path}}
@@ -78,7 +78,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Push chart to chartmuseum-prd repo
-        uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm-with-deps
         with:
           charts-path: ${{inputs.charts-path}}
           version: ${{ inputs.version }}
