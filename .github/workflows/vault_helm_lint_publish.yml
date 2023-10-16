@@ -1,4 +1,4 @@
-name: _Build and publish Helm Chart
+name: "Test and publish Helm Chart"
 
 on:
   workflow_call:
@@ -24,7 +24,7 @@ jobs:
     runs-on: [self-hosted, shared]
     steps:
       - name: Run Chart lint
-        uses: LedgerHQ/actions/helm/lint@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/lint@main
         with:
           chart-testing-config: ${{inputs.chart-testing-config}}
 
@@ -33,12 +33,11 @@ jobs:
     strategy:
       matrix:
         k8s:
-          - v1.22.4
-          - v1.23.0
-          - v1.24.0
+          - v1.24.17
+          - v1.23.17
     steps:
       - name: Run the helm conform
-        uses: LedgerHQ/actions/helm/conform@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/conform@main
         with:
           kubernetes-version: ${{ matrix.k8s }}
           charts-path: ${{ inputs.charts-path }}
@@ -51,7 +50,7 @@ jobs:
     needs: [lint-chart, kubeconform-chart]
     steps:
       - name: Push chart to chartmuseum-prd repo
-        uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/publish-cm@main
         with:
           charts-path: ${{ inputs.charts-path }}
           version: ${{ inputs.version }}
@@ -68,11 +67,11 @@ jobs:
     needs: [publish-chartmuseum-dev]
     steps:
       - name: Push chart to chartmuseum-prd repo
-        uses: LedgerHQ/actions/helm/publish-cm@add-reusable-workflow-helm
+        uses: LedgerHQ/actions/helm/publish-cm@main
         with:
           charts-path: ${{ inputs.charts-path }}
           version: ${{ inputs.version }}
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
           chartmuseum-password: ${{ secrets.CHARTMUSEUM_PASSWORD }}
-          force: true
+          force: false

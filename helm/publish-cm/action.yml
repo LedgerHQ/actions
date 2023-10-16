@@ -4,11 +4,9 @@ description: "Publish Helm Chart on chart museum."
 inputs:
   version:
     description: "Specify the chart version to publish."
-    type: string
     required: true
   charts-path:
     description: "Specify the path where the charts are located."
-    type: string
     required: false
     default: "./helm/charts/"
   chartmuseum-url:
@@ -22,7 +20,6 @@ inputs:
     required: true
   force:
     description: "Replace charts if it exists"
-    type: boolean
     required: false
 
 runs:

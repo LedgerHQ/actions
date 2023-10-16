@@ -4,9 +4,12 @@ description: "Run Helm Chart Testing & Docs"
 inputs:
   chart-testing-config:
     description: "Specify the path where the ct.yaml is located."
-    type: string
     required: true
     default: ".github/ct.yaml"
+  helm-docs-version:
+    description: "Specify the helm-docs version that you want to use."
+    required: true
+    default: "1.11.0"
 
 runs:
   using: "composite"
@@ -24,7 +27,7 @@ runs:
       - name: Run helm-docs
         shell: bash
         env:
-          HELM_DOCS_VERSION: "1.11.0"
+          HELM_DOCS_VERSION: ${{ inputs.helm-docs-version }}
           HELM_DOCS_BASE_URL: "https://github.com/norwoodj/helm-docs/releases/download"
         run: |
           OS=$(uname)
