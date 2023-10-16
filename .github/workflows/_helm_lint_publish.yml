@@ -18,15 +18,6 @@ on:
         type: string
         required: false
         default: "./helm/charts/"
-      dependencies-repository-url:
-        type: string
-        required: false
-      dependencies-repository-user:
-        type: string
-        required: false
-      dependencies-repository-password:
-        type: string
-        required: false
 
 jobs:
   lint-chart:
@@ -35,8 +26,12 @@ jobs:
       - name: Register dependencies repository
         shell: bash
         run: |
+          if [ ! -z "${{ secrets.DEV_CHARTMUSEUM_URL }}" ]; then
+            helm repo add dev-chartmuseum --username ${{ secrets.DEV_CHARTMUSEUM_USER }} --password ${{ secrets.DEV_CHARTMUSEUM_PASSWORD }} ${{ secrets.DEV_CHARTMUSEUM_URL }}
+            helm repo update
+          fi
           if [ ! -z "${{ secrets.PROD_CHARTMUSEUM_URL }}" ]; then
-            helm repo add chartmuseum --username ${{ secrets.PROD_CHARTMUSEUM_USER }} --password ${{ secrets.PROD_CHARTMUSEUM_PASSWORD }} ${{ secrets.PROD_CHARTMUSEUM_URL }}
+            helm repo add prd-chartmuseum --username ${{ secrets.PROD_CHARTMUSEUM_USER }} --password ${{ secrets.PROD_CHARTMUSEUM_PASSWORD }} ${{ secrets.PROD_CHARTMUSEUM_URL }}
             helm repo update
           fi
       - name: Run Chart lint
