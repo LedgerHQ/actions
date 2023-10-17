@@ -21,7 +21,7 @@ on:
 
 jobs:
   lint-chart:
-    runs-on: [self-hosted, shared]
+    runs-on: [shared]
     steps:
       - name: Register dependencies repository
         shell: bash
@@ -40,7 +40,7 @@ jobs:
           chart-testing-config: ${{inputs.chart-testing-config}}
 
   kubeconform-chart:
-    runs-on: [self-hosted, shared]
+    runs-on: [shared]
     strategy:
       matrix:
         k8s:
@@ -65,7 +65,7 @@ jobs:
     name: publish-chartmuseum-dev
     environment: chartmuseum-dev
     if: inputs.version != ''
-    runs-on: [self-hosted, shared]
+    runs-on: [shared]
     needs: [lint-chart, kubeconform-chart]
     steps:
       - name: Checkout
@@ -86,7 +86,7 @@ jobs:
     name: publish-chartmuseum-prd
     environment: chartmuseum-prd
     if: inputs.version != '' && inputs.release != false
-    runs-on: [self-hosted, shared]
+    runs-on: [shared]
     needs: [publish-chartmuseum-dev]
     steps:
       - name: Checkout
