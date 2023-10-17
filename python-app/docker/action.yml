@@ -6,6 +6,10 @@ inputs:
     description: "args to pass to docker build"
     required: false
     default: ""
+outputs:
+  semantic-version:
+    description: "Extracted Semantic version."
+    value: ${{ steps.extract-semantic-version.outputs.semantic-version }}
 
 runs:
   using: "composite"
@@ -33,18 +37,32 @@ runs:
       shell: bash
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
+      name: Semantic Version preparation
+      id: extract-semantic-version
+      env:
+        REF: ${{ github.event.pull_request && github.head_ref || github.ref_name }}
+      run: |
+        if [[ $REF =~ ^[0-9]+\.[0-9]+\.[0-9]+(.*)$ ]]; then
+          echo "semantic-version=$REF" >> ${GITHUB_OUTPUT}
+        else
+          echo "semantic-version=0.0.0-${REF//[\/_]/-}" >> ${GITHUB_OUTPUT}
+        fi
+      shell: bash
+
+    - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Docker meta
       id: meta
       uses: docker/metadata-action@v3
       with:
         images: ${{ env.IMAGE }}
         flavor: |
-            latest=false
+          latest=false
         tags: |
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=ref,event=branch
-            type=ref,event=tag
-            type=ref,event=pr
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          type=ref,event=branch
+          type=ref,event=tag
+          type=ref,event=pr
+          type=semver,pattern={{version}},value=${{steps.extract-semantic-version.outputs.semantic-version}}
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Set up QEMU

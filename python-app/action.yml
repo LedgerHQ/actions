@@ -34,6 +34,10 @@ inputs:
     description: "args to pass to docker build"
     required: false
     default: ""
+outputs:
+  semantic-version:
+    description: "Extracted Semantic version."
+    value: ${{ steps.docker.outputs.semantic-version }}
 
 runs:
   using: "composite"
@@ -52,7 +56,8 @@ runs:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@main
+    - uses: LedgerHQ/actions/python-app/docker@add-reusable-workflow-helm
+      id: docker
       with:
         build-args: ${{ inputs.docker-build-args }}
 
