@@ -1,0 +1,60 @@
+name: "Run Kubeconform"
+description: "Run Kubeconform againt specified K8S version."
+
+inputs:
+  kubernetes-version:
+    description: "Specify the kubernetes version that you want to test."
+    required: true
+  charts-path:
+    description: "Specify the path where the charts are located."
+    required: false
+    default: "./helm/charts/"
+
+runs:
+  using: "composite"
+  steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run kubeconform
+        shell: bash
+        env:
+          KUBERNETES_VERSION: ${{ matrix.k8s }}
+          KUBECONFORM_VERSION: "v0.4.12"
+          KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
+          FILENAME_FORMAT: "{kind}-{group}-{version}"
+        run: |
+          set -o pipefail
+          OS=$(uname)
+          # install kubeconform
+          curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" |
+          tar -xzf - kubeconform
+          # validate changed charts
+          for chart in ${{ inputs.charts-path }}/*/; do
+            values=$(echo "${chart}" | sed "s/charts/values/g")
+            echo "Running kubeconform for this folder: '${chart}'"
+
+            # Test if the directory contains Chart.yaml
+            if [ ! -f "${chart}/Chart.yaml" ]; then
+                echo "Chart.yaml not present, skip."
+                continue
+            fi
+
+            # Test if the directory respects the convention  */charts & */values
+            if [ ${values} == ${chart} -o ! -d ${values} ]; then
+                echo "Chart/Values not present, skip."
+                continue
+            fi
+
+            helm dep up "${chart}" &&
+            for value in $(find "${values}" -type f -name "*.yaml"); do
+              echo -e "▶ Validating ${chart} with values from ${value}"
+              helm template --kube-version "${KUBERNETES_VERSION#v}" -f "${value}" "${chart}" |
+              ./kubeconform -strict -ignore-missing-schemas -exit-on-error \
+                -schema-location default -schema-location 'helm/k8s-crds-schemas/{{ .ResourceKind }}{{ .KindSuffix }}.json' \
+                -kubernetes-version "${KUBERNETES_VERSION#v}" -summary -verbose -schema-location default
+            done
+
+          done

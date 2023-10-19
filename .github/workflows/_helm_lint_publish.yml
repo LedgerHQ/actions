@@ -1,0 +1,39 @@
+name: _Build and publish Helm Chart
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        required: false
+        default: false
+      version:
+        type: string
+        required: false
+      chart-testing-config:
+        type: string
+        required: false
+        default: ".github/ct.yaml"
+      charts-path:
+        type: string
+        required: false
+        default: "./helm/charts/"
+
+jobs:
+  lint:
+    name: "Lint & Kubeconform chart(s)"
+    uses: LedgerHQ/actions/.github/workflows/_helm_lint.yml@add-reusable-workflow-helm
+    with:
+      chart-testing-config: ${{ inputs.chart-testing-config }}
+      charts-path: ${{ inputs.charts-path }}
+    secrets: inherit
+
+  publish:
+    name: "Publish chart(s)"
+    needs: [lint]
+    uses: LedgerHQ/actions/.github/workflows/_helm_publish.yml@add-reusable-workflow-helm
+    with:
+      charts-path: ${{ inputs.charts-path }}
+      version: ${{ inputs.version }}
+      release: ${{ inputs.release }}
+    secrets: inherit
