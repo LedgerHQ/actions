@@ -42,5 +42,10 @@ runs:
         shell: bash
         run: |
           for chart in ${{ inputs.charts-path }}/*/; do
+            # Test if the directory contains Chart.yaml
+            if [ ! -f "${chart}/Chart.yaml" ]; then
+                echo "Chart.yaml not present, skip."
+                continue
+            fi
             helm cm-push ${{ inputs.force && '-f'}} $chart chartmuseum --version ${{ inputs.version }}
           done
