@@ -35,6 +35,12 @@ inputs:
     required: false
     default: ""
 
+outputs:
+  version:
+    description: "Computed Semantic version."
+    value: ${{ steps.docker.outputs.version }}
+
+
 runs:
   using: "composite"
   steps:
