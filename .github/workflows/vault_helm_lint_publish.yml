@@ -10,14 +10,10 @@ on:
       version:
         type: string
         required: false
-      chart-testing-config:
-        type: string
-        required: false
-        default: ".github/ct.yaml"
       charts-path:
         type: string
         required: false
-        default: "./helm/charts/"
+        default: "helm/charts/"
 
 jobs:
   lint-chart:
@@ -26,7 +22,7 @@ jobs:
       - name: Run Chart lint
         uses: LedgerHQ/actions/helm/lint@main
         with:
-          chart-testing-config: ${{inputs.chart-testing-config}}
+          charts-dir: ${{ inputs.charts-path }}
 
   kubeconform-chart:
     runs-on: [self-hosted, shared]
@@ -57,7 +53,7 @@ jobs:
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
           chartmuseum-password: ${{ secrets.CHARTMUSEUM_PASSWORD }}
-          force: startsWith( ${{ inputs.version}}, '0.0.0' )
+          force: startsWith( ${{ inputs.version }}, '0.0.0' )
 
   publish-chartmuseum-prd:
     name: publish-chartmuseum-prd
@@ -74,4 +70,4 @@ jobs:
           chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
           chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
           chartmuseum-password: ${{ secrets.CHARTMUSEUM_PASSWORD }}
-          force: startsWith( ${{ inputs.version}}, '0.0.0' )
+          force: startsWith( ${{ inputs.version }}, '0.0.0' )

@@ -8,7 +8,7 @@ Please create your own reusable workflow matching your need
 
 ## helm-conform action
 
-Check the chart conformity with K8 version
+Check the chart conformity with K8 version using https://github.com/yannh/kubeconform
 
 ```yaml
   - name: Verify conformity
@@ -16,7 +16,7 @@ Check the chart conformity with K8 version
     with:
       kubernetes-version: "v1.23.17" # current default value
       kuberconform-version: "v0.6.3" # current default value
-      charts-path: "./helm/charts/" # where helm charts are
+      charts-path: "helm/charts/" # where helm charts are
       schemas-path: ... # overriding schemas location
 ```
 
@@ -24,13 +24,13 @@ Here is the schemas-path [documentation](https://github.com/yannh/kubeconform#ov
 
 ## helm-lint action
 
-Lint the helm chart
+Lint the helm chart using https://github.com/helm/chart-testing
 
 ```yaml
   - name: Run lint on chart
     uses: LedgerHQ/actions/helm/lint@main
     with:
-      chart-testing-config: ... # the ct config
+      charts-dir: "helm/charts" # where the charts are
       helm-docs-version: "1.11.0" # current default value
 ```
 

@@ -2,10 +2,10 @@ name: "Run Helm Chart Testing & Docs"
 description: "Run Helm Chart Testing & Docs"
 
 inputs:
-  chart-testing-config:
-    description: "Specify the path where the ct.yaml is located."
+  charts-dir:
+    description: "Specify the charts directory."
     required: true
-    default: ".github/ct.yaml"
+    default: "helm/charts/"
   helm-docs-version:
     description: "Specify the helm-docs version that you want to use."
     required: true
@@ -22,7 +22,7 @@ runs:
 
       - name: Run chart-testing (lint)
         shell: bash
-        run: ct lint --config ${{ inputs.chart-testing-config }} --check-version-increment=false
+        run: ct lint --chart-dirs=${{ inputs.charts-dir }} --check-version-increment=false --target-branch=main --remote=origin
 
       - name: Run helm-docs
         shell: bash
