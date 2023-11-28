@@ -40,7 +40,7 @@ runs:
         env:
           KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
           HELM_SCHEMA_LOCATION:  ${{ inputs.schema-path }}
-          HELM_CHART_FOLDER: ${{ charts-path }}
+          HELM_CHART_FOLDER: ${{ inputs.charts-path }}
         run: |
           set -o pipefail
           for chart_file in ${HELM_CHART_FOLDER}/*/Chart.yaml; do
