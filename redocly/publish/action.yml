@@ -29,7 +29,7 @@ runs:
       env:
         REDOCLY_AUTHORIZATION: ${{ env.REDOCLY_AUTHORIZATION }}
       run: |
-        npx @redocly/cli@latest push ${{ inputs.spec-path }} "@ledger/${{ inputs.api-name }}@${{ inputs.api-version }}" --branch "${{ inputs.branch }}" > output
+        npx @redocly/cli@latest push ${{ inputs.spec-path }} --destination="${{ inputs.api-name }}@${{ inputs.api-version }}" --branch="${{ inputs.branch }}" --organization="ledger" > output
         # The redocly tool does not provide a simple way to know if it has succeeded or not.
         # We have to grep its output.
         if [[ $(grep "is successfully pushed to Redocly API Registry" output) ]]; then
