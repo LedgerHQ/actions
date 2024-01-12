@@ -1,0 +1,95 @@
+
+name: Extract `pdm` metadata
+description: Extract required metadata from `pdm`
+
+inputs:
+  python-version:
+    description: Python version used by `pdm`
+    required: false
+    default: "3.11"
+    
+
+outputs:
+  has_tests:
+    description: Wether the project has tests exposed through the `test` command
+    value: ${{ steps.commands.outputs.tests }}
+  has_coverage:
+    description: Wether the project has tests with coverage exposed through the `cover` command
+    value: ${{ steps.commands.outputs.tests }}
+  has_docs:
+    description: Wether the project has a documentation exposed through the `doc` command
+    value: ${{ steps.commands.outputs.docs }}
+  has_openapi:
+    description: Wether the project has an OpenAPI specification exposed through the `doc:openapi` command
+    value: ${{ steps.commands.outputs.openapi  }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python and PDM
+      uses: pdm-project/setup-pdm@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: true
+
+    - name: Extract existing commands
+      id: commands
+      run: | 
+        COMMANDS=$(pdm run --json)
+
+        HAS_TESTS=$(jq 'has("test")' <<< "$COMMANDS")
+        echo "has_tests=${HAS_TESTS}" >> $GITHUB_OUTPUT
+
+        HAS_COVERAGE=$(jq 'has("cover")' <<< "$COMMANDS")
+        echo "has_coverage=${HAS_COVERAGE}" >> $GITHUB_OUTPUT
+
+        HAS_DOCS=$(jq 'has("doc")' <<< "$COMMANDS")
+        echo "has_docs=${HAS_DOCS}" >> $GITHUB_OUTPUT
+
+        HAS_OPENAPI=$(jq 'has("doc:openapi")' <<< "$COMMANDS")
+        echo "has_openapi=${HAS_OPENAPI}" >> $GITHUB_OUTPUT
+      shell: bash
+    - name: Display commands output
+      run: echo "${{ toJson(steps.commands.outputs) }}"
+      shell: bash
+
+    - name: Compute base ref (branch/tag) name
+      id: refs
+      run: |
+        if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
+          echo "target=origin/${GITHUB_BASE_REF#refs/heads/}" >> $GITHUB_OUTPUT
+        elif  [[ $GITHUB_REF == refs/heads/feature/* ]]; then
+          echo "target=main" >> $GITHUB_OUTPUT
+        else
+          echo "target=HEAD^" >> $GITHUB_OUTPUT
+        fi
+
+        branch=${{ github.event.pull_request && github.head_ref || github.ref_name }}
+        sha=${{ github.sha }}
+        if  [[ $GITHUB_EVENT_NAME == 'pull_request' ]]; then
+          echo "branch should be ${GITHUB_HEAD_REF#refs/heads/}"
+          echo "sha should be ${{ github.event.pull_request.head.sha }}"
+        elif [[ $GITHUB_REF == refs/heads/* ]]; then
+          echo "branch should be ${GITHUB_REF#refs/heads/}"
+          echo "sha should be ${{ github.sha }}"
+        fi
+
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          # It's a tag aka. a semver dotted release (X.Y.Z assuming no v prefix)
+          version=${GITHUB_REF#refs/tags/}
+          echo "branch=${version}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+          echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+        elif [[ ! -z "$branch" ]]; then
+          echo "branch=${branch}" >> $GITHUB_OUTPUT
+          echo "version=${branch//\//-}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "sha=${sha}" >> $GITHUB_OUTPUT
+        else
+          echo "::error ::Unkown case: current build is neither a tag, a branch or a pull request"
+          exit 1
+        fi
+      shell: bash
+    - name: Display refs output
+      run: echo "${{ toJson(steps.refs.outputs) }}"
+      shell: bash

@@ -1,0 +1,49 @@
+name: Test
+description: Execute test using `pdm` scripts
+
+inputs:
+  python-version:
+    description: Python version to run the tests with
+    required: true
+    default: "3.11"
+  pypi-token:
+    description: A Token to Ledger private PyPI with read permissions
+    required: true
+    default: ""
+  github-token:
+    description: A Github token with proper permissions
+    default: ${{ github.token }}
+  init:
+    description: Clone & sync
+    default: true
+
+runs:
+  using: composite
+  steps:
+    - name: Clone and install dependencies
+      if: inputs.init == 'true'
+      uses: LedgerHQ/actions/pdm/init@main
+      with:
+        python-version: ${{ inputs.python-version }}
+        group: test
+        pypi-token: ${{ inputs.pypi-token }}
+
+    - name: Run Tests
+      run: pdm cover -v --force-sugar --color=yes
+      env:
+        FORCE_COLOR: true
+      shell: bash
+
+    - name: Pytest coverage comment
+      id: coverage
+      uses: MishaKav/pytest-coverage-comment@v1.1.50
+      with:
+        github-token: ${{ inputs.github-token }}
+        pytest-xml-coverage-path: ./reports/coverage.xml
+        junitxml-path: ./reports/tests.xml
+        title: Coverage Report for Python ${{ inputs.python-version }}
+        unique-id-for-comment: ${{ inputs.python-version }}
+
+    - name: Add coverage report to summary
+      run: echo -e ${{ steps.coverage.outputs.summaryReport }} >> $GITHUB_STEP_SUMMARY
+      shell: bash
