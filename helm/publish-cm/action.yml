@@ -39,7 +39,7 @@ runs:
       - name: Push chart to chartmuseum repo
         shell: bash
         run: |
-          for chart_file in ${{ inputs.chart-path }}/*/Chart.yaml; do
+          for chart_file in ${{ inputs.charts-path }}/*/Chart.yaml; do
             chart_dir=$(dirname "$chart_file")
             helm cm-push ${{ inputs.force == 'true' && '-f' || ''}} "$chart_dir" chartmuseum --version "${{ inputs.version }}"
           done
