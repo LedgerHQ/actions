@@ -38,12 +38,8 @@ runs:
           helm repo update
       - name: Push chart to chartmuseum repo
         shell: bash
-        env:
-          HELM_CHART_FOLDER: ${{ inputs.charts-path }}
-          FORCE_CHART_OVERWRITE: ${{ inputs.force }}
-          CHART_VERSION: ${{ inputs.version }}
         run: |
-          for chart_file in ${HELM_CHART_FOLDER}/*/Chart.yaml; do
+          for chart_file in ${{ inputs.chart-path }}/*/Chart.yaml; do
             chart_dir=$(dirname "$chart_file")
-            helm cm-push ${{ "$FORCE_CHART_OVERWRITE" && "-f"}} "$chart_dir" chartmuseum --version "$CHART_VERSION"
+            helm cm-push ${{ inputs.force && "-f"}} "$chart_dir" chartmuseum --version ${{ inputs.version }}
           done
