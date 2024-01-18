@@ -41,5 +41,5 @@ runs:
         run: |
           for chart_file in ${{ inputs.chart-path }}/*/Chart.yaml; do
             chart_dir=$(dirname "$chart_file")
-            helm cm-push ${{ inputs.force && "-f"}} "$chart_dir" chartmuseum --version ${{ inputs.version }}
+            helm cm-push ${{ input.force == 'true' && "-f" || ''}} "$chart_dir" chartmuseum --version "${{ inputs.version }}"
           done
