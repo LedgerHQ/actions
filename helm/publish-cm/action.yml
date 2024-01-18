@@ -6,9 +6,9 @@ inputs:
     description: "Specify the chart version to publish."
     required: true
   charts-path:
-    description: "Specify the path where the charts are located."
+    description: "Specify the path where the charts are located (no trailing slash)."
     required: false
-    default: "./helm/charts/"
+    default: "./helm/charts"
   chartmuseum-url:
     description: "Specify the URL of Chart Museum"
     required: true
