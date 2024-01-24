@@ -51,3 +51,12 @@ It need `secrets: inherit` to be used within another workflow
       force: true # force overwriting helm charts in chartmuseum
 ```
 
+## argocd-test action
+
+Test that the helm chart in argocd/base renders.
+
+```yaml
+  - uses: LedgerHQ/actions/helm/argocd-test@main
+    with:
+      github-token: ${{ secrets.GITHUB_TOKEN }}
+```
