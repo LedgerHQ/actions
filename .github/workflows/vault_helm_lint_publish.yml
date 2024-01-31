@@ -29,8 +29,9 @@ jobs:
     strategy:
       matrix:
         k8s:
-          - v1.24.17
-          - v1.23.17
+          - v1.27.9
+          - v1.26.12
+          - v1.25.16
     steps:
       - name: Run the helm conform
         uses: LedgerHQ/actions/helm/conform@main
