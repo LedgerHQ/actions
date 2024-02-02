@@ -31,9 +31,9 @@ jobs:
         with:
           charts-path: ${{inputs.charts-path}}
           version: ${{ inputs.version }}
-          chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
-          chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
-          chartmuseum-password: ${{ secrets.CHARTMUSEUM_PASSWORD }}
+          chartmuseum-url: ${{ secrets.CHARTMUSEUM_DEV_URL }}
+          chartmuseum-user: ${{ secrets.CHARTMUSEUM_DEV_USER }}
+          chartmuseum-password: ${{ secrets.CHARTMUSEUM_DEV_PASSWORD }}
           force: true
 
   publish-chartmuseum-prd:
@@ -52,7 +52,7 @@ jobs:
         with:
           charts-path: ${{inputs.charts-path}}
           version: ${{ inputs.version }}
-          chartmuseum-url: ${{ secrets.CHARTMUSEUM_URL }}
-          chartmuseum-user: ${{ secrets.CHARTMUSEUM_USER }}
-          chartmuseum-password: ${{ secrets.CHARTMUSEUM_PASSWORD }}
+          chartmuseum-url: ${{ secrets.CHARTMUSEUM_PROD_URL }}
+          chartmuseum-user: ${{ secrets.CHARTMUSEUM_PROD_USER }}
+          chartmuseum-password: ${{ secrets.CHARTMUSEUM_PROD_PASSWORD }}
           force: true
