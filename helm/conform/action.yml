@@ -54,7 +54,7 @@ runs:
             # below is temporary duplicated code to test Vault Helm value located in another folder
             vault_values_dir=$(echo "$chart_dir" | sed "s/charts/values/g")
             if [ -d "$vault_values_dir" ]; then
-              for vault_value_file in ${$vault_values_dir}/*.yaml; do
+              for vault_value_file in ${vault_values_dir}/*.yaml; do
                 echo -e "▶ Validating ${chart_file} with values from ${vault_value_file}"
                 helm template --kube-version "$KUBERNETES_VERSION" -f "$vault_value_file" "$chart_dir" |
                 ./kubeconform -strict -exit-on-error -kubernetes-version ${KUBERNETES_VERSION#v}\
