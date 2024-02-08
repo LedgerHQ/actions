@@ -13,7 +13,22 @@ inputs:
   github-token:
     description: Specify the github token to login to ghcr.io
     required: true
-
+  helm-version:
+    description:
+    required: true
+    default: "v3.13.3"
+  kubernetes-tested-version:
+    description: Specify the kubernetes version used to test helm templates
+    required: true
+    default: "v1.27.9"
+  kuberconform-version:
+    description: Specify the kuberconform version.
+    required: true
+    default: "v0.6.3"
+  datatree-crd-catalog-version:
+    description: Specify the CRD catalog version .
+    required: true
+    default: "v0.0.12"
 
 runs:
   using: composite
@@ -24,7 +39,17 @@ runs:
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
-          version: "v3.13.3"
+          version: $${{ inputs.helm-version }}
+
+      - name: Set up kubeconform
+        shell: bash
+        env:
+          KUBECONFORM_VERSION: ${{ inputs.kuberconform-version }}
+          KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
+        run: |
+          set -o pipefail
+          OS=$(uname)
+          curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" | tar -xzf - kubeconform
 
       - name: Login to ghcr.io
         uses: docker/login-action@v3
@@ -33,8 +58,17 @@ runs:
           username: ${{ github.actor }}
           password: ${{ inputs.github-token }}
 
-      - name: Run helm template
+      - name: Run helm template then kubeconform
         shell: bash
+        env:
+          KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
+          HELM_SCHEMA_LOCATION:  ${{ inputs.schema-path }}
+          HELM_CHART_FOLDER: ${{ inputs.charts-path }}
+          HELM_OPTIONS: ${{ inputs.helm-options }}
+          DATATREE_CRD_CATALOG_URL: 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/${{ inputs.datatree-crd-catalog-version }}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
         run: |
-          cd ${{ inputs.chart-dir }}
-          helm dependency build . && helm template . ${{ inputs.helm-options }}
+          set -e
+          cd $HELM_CHART_FOLDER
+          helm dependency build . && helm template . $HELM_OPTIONS >> helm-rendered.yaml
+          .kubeconform -strict -exit-on-error -summary -output json \
+          -schema-location default -schema-location $DATATREE_CRD_CATALOG_URL helm-rendered.yaml

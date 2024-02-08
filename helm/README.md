@@ -54,6 +54,7 @@ It need `secrets: inherit` to be used within another workflow
 ## argocd-test action
 
 Test that the helm chart in argocd/base renders.
+Also verify the comformity of the ressources.
 
 ```yaml
   - uses: LedgerHQ/actions/helm/argocd-test@main
