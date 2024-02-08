@@ -39,7 +39,7 @@ runs:
       - name: Set up Helm
         uses: azure/setup-helm@v3
         with:
-          version: $${{ inputs.helm-version }}
+          version: ${{ inputs.helm-version }}
 
       - name: Set up kubeconform
         shell: bash
@@ -58,17 +58,22 @@ runs:
           username: ${{ github.actor }}
           password: ${{ inputs.github-token }}
 
-      - name: Run helm template then kubeconform
+      - name: Run helm template then kubeconform 
         shell: bash
         env:
-          KUBERNETES_VERSION: ${{ inputs.kubernetes-version }}
-          HELM_SCHEMA_LOCATION:  ${{ inputs.schema-path }}
-          HELM_CHART_FOLDER: ${{ inputs.charts-path }}
+          KUBERNETES_VERSION: ${{ inputs.kubernetes-tested-version}}
+          HELM_CHART_FOLDER: ${{ inputs.chart-dir }}
           HELM_OPTIONS: ${{ inputs.helm-options }}
           DATATREE_CRD_CATALOG_URL: 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/${{ inputs.datatree-crd-catalog-version }}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
         run: |
           set -e
+          HERE=$(pwd)
+
           cd $HELM_CHART_FOLDER
+          echo "Rendering the chart"
           helm dependency build . && helm template . $HELM_OPTIONS >> helm-rendered.yaml
-          .kubeconform -strict -exit-on-error -summary -output json \
-          -schema-location default -schema-location $DATATREE_CRD_CATALOG_URL helm-rendered.yaml
+
+          cd $HERE
+          echo "Checking outputs conformity"
+          ./kubeconform -strict -exit-on-error -summary \
+          -schema-location default -schema-location $DATATREE_CRD_CATALOG_URL ${HELM_CHART_FOLDER}/helm-rendered.yaml
