@@ -42,6 +42,11 @@ runs:
         python-version: ${{ inputs.python-version }}
         cache: true
 
+    - name: Set some settings
+      run: |
+        pdm config install.cache true
+      shell: bash
+
     - name: Install dependencies
       run: |
         echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
