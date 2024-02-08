@@ -1,0 +1,47 @@
+name: Documentation
+description: Build and publish documentation
+
+inputs:
+  version:
+    description: Force a version to be built
+    required: false
+  openapi:
+    description: Has OpenAPI specs
+    default: false
+  site:
+    description: Publish a documentation site
+    default: false
+  pypi-token:
+    description: A read token for private PyPI access
+    required: false
+  init:
+    description: Clone & sync
+    default: true
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
+
+outputs:
+  url:
+    description: The published documentation URL
+    value: ${{ steps.publish.outputs.url }}
+
+runs:
+  using: "composite"
+  steps:
+    - uses: LedgerHQ/actions/pdm/doc/build@main
+      with:
+        init: ${{ inputs.init }}
+        python-version: ${{ inputs.python-version }}
+        pypi-token: ${{ inputs.pypi-token }}
+        openapi: ${{ inputs.openapi }}
+        site: ${{ inputs.site }}
+    - uses: LedgerHQ/actions/pdm/doc/publish@main
+      id: publish
+      with:
+        init: false
+        pypi-token: ${{ inputs.pypi-token }}
+        openapi: ${{ inputs.openapi }}
+        site: ${{ inputs.site }}
+        version: ${{ inputs.version }}

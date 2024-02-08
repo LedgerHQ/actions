@@ -1,0 +1,75 @@
+name: Build documentation
+description: Build the documentation using `pdm` commands
+
+inputs:
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
+  pypi-token:
+    description: A read token for private PyPI access
+    required: false
+  openapi:
+    description: Whether or not to build OpenAPI specs
+    default: false
+  site:
+    description: Whether or not to build a documentation site
+    default: false
+  init:
+    description: Clone & sync
+    default: true
+
+runs:
+  using: composite
+  steps:
+    - name: Clone and install dependencies
+      uses: LedgerHQ/actions/pdm/init@main
+      if: inputs.init == 'true'
+      with:
+        group: docs
+        history: true
+        pypi-token: ${{ inputs.pypi-token }}
+        python-version: ${{ inputs.python-version }}
+
+    - name: Update the CHANGELOG
+      # Failsafe changelog too avoid failure when there is no update
+      run: pdm changelog || true
+      env:
+        FORCE_COLOR: true
+      shell: bash
+
+    - name: Upload the CHANGELOG
+      uses: actions/upload-artifact@v4
+      with:
+        name: changelog
+        path: CHANGELOG.md
+
+    - name: Generate the OpenAPI specifications
+      if: inputs.openapi == 'true'
+      run: pdm doc:openapi
+      env:
+        FORCE_COLOR: true
+      shell: bash
+
+    - name: Upload the OpenAPI specifications
+      if: inputs.openapi == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: openapi
+        path: docs/openapi.yaml
+
+    - name: Generate the documentation
+      if: inputs.site == 'true'
+      run: pdm doc:build
+      env:
+        FORCE_COLOR: true
+      shell: bash
+      
+    - name: Upload the generated documentation
+      if: inputs.site == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: site/
+        retention-days: 7
+        if-no-files-found: error

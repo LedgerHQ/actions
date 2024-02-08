@@ -1,0 +1,135 @@
+name: Slack Notify Release
+description: Dispatch a Slack release Notification in a given channel
+
+inputs:
+  project:
+    description: Project name
+    required: true
+  version:
+    description: Released version
+    required: true
+  webhook-url:
+    description: Slack webhook URL
+    required: true
+  channel:
+    description: Channel to notify in
+    default: "#vault-ci-notifications"
+  github-release:
+    description: An optional github release URL
+  docker:
+    description: An optionnal Docker image URL
+  documentation:
+    description: An optional documentation URL
+
+runs:
+  using: composite
+  steps:
+    - name: Build Slacks blocks
+      id: blocks
+      run: | 
+        PROJECT="${{ inputs.project }}"
+        VERSION="${{ inputs.version }}"
+        REPOSITORY="${{ github.repository }}"
+        SLUG="${{ github.event.repository.name }}"
+        VERSION="${{ inputs.version }}"
+        DOCKER="${{ inputs.docker }}"
+        DOC="${{ inputs.documentation }}"
+        GH_RELEASE="${{ inputs.github-release }}"
+
+        JSON=$(jq -n \
+          --arg project "$PROJECT" \
+          --arg version "$VERSION" \
+        '{
+          "blocks": [
+            {
+              "type": "header",
+              "text": {
+              "type": "plain_text",
+              "text": ":rocket_vault: \($project) \($version) :rocket_vault:",
+              "emoji": true
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+              "type": "mrkdwn",
+              "text": "\($project) has been released in version \($version) :point_down:"
+              }
+            }
+          ]
+        }')
+
+        if [[ "$DOCKER" ]]; then
+          DOCKER_SEGMENT=$(jq -n --arg docker ${DOCKER} '{
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": ":docker: *Docker image*"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "`\($docker)`"
+            }
+          ]
+          }')
+          JSON=$(echo $JSON | jq --argjson docker "$DOCKER_SEGMENT" '.blocks += [$docker]')
+        fi
+
+        ACTIONS=$(jq -n '{
+          "type": "actions",
+          "elements": []
+        }')
+
+        if [[ "${GH_RELEASE}" ]]; then
+          RELEASE_BTN=$(jq -n --arg url ${GH_RELEASE} '{
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "text": ":github: Github release",
+              "emoji": true
+            },
+            "url": $url
+          }')
+          ACTIONS=$(echo $ACTIONS | jq --argjson action "$RELEASE_BTN" '.elements += [$action]')
+        fi
+
+        if [[ "${DOCKER}" ]]; then
+          URL="https://github.com/${REPOSITORY}/pkgs/container/${SLUG}/${VERSION}"
+          DOCKER_BTN=$(jq -n --arg url ${URL} '{
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "text": ":docker: Docker image",
+              "emoji": true
+            },
+            "url": $url
+          }')
+          ACTIONS=$(echo $ACTIONS | jq --argjson action "$DOCKER_BTN" '.elements += [$action]')
+        fi
+
+        if [[ "${DOC}" ]]; then
+          DOC_BTN=$(jq -n --arg url ${DOC} '{
+            "type": "button",
+            "text": {
+              "type": "plain_text",
+              "text": ":documentation: Documentation",
+              "emoji": true
+            },
+            "url": $url
+          }')
+          ACTIONS=$(echo $ACTIONS | jq --argjson action "$DOC_BTN" '.elements += [$action]')
+        fi
+
+        JSON=$(echo $JSON | jq --argjson actions "$ACTIONS" '.blocks += [$actions]')
+        echo "json=$JSON" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Send Slack notification
+      uses: Ilshidur/action-slack@2.1.0
+      if: env.SLACK_WEBHOOK != null
+      env:
+          SLACK_WEBHOOK: ${{ inputs.webhook-url }}
+          SLACK_CHANNEL: ${{ inputs.channel }}
+          SLACK_AVATAR: https://emoji.slack-edge.com/T032Z0S1J/rocket_vault/db3b32d9d9f82429.png
+          SLACK_CUSTOM_PAYLOAD: ${{ steps.blocks.output.json }}

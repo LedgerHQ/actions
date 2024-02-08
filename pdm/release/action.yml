@@ -1,0 +1,143 @@
+name: Release
+description: Bump version and publish release assets
+
+inputs:
+  kind:
+    description: Kind of project to release (lib/app)
+    required: true
+    default: app
+  pypi-token:
+    description: A Token to Ledger private PyPI
+    required: true
+    default: ""
+  github-token:
+    description: A Github token with 
+    required: true
+  increment:
+    description: "Kind of increment (optional: MAJOR|MINOR|PATCH)"
+    default: ''
+    required: false
+
+
+outputs:
+  url: 
+    description: The generated Github Release URL
+    value: ${{ steps.release.outputs.url }}
+  version: 
+    description: The released version
+    value: ${{ steps.bump.outputs.version }}
+  documentation: 
+    description: The released documentation URL
+    value: ${{ steps.doc.outputs.url }}
+
+
+runs:
+  using: composite
+  steps:
+    - name: Clone and install dependencies
+      uses: LedgerHQ/actions/pdm/init@main
+      with:
+        group: docs
+        history: true
+        github-token: ${{ inputs.github-token }}
+        pypi-token: ${{ inputs.pypi-token }}
+        python-version: "3.11"
+
+    - name: Bump using commitizen
+      id: bump
+      run: |
+        CMD=('pdm' 'bump' '--changelog-to-stdout')
+        if [[ $INPUT_INCREMENT ]]; then
+          CMD+=('--increment' "$INPUT_INCREMENT")
+        fi
+        "${CMD[@]}" > body.md
+
+        REV="$(pdm run cz version --project)"
+        echo "REVISION=${REV}" >>"$GITHUB_ENV"
+        echo "version=${REV}" >>"$GITHUB_OUTPUT"
+      env:
+        FORCE_COLOR: true
+      shell: bash
+
+    # Build once to publish the same package on every repository
+    - name: Build distribution
+      if: inputs.kind == 'lib'
+      run: pdm build
+      env:
+        FORCE_COLOR: true
+      shell: bash
+
+    - name: Push to GemFury
+      if: inputs.kind == 'lib' && env.PDM_PUBLISH_USERNAME != null
+      env:
+        PDM_PUBLISH_REPO: https://push.fury.io/ledger
+        PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
+        PDM_PUBLISH_PASSWORD: "-" # tricks github actions YAML parser and PDM test for empty password
+        FORCE_COLOR: true
+      run: pdm publish --no-build
+      shell: bash
+
+    - name: Push to our internal Nexus
+      if: inputs.kind == 'lib' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
+      env:
+        PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/pypi-internal/
+        PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
+        PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
+        FORCE_COLOR: true
+      run: pdm publish --no-build
+      shell: bash
+
+    - name: Docker image
+      uses: LedgerHQ/actions/pdm/docker@main
+      id: docker
+      if: inputs.kind == 'app'
+      with:
+        clone: false
+        version: ${{ env.REVISION }}
+        pypi-token: ${{ inputs.pypi-token }}
+        github-token: ${{ inputs.github-token }}
+
+    - name: Add docker image to release body
+      if: steps.docker.outputs.image
+      run: |
+        echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
+      shell: bash
+
+    - name: Documentation
+      id: doc
+      uses: LedgerHQ/actions/pdm/doc@main
+      with:
+        version: ${{ env.REVISION }}
+        pypi-token: ${{ inputs.pypi-token }}
+        openapi: ${{ inputs.kind == 'app' }}
+        site: true
+        init: false
+
+    - name: Add doc to release body
+      if: steps.doc.outputs.url
+      run: |
+        echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
+      shell: bash
+
+    - name: Push release commit and tag
+      run: |
+        git push -f
+        git push -f origin ${{ env.REVISION }}
+      shell: bash
+
+    - name: Github Release
+      id: release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: "body.md"
+        tag_name: ${{ env.REVISION }}
+        token: ${{ inputs.github-token }}
+        fail_on_unmatched_files: false
+        files: |
+          dist/*
+          docs/openapi.yaml
+          CHANGELOG.md
+  
+    - name: Publish summary
+      run: echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
+      shell: bash

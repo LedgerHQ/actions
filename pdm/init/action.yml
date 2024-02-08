@@ -1,0 +1,51 @@
+name: Initialize `pdm`
+description: Install Python and `pdm` with cache and extract metadata
+
+inputs:
+  python-version:
+    description: Python version to use
+    required: true
+    default: "3.11"
+  group:
+    description: Dependency group to install
+  history:
+    description: Fetch the full history
+    required: false
+    default: false
+  pypi-token:
+    description: Private PyPI token (read)
+    required: false
+    default: ""
+  github-token:
+    description: A Github token with proper permissions
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Clone
+      uses: actions/checkout@v4
+      with:
+        token: ${{ inputs.github-token }}
+        fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
+
+    - name: Setup git
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@ledger.fr
+      shell: bash
+
+    - name: Set up Python and PDM
+      uses: pdm-project/setup-pdm@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: true
+
+    - name: Install dependencies
+      run: |
+        echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
+        pdm sync --dev --group ${{ inputs.group }}
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
+      shell: bash
