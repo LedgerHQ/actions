@@ -55,10 +55,11 @@ runs:
           HELM_OPTIONS: ${{ inputs.helm-options }}
         run: |
           set -e
+          HERE=$(pwd)
           cd $HELM_CHART_FOLDER
           helm dependency build .
           helm template . $HELM_OPTIONS > helm-rendered.yaml
-
+          mv helm-rendered.yaml ${HERE}/
 
       - name: Set up kubeconform
         shell: bash
@@ -76,6 +77,4 @@ runs:
           KUBERNETES_VERSION: ${{ inputs.kubernetes-tested-version}}
           DATATREE_CRD_CATALOG_URL: 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/${{ inputs.datatree-crd-catalog-version }}/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
         run: |
-          echo $(pwd) #debug
-          ls
           ./kubeconform -strict -exit-on-error -summary -schema-location default -schema-location $DATATREE_CRD_CATALOG_URL helm-rendered.yaml
