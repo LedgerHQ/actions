@@ -67,7 +67,7 @@ runs:
           OS=$(uname)
           curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" | tar -xzf - kubeconform
 
-     - name: Run kubeconform 
+      - name: Run kubeconform
         shell: bash
         env:
           KUBERNETES_VERSION: ${{ inputs.kubernetes-tested-version}}
