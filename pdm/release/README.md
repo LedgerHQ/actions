@@ -19,7 +19,7 @@ jobs:
 | `kind` | Kind of project to release (lib/app) | `app` | `true` |
 | `pypi-token` | A Token to Ledger private PyPI | `""` | `true` |
 | `github-token` | A Github token with | `""` | `true` |
-| `increment` | Kind of increment (optional: MAJOR|MINOR|PATCH) | `""` | `false` |
+| `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
 
 
 ## Outputs
