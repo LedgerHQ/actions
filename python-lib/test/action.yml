@@ -19,7 +19,7 @@ runs:
         echo "PACKAGE_NAME=$(python -c 'import setuptools;print(setuptools.find_packages(exclude=["tests", "tests.*"])[0])')" >> $GITHUB_ENV
       shell: bash
     - name: Lint
-      uses: pre-commit/action@v3.0.0
+      uses: pre-commit/action@v3.0.1
     - name: Install dependencies
       run: |
         export PIP_EXTRA_INDEX_URL
