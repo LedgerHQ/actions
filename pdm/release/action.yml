@@ -57,6 +57,7 @@ runs:
         echo "version=${REV}" >>"$GITHUB_OUTPUT"
       env:
         FORCE_COLOR: true
+        INPUT_INCREMENT: ${{ inputs.increment }}
       shell: bash
 
     # Build once to publish the same package on every repository
