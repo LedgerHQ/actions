@@ -44,16 +44,16 @@ runs:
             {
               "type": "header",
               "text": {
-              "type": "plain_text",
-              "text": ":rocket_vault: \($project) \($version) :rocket_vault:",
-              "emoji": true
+                "type": "plain_text",
+                "text": ":rocket_vault: \($project) \($version) :rocket_vault:",
+                "emoji": true
               }
             },
             {
               "type": "section",
               "text": {
-              "type": "mrkdwn",
-              "text": "\($project) has been released in version \($version) :point_down:"
+                "type": "mrkdwn",
+                "text": "\($project) has been released in version \($version) :point_down:"
               }
             }
           ]
@@ -122,7 +122,12 @@ runs:
         fi
 
         JSON=$(echo $JSON | jq --argjson actions "$ACTIONS" '.blocks += [$actions]')
-        echo "json=$JSON" >> $GITHUB_OUTPUT
+
+        # Only way to return multiline output
+        echo "json<<JSON" >> $GITHUB_OUTPUT
+        echo "$JSON" >> $GITHUB_OUTPUT
+        echo "JSON" >> $GITHUB_OUTPUT
+
       shell: bash
 
     - name: Send Slack notification
