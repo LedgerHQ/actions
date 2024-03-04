@@ -47,10 +47,10 @@ runs:
         pdm config install.cache true
       shell: bash
 
-    - name: Install dependencies
+    - name: Install dependencies (main, all extras and specified dev group)
       run: |
         echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
-        pdm sync --dev --group ${{ inputs.group }}
+        pdm sync --group :all --dev --group ${{ inputs.group }}
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
       shell: bash
