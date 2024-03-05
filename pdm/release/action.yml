@@ -11,7 +11,7 @@ inputs:
     required: true
     default: ""
   github-token:
-    description: A Github token with 
+    description: A Github token with
     required: true
   increment:
     description: "Kind of increment (optional: MAJOR|MINOR|PATCH)"
@@ -20,13 +20,13 @@ inputs:
 
 
 outputs:
-  url: 
+  url:
     description: The generated Github Release URL
     value: ${{ steps.release.outputs.url }}
-  version: 
+  version:
     description: The released version
     value: ${{ steps.bump.outputs.version }}
-  documentation: 
+  documentation:
     description: The released documentation URL
     value: ${{ steps.doc.outputs.url }}
 
@@ -46,7 +46,7 @@ runs:
     - name: Bump using commitizen
       id: bump
       run: |
-        CMD=('pdm' 'bump' '--changelog-to-stdout')
+        CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
         if [[ $INPUT_INCREMENT ]]; then
           CMD+=('--increment' "$INPUT_INCREMENT")
         fi
@@ -138,7 +138,7 @@ runs:
           dist/*
           docs/openapi.yaml
           CHANGELOG.md
-  
+
     - name: Publish summary
       run: echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
       shell: bash
