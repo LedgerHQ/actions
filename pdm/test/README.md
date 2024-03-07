@@ -20,6 +20,7 @@ jobs:
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `init` | Clone & sync | `true` | `false` |
+| `parameters` | Some extra paramaters to the `pdm cover` command | `""` | `false` |
 
 
 ## Outputs
