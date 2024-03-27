@@ -54,10 +54,10 @@ runs:
     - name: Install dependencies (main, all extras and specified dev group)
       run: |
         echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
-        params="--group :all --dev"
-        [ -z "${GROUPS}" ] && params+=" --group ${GROUPS}"
-        [ -z "${EXCLUDED_GROUPS}" ] && params+=" --without ${EXCLUDED_GROUPS}"
-        pdm sync "${params}"
+        params=(--group :all --dev)
+        [ -z "${GROUPS}" ] || params+=(--group ${GROUPS})
+        [ -z "${EXCLUDED_GROUPS}" ] || params+=(--without ${EXCLUDED_GROUPS})
+        pdm sync "${params[@]}"
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
         GROUPS: ${{ inputs.group }}
