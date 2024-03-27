@@ -16,9 +16,10 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
+| `clone` | Wether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
-| `github-token` | A Github token with | `""` | `false` |
+| `github-token` | A Github token with proper permissions | `""` | `false` |
 
 
 ## Outputs

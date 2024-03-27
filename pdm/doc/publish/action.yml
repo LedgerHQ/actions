@@ -17,6 +17,12 @@ inputs:
   init:
     description: Clone & sync
     default: true
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
 
 outputs:
   url:
@@ -30,14 +36,15 @@ runs:
       if: inputs.init == 'true'
       uses: LedgerHQ/actions/pdm/init@main
       with:
-        group: docs
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
         history: true
         pypi-token: ${{ inputs.pypi-token }}
 
     - uses: actions/download-artifact@v4
       with:
         name: changelog
-    
+
     - uses: actions/download-artifact@v4
       if: inputs.openapi == 'true'
       with:

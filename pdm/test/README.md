@@ -20,7 +20,9 @@ jobs:
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `init` | Clone & sync | `true` | `false` |
-| `parameters` | Some extra paramaters to the `pdm cover` command | `""` | `false` |
+| `parameters` | Some extra parameters to pass to `pdm cover` | `""` | `false` |
+| `group` | Dependency group(s) to install | `test` | `false` |
+| `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
 
 ## Outputs

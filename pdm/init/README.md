@@ -17,7 +17,8 @@ jobs:
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
 | `python-version` | Python version to use | `3.11` | `true` |
-| `group` | Dependency group to install | `""` | `false` |
+| `group` | Dependency group(s) to install | `""` | `false` |
+| `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `history` | Fetch the full history | `false` | `false` |
 | `pypi-token` | Private PyPI token (read) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |

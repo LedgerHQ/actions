@@ -7,7 +7,11 @@ inputs:
     required: true
     default: "3.11"
   group:
-    description: Dependency group to install
+    description: Dependency group(s) to install
+    default: ''
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
   history:
     description: Fetch the full history
     required: false
@@ -50,7 +54,12 @@ runs:
     - name: Install dependencies (main, all extras and specified dev group)
       run: |
         echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
-        pdm sync --group :all --dev --group ${{ inputs.group }}
+        params="--group :all --dev"
+        [ -z "${GROUPS}" ] && params+=" --group ${GROUPS}"
+        [ -z "${EXCLUDED_GROUPS}" ] && params+=" --without ${EXCLUDED_GROUPS}"
+        pdm sync "${params}"
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
+        GROUPS: ${{ inputs.group }}
+        EXCLUDED_GROUPS: ${{ inputs.exclude-group }}
       shell: bash

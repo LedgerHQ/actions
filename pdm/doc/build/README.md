@@ -21,6 +21,8 @@ jobs:
 | `openapi` | Whether or not to build OpenAPI specs | `false` | `false` |
 | `site` | Whether or not to build a documentation site | `false` | `false` |
 | `init` | Clone & sync | `true` | `false` |
+| `group` | Dependency group(s) to install | `docs` | `false` |
+| `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
 
 ## Outputs

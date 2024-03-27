@@ -15,8 +15,13 @@ inputs:
     required: true
   increment:
     description: "Kind of increment (optional: MAJOR|MINOR|PATCH)"
-    default: ''
     required: false
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
 
 
 outputs:
@@ -37,7 +42,8 @@ runs:
     - name: Clone and install dependencies
       uses: LedgerHQ/actions/pdm/init@main
       with:
-        group: docs
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
         history: true
         github-token: ${{ inputs.github-token }}
         pypi-token: ${{ inputs.pypi-token }}

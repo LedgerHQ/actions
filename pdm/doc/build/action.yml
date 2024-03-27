@@ -18,6 +18,12 @@ inputs:
   init:
     description: Clone & sync
     default: true
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
 
 runs:
   using: composite
@@ -26,7 +32,8 @@ runs:
       uses: LedgerHQ/actions/pdm/init@main
       if: inputs.init == 'true'
       with:
-        group: docs
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
         history: true
         pypi-token: ${{ inputs.pypi-token }}
         python-version: ${{ inputs.python-version }}
@@ -64,7 +71,7 @@ runs:
       env:
         FORCE_COLOR: true
       shell: bash
-      
+
     - name: Upload the generated documentation
       if: inputs.site == 'true'
       uses: actions/upload-artifact@v4
