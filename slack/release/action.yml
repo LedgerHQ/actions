@@ -26,7 +26,7 @@ runs:
   steps:
     - name: Build Slacks blocks
       id: blocks
-      run: | 
+      run: |
         PROJECT="${{ inputs.project }}"
         VERSION="${{ inputs.version }}"
         REPOSITORY="${{ github.repository }}"
@@ -137,4 +137,4 @@ runs:
           SLACK_WEBHOOK: ${{ inputs.webhook-url }}
           SLACK_CHANNEL: ${{ inputs.channel }}
           SLACK_AVATAR: https://emoji.slack-edge.com/T032Z0S1J/rocket_vault/db3b32d9d9f82429.png
-          SLACK_CUSTOM_PAYLOAD: ${{ steps.blocks.output.json }}
+          SLACK_CUSTOM_PAYLOAD: ${{ steps.blocks.outputs.json }}
