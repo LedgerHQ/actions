@@ -19,6 +19,12 @@ inputs:
   parameters:
     description: Some extra parameters to pass to `pdm cover`
     default: ""
+  group:
+    description: Dependency group(s) to install
+    default: test
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
 
 runs:
   using: composite
@@ -28,7 +34,8 @@ runs:
       uses: LedgerHQ/actions/pdm/init@main
       with:
         python-version: ${{ inputs.python-version }}
-        group: test
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
         pypi-token: ${{ inputs.pypi-token }}
 
     - name: Run Tests

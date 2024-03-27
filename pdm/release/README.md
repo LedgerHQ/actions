@@ -20,6 +20,8 @@ jobs:
 | `pypi-token` | A Token to Ledger private PyPI | `""` | `true` |
 | `github-token` | A Github token with | `""` | `true` |
 | `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
+| `group` | Dependency group(s) to install | `docs` | `false` |
+| `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
 
 ## Outputs

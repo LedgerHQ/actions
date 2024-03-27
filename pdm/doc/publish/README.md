@@ -21,6 +21,8 @@ jobs:
 | `site` | Publish a documentation site | `false` | `false` |
 | `pypi-token` | A read token for private PyPI access | `""` | `false` |
 | `init` | Clone & sync | `true` | `false` |
+| `group` | Dependency group(s) to install | `docs` | `false` |
+| `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
 
 ## Outputs
