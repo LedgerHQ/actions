@@ -41,6 +41,7 @@ runs:
   steps:
     - name: Clone and install dependencies
       uses: LedgerHQ/actions/pdm/init@main
+      id: meta
       with:
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
@@ -97,7 +98,7 @@ runs:
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
-      if: inputs.kind == 'app'
+      if: inputs.kind == 'app' and steps.meta.outputs.has_docker
       with:
         clone: false
         version: ${{ env.REVISION }}
@@ -116,7 +117,7 @@ runs:
       with:
         version: ${{ env.REVISION }}
         pypi-token: ${{ inputs.pypi-token }}
-        openapi: ${{ inputs.kind == 'app' }}
+        openapi: ${{ inputs.kind == 'app' && steps.meta.outputs.has_openapi }}
         site: true
         init: false
 

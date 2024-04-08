@@ -26,5 +26,12 @@ jobs:
 
 ## Outputs
 
-N/A
+| Output | Description |
+|--------|-------------|
+| `has_tests` | Wether the project has tests exposed through the `test` command |
+| `has_coverage` | Wether the project has tests with coverage exposed through the `cover` command |
+| `has_docs` | Wether the project has a documentation exposed through the `doc` command |
+| `has_openapi` | Wether the project has an OpenAPI specification exposed through the `doc:openapi` command |
+| `has_docker` | Wether the project a Docker image (aka. a `Dockerfile` present at root) |
+
 

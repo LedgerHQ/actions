@@ -25,6 +25,24 @@ inputs:
     required: false
     default: ${{ github.token }}
 
+outputs:
+  has_tests:
+    description: Wether the project has tests exposed through the `test` command
+    value: ${{ steps.meta.outputs.has_tests }}
+  has_coverage:
+    description: Wether the project has tests with coverage exposed through the `cover` command
+    value: ${{ steps.meta.outputs.has_coverage }}
+  has_docs:
+    description: Wether the project has a documentation exposed through the `doc` command
+    value: ${{ steps.meta.outputs.has_docs }}
+  has_openapi:
+    description: Wether the project has an OpenAPI specification exposed through the `doc:openapi` command
+    value: ${{ steps.meta.outputs.has_openapi }}
+  has_docker:
+    description: Wether the project a Docker image (aka. a `Dockerfile` present at root)
+    value: ${{ steps.meta.outputs.has_docker }}
+
+
 runs:
   using: composite
   steps:
@@ -62,4 +80,28 @@ runs:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
         GROUPS: ${{ inputs.group }}
         EXCLUDED_GROUPS: ${{ inputs.exclude-group }}
+      shell: bash
+
+    - name: Extract some metadata
+      id: meta
+      run: |
+        COMMANDS=$(pdm run --json)
+
+        HAS_TESTS=$(jq 'has("test")' <<< "$COMMANDS")
+        echo "has_tests=${HAS_TESTS}" >> $GITHUB_OUTPUT
+
+        HAS_COVERAGE=$(jq 'has("cover")' <<< "$COMMANDS")
+        echo "has_coverage=${HAS_COVERAGE}" >> $GITHUB_OUTPUT
+
+        HAS_DOCS=$(jq 'has("doc")' <<< "$COMMANDS")
+        echo "has_docs=${HAS_DOCS}" >> $GITHUB_OUTPUT
+
+        HAS_OPENAPI=$(jq 'has("doc:openapi")' <<< "$COMMANDS")
+        echo "has_openapi=${HAS_OPENAPI}" >> $GITHUB_OUTPUT
+
+        [ -f Dockerfile ] && HAS_DOCKER='true' || HAS_DOCKER='false'
+        echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
+      shell: bash
+    - name: Display commands output
+      run: echo "${{ toJson(steps.meta.outputs) }}"
       shell: bash
