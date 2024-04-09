@@ -31,7 +31,7 @@ runs:
         path: ${{ inputs.allure-results-path }}/allure-results
     - name: Publish report on Allure Server
       id: allure-server
-      uses: LedgerHQ/send-to-allure-server-action@2.0.0
+      uses: LedgerHQ/send-to-allure-server-action@2.1.2
       with:
         allure-server-url: "https://allure-server.aws.prd.ldg-tech.com"
         build-name: ${{ github.workflow }}
