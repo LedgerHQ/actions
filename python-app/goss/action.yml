@@ -25,7 +25,7 @@ runs:
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Set up Docker Buildx
