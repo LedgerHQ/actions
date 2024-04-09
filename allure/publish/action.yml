@@ -25,7 +25,7 @@ runs:
   using: "composite"
   steps:
     - name: Upload Allure Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: "allure-results"
         path: ${{ inputs.allure-results-path }}/allure-results
