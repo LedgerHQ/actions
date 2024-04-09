@@ -31,6 +31,7 @@ runs:
   steps:
     - name: Clone and install dependencies
       if: inputs.init == 'true'
+      id: meta
       uses: LedgerHQ/actions/pdm/init@main
       with:
         python-version: ${{ inputs.python-version }}
@@ -49,6 +50,7 @@ runs:
       uses: MishaKav/pytest-coverage-comment@v1.1.51
       with:
         github-token: ${{ inputs.github-token }}
+        coverage-path-prefix: ${{ steps.meta.outputs.has_src && 'src/' || '' }}
         pytest-xml-coverage-path: ./reports/coverage.xml
         junitxml-path: ./reports/tests.xml
         title: Coverage Report for Python ${{ inputs.python-version }}

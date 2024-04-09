@@ -41,6 +41,9 @@ outputs:
   has_docker:
     description: Wether the project a Docker image (aka. a `Dockerfile` present at root)
     value: ${{ steps.meta.outputs.has_docker }}
+  has_src:
+    description: Wether the project is using a `src` layout or not
+    value: ${{ steps.meta.outputs.has_src }}
 
 
 runs:
@@ -101,6 +104,9 @@ runs:
 
         [ -f Dockerfile ] && HAS_DOCKER='true' || HAS_DOCKER='false'
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
+
+        [ -d src/ ] && HAS_SRC='true' || HAS_SRC='false'
+        echo "has_src=${HAS_SRC}" >> $GITHUB_OUTPUT
       shell: bash
     - name: Display commands output
       run: echo "${{ toJson(steps.meta.outputs) }}"
