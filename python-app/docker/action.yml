@@ -54,7 +54,7 @@ runs:
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Docker meta
       id: meta
-      uses: docker/metadata-action@v3
+      uses: docker/metadata-action@v5
       with:
         images: ${{ env.IMAGE }}
         flavor: |
