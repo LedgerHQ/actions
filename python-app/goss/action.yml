@@ -48,7 +48,7 @@ runs:
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Install Goss
-      uses: e1himself/goss-installation-action@v1.0.3
+      uses: e1himself/goss-installation-action@v1.2.1
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Run GOSS validation
