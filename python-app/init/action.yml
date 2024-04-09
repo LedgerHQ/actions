@@ -25,7 +25,7 @@ runs:
       shell: bash
 
     - name: setup python with parsed version
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ steps.parse-python-version.outputs.python-version }}
         cache: 'pipenv'
