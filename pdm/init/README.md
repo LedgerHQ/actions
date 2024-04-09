@@ -33,5 +33,6 @@ jobs:
 | `has_docs` | Wether the project has a documentation exposed through the `doc` command |
 | `has_openapi` | Wether the project has an OpenAPI specification exposed through the `doc:openapi` command |
 | `has_docker` | Wether the project a Docker image (aka. a `Dockerfile` present at root) |
+| `has_src` | Wether the project is using a `src` layout or not |
 
 
