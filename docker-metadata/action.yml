@@ -63,7 +63,7 @@ runs:
       shell: bash
     - name: Build docker metadata
       id: docker
-      uses: docker/metadata-action@v4
+      uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.images }}
         flavor: latest=false
