@@ -135,7 +135,7 @@ runs:
 
     - name: Github Release
       id: release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         body_path: "body.md"
         tag_name: ${{ env.REVISION }}
