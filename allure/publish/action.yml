@@ -60,7 +60,7 @@ runs:
       shell: bash
     - name: Send notification to Slack
       if: inputs.slack-webhook-url
-      uses: LedgerHQ/slack-action@v1.5
+      uses: LedgerHQ/slack-action@1.6
       env:
         SLACK_WEBHOOK: ${{ inputs.slack-webhook-url }}
       with:
