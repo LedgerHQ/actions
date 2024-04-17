@@ -98,7 +98,7 @@ runs:
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
-      if: inputs.kind == 'app' and steps.meta.outputs.has_docker
+      if: inputs.kind == 'app' && steps.meta.outputs.has_docker
       with:
         clone: false
         version: ${{ env.REVISION }}
