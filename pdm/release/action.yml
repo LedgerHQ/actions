@@ -76,6 +76,7 @@ runs:
       shell: bash
 
     - name: Push to GemFury
+      id: gemfury
       if: inputs.kind == 'lib' && env.PDM_PUBLISH_USERNAME != null
       env:
         PDM_PUBLISH_REPO: https://push.fury.io/ledger
@@ -86,9 +87,10 @@ runs:
       shell: bash
 
     - name: Push to our internal Nexus
+      id: nexus
       if: inputs.kind == 'lib' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
       env:
-        PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/pypi-internal/
+        PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/${{ env.NEXUS_REPO || 'pypi-internal'}}/
         PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
         PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
         FORCE_COLOR: true
@@ -107,12 +109,14 @@ runs:
 
     - name: Add docker image to release body
       if: steps.docker.outputs.image
+      continue-on-error: true  # Not critical
       run: |
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
       shell: bash
 
     - name: Documentation
       id: doc
+      continue-on-error: true  # Can be manually published after
       uses: LedgerHQ/actions/pdm/doc@main
       with:
         version: ${{ env.REVISION }}
@@ -123,6 +127,7 @@ runs:
 
     - name: Add doc to release body
       if: steps.doc.outputs.url
+      continue-on-error: true  # Not critical
       run: |
         echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
       shell: bash
@@ -135,6 +140,7 @@ runs:
 
     - name: Github Release
       id: release
+      continue-on-error: true  # Can be manually published after
       uses: softprops/action-gh-release@v2
       with:
         body_path: "body.md"
@@ -147,5 +153,65 @@ runs:
           CHANGELOG.md
 
     - name: Publish summary
+      continue-on-error: true
       run: echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
       shell: bash
+
+    # Cleanup published artifacts if tag push failed
+    - name: Show release failure in summary
+      # Runs on release failure if doc has been published
+      if: always() && job.status == 'failure'
+      run: |
+        echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
+        echo "DIST=$(pdm show --name)" >> $GITHUB_ENV
+
+    - name: Cleanup documentation
+      # Runs on release failure if doc has been published
+      if: always() && job.status == 'failure' && steps.doc.outcome == 'success'
+      run: |
+        pdm run mike delete --push ${REVISION}
+        echo "🧹 Documentation for version ${REVISION} has been removed" >> $GITHUB_STEP_SUMMARY
+
+    - name: Cleanup docker
+      # Runs on release failure if docker has been published
+      if: always() && job.status == 'failure' && steps.docker.outcome == 'success'
+      run: |
+        # See:
+        #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
+        #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
+        GHAPI=("gh" "api" "-H" "Accept: application/vnd.github+json" "-H" "X-GitHub-Api-Version: 2022-11-28")
+        PKG='${{ github.event.repository.name }}'
+        VERSIONS=$(${GHAPI[@]} /orgs/LedgerHQ/packages/container/${PKG}/versions)
+        QUERY='.[] | select(.name == "${{ steps.docker.outputs.digest }}") | .id'
+        VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
+        ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
+        IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
+
+    - name: Cleanup Nexus
+      # Runs on release failure if package has been published on Nexus
+      if: always() && job.status == 'failure' && steps.nexus.outcome == 'success'
+      run: |
+        # See:
+        #   - https://help.sonatype.com/en/search-api.html#SearchAPI-SearchComponents
+        #   - https://help.sonatype.com/en/components-api.html#delete-component
+        API="https://${NEXUS_HOST}/service/rest/v1"
+        CURL=("curl" "-u" "${NEXUS_USER}:${NEXUS_PASSWORD}")
+        REPO=${NEXUS_REPO:-'pypi-internal'}
+        CANDIDATES=$(${CURL[@]} "${API}/search?repository=${REPO}&name=${DIST}&version=${REVISION}")
+        COMPONENT_ID=$(echo ${CANDIDATES} | jq --raw-output ".items[0].id")
+        ${CURL[@]} -X DELETE "${API}/components/${COMPONENT_ID}"
+        echo "🧹 Nexus package for \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+
+    - name: Cleanup GemFury
+      # Runs on release failure if package has been published to GemFury
+      if: always() && job.status == 'failure' && steps.gemfury.outcome == 'success'
+      run: |
+        # See:
+        #   - https://github.com/gemfury/cli/blob/main/api/yank.go
+        #   - https://github.com/gemfury/cli/blob/main/api/client.go
+        curl -X DELETE \
+             -H "Accept: application/vnd.fury.v1" \
+             -H "Authorization: ${{ inputs.pypi-token }}" \
+             https://api.fury.io/packages/${DIST}/versions/${REVISION}
+        echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
