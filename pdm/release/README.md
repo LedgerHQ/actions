@@ -23,6 +23,18 @@ jobs:
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
+## Environment variables
+
+### Publishing on Nexus
+
+Those variables are required if you want to publish you package on Nexus.
+
+| Name | Description | Default | Required |
+|------|-------------|---------|----------|
+| `NEXUS_HOST` | The Nexus repository host (without the `https?://` prefix) | | `true` |
+| `NEXUS_USER` | The Nexus username to authenticate with | | `true` |
+| `NEXUS_PASSWORD` | The Nexus password to authenticate with | | `true` |
+| `NEXUS_REPO` | The Nexus repository to publish in | `pypi-internal` | `false` |
 
 ## Outputs
 
