@@ -7,7 +7,7 @@ inputs:
     required: true
     default: app
   pypi-token:
-    description: A Token to Ledger private PyPI
+    description: A Token to publish on PyPI (private or public)
     required: true
     default: ""
   github-token:
@@ -22,6 +22,10 @@ inputs:
   exclude-group:
     description: Dependency group(s) to exclude from install
     default: ''
+  public:
+    description: Is it a public library ?
+    default: 'false'
+
 
 
 outputs:
@@ -77,7 +81,7 @@ runs:
 
     - name: Push to GemFury
       id: gemfury
-      if: inputs.kind == 'lib' && env.PDM_PUBLISH_USERNAME != null
+      if: inputs.kind == 'lib' && inputs.public != 'true' && env.PDM_PUBLISH_USERNAME != null
       env:
         PDM_PUBLISH_REPO: https://push.fury.io/ledger
         PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
@@ -88,11 +92,20 @@ runs:
 
     - name: Push to our internal Nexus
       id: nexus
-      if: inputs.kind == 'lib' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
+      if: inputs.kind == 'lib' && inputs.public != 'true' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
       env:
         PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/${{ env.NEXUS_REPO || 'pypi-internal'}}/
         PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
         PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
+        FORCE_COLOR: true
+      run: pdm publish --no-build
+      shell: bash
+
+    - name: Push to PyPI
+      id: pypi
+      if: inputs.kind == 'lib' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      env:
+        PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
         FORCE_COLOR: true
       run: pdm publish --no-build
       shell: bash
@@ -215,3 +228,11 @@ runs:
              -H "Authorization: ${{ inputs.pypi-token }}" \
              https://api.fury.io/packages/${DIST}/versions/${REVISION}
         echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+
+    - name: Cleanup PyPI
+      # Runs on release failure if package has been published to PyPI
+      if: always() && job.status == 'failure' && steps.pypi.outcome == 'success'
+      run: |
+        # See: https://pypi.org/help/#file-name-reuse
+        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." >> $GITHUB_STEP_SUMMARY
+        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." >> $GITHUB_STEP_SUMMARY
