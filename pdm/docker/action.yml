@@ -3,8 +3,8 @@ description: Build Docker image
 
 inputs:
   clone:
-    description: Wether to clone or not
-    default: true
+    description: Whether to clone or not
+    default: 'true'
   version:
     description: Force the built version
   pypi-token:

@@ -15,4 +15,3 @@ Provides some reusable PDM actions.
 | [Test (`test`)](test/) | Execute test using `pdm` scripts |
 | [Build documentation (`doc/build`)](doc/build/) | Build the documentation using `pdm` commands |
 | [Publish documentation (`doc/publish`)](doc/publish/) | Publish the documentation |
-

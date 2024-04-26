@@ -7,16 +7,16 @@ inputs:
     required: false
   openapi:
     description: Has OpenAPI specs
-    default: false
+    default: 'false'
   site:
     description: Publish a documentation site
-    default: false
+    default: 'false'
   pypi-token:
     description: A read token for private PyPI access
     required: false
   init:
     description: Clone & sync
-    default: true
+    default: 'true'
   python-version:
     description: Python version used to build
     required: false

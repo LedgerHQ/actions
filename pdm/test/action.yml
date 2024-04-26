@@ -15,7 +15,7 @@ inputs:
     default: ${{ github.token }}
   init:
     description: Clone & sync
-    default: true
+    default: 'true'
   parameters:
     description: Some extra parameters to pass to `pdm cover`
     default: ""
@@ -42,7 +42,7 @@ runs:
     - name: Run Tests
       run: pdm cover -v --force-sugar --color=yes ${{ inputs.parameters }}
       env:
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       shell: bash
 
     - name: Pytest coverage comment

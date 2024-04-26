@@ -1,6 +1,6 @@
 # helm
 
-See the [Vault helm workflow](.github/workflows/vault_helm_lint_publish.yml) as an example. 
+See the [Vault helm workflow](.github/workflows/vault_helm_lint_publish.yml) as an example.
 
 It is combining below actions to meet Vault needs.
 
@@ -8,7 +8,7 @@ Please create your own reusable workflow matching your need
 
 ## helm-conform action
 
-Check the chart conformity with K8 version using https://github.com/yannh/kubeconform
+Check the chart conformity with K8 version using <https://github.com/yannh/kubeconform>
 
 ```yaml
   - name: Verify conformity
@@ -24,7 +24,7 @@ Here is the schemas-path [documentation](https://github.com/yannh/kubeconform#ov
 
 ## helm-lint action
 
-Lint the helm chart using https://github.com/helm/chart-testing
+Lint the helm chart using <https://github.com/helm/chart-testing>
 
 ```yaml
   - name: Run lint on chart
@@ -54,7 +54,7 @@ It need `secrets: inherit` to be used within another workflow
 ## argocd-test action
 
 Test that the helm chart in argocd/base renders.
-Also verify the comformity of the ressources.
+Also verify the comformity of the resources.
 
 ```yaml
   - uses: LedgerHQ/actions/helm/argocd-test@main

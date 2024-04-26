@@ -14,7 +14,7 @@ inputs:
     description: Specify the github token to login to ghcr.io
     required: true
   helm-version:
-    description:
+    description: Helm version
     required: true
     default: "v3.13.3"
   kubernetes-tested-version:

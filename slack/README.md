@@ -7,4 +7,3 @@ Provides some reusable Slack actions.
 | Name | Description |
 |--------|-------------|
 | [Slack Notify Release (`release`)](release/) | Dispatch a Slack release Notification in a given channel |
-

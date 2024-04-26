@@ -18,8 +18,6 @@ jobs:
 |-------|-------------|---------|----------|
 | `python-version` | Python version used to build | `3.11` | `false` |
 
-
 ## Outputs
 
 N/A
-

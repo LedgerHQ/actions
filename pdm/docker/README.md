@@ -16,11 +16,10 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
-| `clone` | Wether to clone or not | `true` | `false` |
+| `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
 | `github-token` | A Github token with proper permissions | `""` | `false` |
-
 
 ## Outputs
 
@@ -28,5 +27,3 @@ jobs:
 |--------|-------------|
 | `image` | The published docker image |
 | `digest` | The published docker image digest |
-
-
