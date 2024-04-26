@@ -177,6 +177,7 @@ runs:
       run: |
         echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
         echo "DIST=$(pdm show --name)" >> $GITHUB_ENV
+      shell: bash
 
     - name: Cleanup documentation
       # Runs on release failure if doc has been published
@@ -184,6 +185,7 @@ runs:
       run: |
         pdm run mike delete --push ${REVISION}
         echo "🧹 Documentation for version ${REVISION} has been removed" >> $GITHUB_STEP_SUMMARY
+      shell: bash
 
     - name: Cleanup docker
       # Runs on release failure if docker has been published
@@ -200,6 +202,7 @@ runs:
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
         IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
         echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
+      shell: bash
 
     - name: Cleanup Nexus
       # Runs on release failure if package has been published on Nexus
@@ -215,6 +218,7 @@ runs:
         COMPONENT_ID=$(echo ${CANDIDATES} | jq --raw-output ".items[0].id")
         ${CURL[@]} -X DELETE "${API}/components/${COMPONENT_ID}"
         echo "🧹 Nexus package for \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+      shell: bash
 
     - name: Cleanup GemFury
       # Runs on release failure if package has been published to GemFury
@@ -228,6 +232,7 @@ runs:
              -H "Authorization: ${{ inputs.pypi-token }}" \
              https://api.fury.io/packages/${DIST}/versions/${REVISION}
         echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+      shell: bash
 
     - name: Cleanup PyPI
       # Runs on release failure if package has been published to PyPI
@@ -236,3 +241,4 @@ runs:
         # See: https://pypi.org/help/#file-name-reuse
         echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." >> $GITHUB_STEP_SUMMARY
         echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." >> $GITHUB_STEP_SUMMARY
+      shell: bash
