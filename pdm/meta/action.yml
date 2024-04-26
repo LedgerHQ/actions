@@ -11,16 +11,16 @@ inputs:
 
 outputs:
   has_tests:
-    description: Wether the project has tests exposed through the `test` command
+    description: Whether the project has tests exposed through the `test` command
     value: ${{ steps.commands.outputs.has_tests }}
   has_coverage:
-    description: Wether the project has tests with coverage exposed through the `cover` command
+    description: Whether the project has tests with coverage exposed through the `cover` command
     value: ${{ steps.commands.outputs.has_coverage }}
   has_docs:
-    description: Wether the project has a documentation exposed through the `doc` command
+    description: Whether the project has a documentation exposed through the `doc` command
     value: ${{ steps.commands.outputs.has_docs }}
   has_openapi:
-    description: Wether the project has an OpenAPI specification exposed through the `doc:openapi` command
+    description: Whether the project has an OpenAPI specification exposed through the `doc:openapi` command
     value: ${{ steps.commands.outputs.has_openapi }}
   target:
     description: The target branch in case of pull-request
@@ -32,7 +32,7 @@ outputs:
     description: The real actual branch (resolved in case of pull-request)
     value: ${{ steps.refs.outputs.branch }}
   sha:
-    description: The current commit `sha1` being tested/builded
+    description: The current commit `sha1` being tested/built
     value: ${{ steps.refs.outputs.sha }}
 
 
@@ -99,7 +99,7 @@ runs:
           echo "version=${branch//\//-}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "sha=${sha}" >> $GITHUB_OUTPUT
         else
-          echo "::error ::Unkown case: current build is neither a tag, a branch or a pull request"
+          echo "::error ::Unknown case: current build is neither a tag, a branch or a pull request"
           exit 1
         fi
       shell: bash

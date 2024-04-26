@@ -24,11 +24,8 @@ jobs:
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 
-
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
 | `url` | The published documentation URL |
-
-

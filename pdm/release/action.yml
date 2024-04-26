@@ -67,7 +67,7 @@ runs:
         echo "REVISION=${REV}" >>"$GITHUB_ENV"
         echo "version=${REV}" >>"$GITHUB_OUTPUT"
       env:
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
         INPUT_INCREMENT: ${{ inputs.increment }}
       shell: bash
 
@@ -76,7 +76,7 @@ runs:
       if: inputs.kind == 'lib'
       run: pdm build
       env:
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       shell: bash
 
     - name: Push to GemFury
@@ -86,7 +86,7 @@ runs:
         PDM_PUBLISH_REPO: https://push.fury.io/ledger
         PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
         PDM_PUBLISH_PASSWORD: "-" # tricks github actions YAML parser and PDM test for empty password
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       run: pdm publish --no-build
       shell: bash
 
@@ -97,7 +97,7 @@ runs:
         PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/${{ env.NEXUS_REPO || 'pypi-internal'}}/
         PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
         PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       run: pdm publish --no-build
       shell: bash
 
@@ -106,7 +106,7 @@ runs:
       if: inputs.kind == 'lib' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       run: pdm publish --no-build
       shell: bash
 

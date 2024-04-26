@@ -17,7 +17,7 @@ inputs:
   github-release:
     description: An optional github release URL
   docker:
-    description: An optionnal Docker image URL
+    description: An optional Docker image URL
   documentation:
     description: An optional documentation URL
 

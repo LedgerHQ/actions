@@ -23,11 +23,8 @@ jobs:
 | `init` | Clone & sync | `true` | `false` |
 | `python-version` | Python version used to build | `3.11` | `false` |
 
-
 ## Outputs
 
 | Output | Description |
 |--------|-------------|
 | `url` | The published documentation URL |
-
-

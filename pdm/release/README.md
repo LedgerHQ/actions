@@ -44,5 +44,3 @@ Those variables are required if you want to publish you package on Nexus.
 | `url` | The generated Github Release URL |
 | `version` | The released version |
 | `documentation` | The released documentation URL |
-
-

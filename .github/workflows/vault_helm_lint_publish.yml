@@ -38,7 +38,7 @@ jobs:
         with:
           kubernetes-version: ${{ matrix.k8s }}
           charts-path: ${{ inputs.charts-path }}
-        
+
   publish-chartmuseum-dev:
     name: publish-chartmuseum-dev
     if: inputs.version != ''

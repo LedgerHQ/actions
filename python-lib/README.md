@@ -114,7 +114,7 @@ on:
 
 ## Requirements
 
-Beside chosing the version of python to run, this action does not allow the
+Beside choosing the version of python to run, this action does not allow the
 caller to customize it. *This is on purpose.*
 
 We want all of our python lib repositories to look the same, so here are

@@ -7,16 +7,16 @@ inputs:
     required: false
   openapi:
     description: Has OpenAPI specs
-    default: false
+    default: 'false'
   site:
     description: Publish a documentation site
-    default: false
+    default: 'false'
   pypi-token:
     description: A read token for private PyPI access
     required: false
   init:
     description: Clone & sync
-    default: true
+    default: 'true'
   group:
     description: Dependency group(s) to install
     default: docs
@@ -55,14 +55,14 @@ runs:
       if: inputs.site == 'true' && github.ref == 'refs/heads/main'
       run: pdm doc:deploy --push --update-aliases main latest
       env:
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       shell: bash
 
     - name: Deploy the documentation site (tag)
       if: inputs.site == 'true' && inputs.version || startsWith(github.ref, 'refs/tags')
       run: pdm doc:deploy --push ${{ inputs.version || github.head_ref || github.ref_name }}
       env:
-        FORCE_COLOR: true
+        FORCE_COLOR: 'true'
       shell: bash
 
     - name: Publish summary

@@ -52,7 +52,7 @@ runs:
           echo "version=${branch//\//-}-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           echo "sha=${sha}" >> $GITHUB_OUTPUT
         else
-          echo "::error ::Unkown case: current build is neither a tag, a branch or a pull request"
+          echo "::error ::Unknown case: current build is neither a tag, a branch or a pull request"
           exit 1
         fi
       shell: bash

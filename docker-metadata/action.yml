@@ -54,7 +54,7 @@ runs:
           labels="$labels
           org.opencontainers.image.url=${{ inputs.url }}"
         fi
-        
+
         # Clean up labels and set output
         labels="${labels//'%'/'%25'}"
         labels="${labels//$'\n'/'%0A'}"

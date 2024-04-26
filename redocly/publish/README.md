@@ -14,7 +14,7 @@ Github action to publish a new version of an API spec to redocly.
 ```
 
 By default we publish the spec at the path `openapi/spec.json`.
-If your spec is located elsewhere you can 
+If your spec is located elsewhere you can
 
 ```yaml
     spec-path: "account-reader/tooling/openapi/spec.json"

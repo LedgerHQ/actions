@@ -18,60 +18,50 @@ inputs:
   instance-type:
     description: EC2 Instance Type
     required: false
-    type: string
     default: t3.medium
 
   instance-volume-size:
     description: Volume size for EC2 Instance
     required: false
-    type: number
-    default: 8
+    default: '8'
 
   subnet-id:
     description: VPC Subnet Id
     required: false
-    type: string
     default: subnet-009c04af0177247e8
 
   security-group-id:
     description: Security Group ID
     required: false
-    type: string
     default: sg-010daba499648d1e7
 
   github-token:
     description: GitHub Token
-    type: string
     required: true
 
   label:
     description: EC2 Runner Label
     required: false
-    type: string
-    default: 
+    default: ''
 
   ec2-instance-id:
     description: EC2 Runner ID
     required: false
-    type: string
-    default: 
+    default: ''
 
   aws-nfs-logging:
     description: Flag for enabling or disabling NFS logging
     required: false
-    type: boolean
-    default: false
+    default: 'false'
 
   aws-nfs-host:
     description: NFS host in AWS for logging
     required: false
-    type: string
     default: fs-0f9f29caae5ade69c.efs.eu-west-1.amazonaws.com
 
   github-runner-version:
     description: GitHub runner releases version
     required: false
-    type: string
     default: 2.304.0
 
 outputs:

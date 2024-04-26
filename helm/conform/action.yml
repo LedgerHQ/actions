@@ -1,5 +1,5 @@
 name: "Run Kubeconform"
-description: "Run Kubeconform againt specified K8S version."
+description: "Run Kubeconform against specified K8S version."
 
 inputs:
   kubernetes-version:
@@ -30,7 +30,7 @@ runs:
         env:
           KUBECONFORM_VERSION: ${{ inputs.kuberconform-version }}
           KUBECONFORM_BASE_URL: "https://github.com/yannh/kubeconform/releases/download"
-        run: | 
+        run: |
           set -o pipefail
           OS=$(uname)
           curl -sSfL "${KUBECONFORM_BASE_URL}/${KUBECONFORM_VERSION}/kubeconform-${OS}-amd64.tar.gz" |
