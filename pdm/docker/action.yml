@@ -12,6 +12,12 @@ inputs:
     required: true
   github-token:
     description: A Github token with proper permissions
+  build-args:
+    description: Docker build command extra `build-args` (multiline supported)
+    default: ""
+  secrets:
+    description: Docker build command extra `secrets` (multiline supported)
+    default: ""
 
 
 outputs:
@@ -78,8 +84,10 @@ runs:
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
           DD_GIT_COMMIT_SHA=${{ github.sha }}
+          ${{ inputs.build-args }}
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token }}
+          ${{ inputs.secrets }}
         pull: true
         load: true
         tags: ${{ steps.meta.outputs.tags }}
@@ -108,8 +116,10 @@ runs:
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
           DD_GIT_COMMIT_SHA=${{ github.sha }}
+          ${{ inputs.build-args }}
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token }}
+          ${{ inputs.secrets }}
         pull: ${{ steps.vars.outputs.has_goss != 'true' }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}

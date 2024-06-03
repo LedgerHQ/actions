@@ -20,6 +20,8 @@ jobs:
 | `version` | Force the built version | `""` | `false` |
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
 | `github-token` | A Github token with proper permissions | `""` | `false` |
+| `build-args` | Docker build command extra `build-args` (multiline supported) | `""` | `false` |
+| `secrets` | Docker build command extra `secrets` (multiline supported) | `""` | `false` |
 
 ## Outputs
 
