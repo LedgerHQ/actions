@@ -18,6 +18,9 @@ inputs:
   secrets:
     description: Docker build command extra `secrets` (multiline supported)
     default: ""
+  dgoss-args:
+    description: dgoss extra docker parameters
+    default: ""
 
 
 outputs:
@@ -100,7 +103,7 @@ runs:
       if: steps.vars.outputs.has_goss == 'true'
 
     - name: Run GOSS validation
-      run: dgoss run ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
+      run: dgoss run ${{ inputs.dgoss-args }} ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
       if: steps.vars.outputs.has_goss == 'true'
       env:
         # Make dgoss works with Ledger dind runners

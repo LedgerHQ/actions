@@ -22,6 +22,7 @@ jobs:
 | `github-token` | A Github token with proper permissions | `""` | `false` |
 | `build-args` | Docker build command extra `build-args` (multiline supported) | `""` | `false` |
 | `secrets` | Docker build command extra `secrets` (multiline supported) | `""` | `false` |
+| `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
 
 ## Outputs
 
