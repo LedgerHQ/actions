@@ -109,39 +109,9 @@ runs:
         cp ${{ inputs.doc_output }} ./specs/head-spec.yaml
       shell: bash
 
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-
-    - name: install bump CLI
-      run: |
-        npm install -g bump-cli
-      shell: bash
-
-    - name: create outputs directory
-      run: |
-        mkdir outputs
-      shell: bash
-
-    - name: generate markdown diff
-      run: |
-        # see https://github.com/bump-sh/cli/blob/main/src/flags.ts#L94
-        # the CI env variable is automatically in Github action
-        # we do not want to fails on breaking change
-        # but we want to stop if the diff fail for other reasons
-        unset CI
-        bump diff -f markdown ./specs/base-spec.yaml ./specs/head-spec.yaml > outputs/spec-diff.md
-        bump diff -f text ./specs/base-spec.yaml ./specs/head-spec.yaml > outputs/spec-diff.text
-      shell: bash
-
-    - name: Comment PR with OpenAPI diff
-      uses: thollander/actions-comment-pull-request@v2
-      if: github.event_name == 'pull_request'
+    - name: Generate the OpenAPI diff
+      uses: LedgerHQ/actions/openapi/diff@main
       with:
-        filePath: outputs/spec-diff.md
-        comment_tag: openapi-diff
-
-    - uses: actions/upload-artifact@v3
-      with:
-        name: openapi-diff
-        path: outputs
-        retention-days: 10
+        base: specs/base-spec.yaml
+        head: specs/head-spec.yaml
+        output: outputs/

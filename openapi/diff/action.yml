@@ -1,0 +1,82 @@
+name: OpenAPI Diff
+description: Generate a diff between 2 OpenAPI specifications
+
+inputs:
+  base:
+    description: Base diff specification file
+    required: true
+  head:
+    description: Head diff specification file
+    required: true
+  output:
+    description: Output directory
+    required: true
+    default: reports/openapi
+
+outputs:
+  markdown:
+    description: Path to the generated markdown diff file
+    value: ${{ steps.generate.outputs.markdown }}
+  text:
+    description: Path to the generated text diff file
+    value: ${{ steps.generate.outputs.text }}
+
+runs:
+  using: "composite"
+
+  steps:
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+
+    - name: Install bump CLI
+      run: |
+        npm install -g bump-cli
+      shell: bash
+
+    - name: Create outputs directory
+      run: |
+        mkdir -p ${{ inputs.output }}
+      shell: bash
+
+    - name: generate diff files (markdown & plain text)
+      id: generate
+      run: |
+        # see https://github.com/bump-sh/cli/blob/main/src/flags.ts#L94
+        # the CI env variable is automatically in Github action
+        # we do not want to fails on breaking change
+        # but we want to stop if the diff fail for other reasons
+        unset CI
+
+        echo "Generating Markdown diff"
+        md_output=${{ inputs.output }}/diff.md
+        bump diff -f markdown ${{ inputs.base }} ${{ inputs.head }} > ${md_output}
+        echo "markdown=${md_output}" >> "$GITHUB_OUTPUT"
+
+        # Format diff has PR comment
+        comment=${{ inputs.output }}/pr-comment.md
+        echo "## OpenAPI changes\n" >> ${comment}
+        cat ${md_output} >> ${comment}
+        echo "comment=${comment}" >> "$GITHUB_OUTPUT"
+        # Display diff in the summary
+        cat ${comment} >> $GITHUB_STEP_SUMMARY
+
+        echo "Generating text diff"
+        txt_output=${{ inputs.output }}/diff.txt
+        bump diff -f txt ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
+        echo "text=${txt_output}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Comment PR with OpenAPI diff
+      if: github.event_name == 'pull_request'
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        filePath: ${{ steps.generate.outputs.comment }}
+        comment_tag: openapi-diff
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: openapi-diff
+        path: |
+          ${{ steps.generate.outputs.markdown }}
+          ${{ steps.generate.outputs.text }}
+        retention-days: 10

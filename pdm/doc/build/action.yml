@@ -30,6 +30,7 @@ runs:
   steps:
     - name: Clone and install dependencies
       uses: LedgerHQ/actions/pdm/init@main
+      id: init
       if: inputs.init == 'true'
       with:
         group: ${{ inputs.group }}
@@ -80,3 +81,32 @@ runs:
         path: site/
         retention-days: 7
         if-no-files-found: error
+
+    - name: Backup current OpenAPI specifications
+      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      run: mv docs/openapi.yaml openapi.head.yaml
+      shell: bash
+
+    - name: Checkout base ref
+      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      run: git checkout ${{ github.base_ref }}
+      shell: bash
+
+    - name: Synchronize dependencies
+      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      run: pdm sync
+      shell: bash
+
+    - name: Generate the base OpenAPI specifications
+      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      run: pdm doc:openapi
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    - name: Generate the OpenAPI diff
+      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      uses: LedgerHQ/actions/openapi/diff@main
+      with:
+        base: openapi.base.yaml
+        head: openapi.head.yaml
