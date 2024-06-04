@@ -44,6 +44,9 @@ outputs:
   has_src:
     description: Whether the project is using a `src` layout or not
     value: ${{ steps.meta.outputs.has_src }}
+  is_pr:
+    description: Is the current workflow run a pull-request
+    value: ${{ steps.meta.outputs.is_pr }}
 
 
 runs:
@@ -107,7 +110,7 @@ runs:
 
         [ -d src/ ] && HAS_SRC='true' || HAS_SRC='false'
         echo "has_src=${HAS_SRC}" >> $GITHUB_OUTPUT
-      shell: bash
-    - name: Display commands output
-      run: echo "${{ toJson(steps.meta.outputs) }}"
+
+        IS_PR="${{ github.event_name == 'pull_request' }}"
+        echo "is_pr=${IS_PR}" >> $GITHUB_OUTPUT
       shell: bash
