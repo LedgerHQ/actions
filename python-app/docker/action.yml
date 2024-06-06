@@ -6,6 +6,10 @@ inputs:
     description: "args to pass to docker build"
     required: false
     default: ""
+  platforms:
+    description: "args for build platforms (eg: linux/amd64,linux/arm64)"
+    required: false
+    default: linux/amd64 
 
 outputs:
   version:
@@ -74,7 +78,7 @@ runs:
       name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
       with:
-        platforms: ${{ inputs.PLATFORMS || 'linux/amd64' }}
+        platforms: ${{ inputs.platforms }}
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
