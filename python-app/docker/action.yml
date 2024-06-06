@@ -9,7 +9,7 @@ inputs:
   platforms:
     description: "args for build platforms (eg: linux/amd64,linux/arm64)"
     required: false
-    default: linux/amd64 
+    default: linux/amd64
 
 outputs:
   version:
