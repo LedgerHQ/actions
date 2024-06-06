@@ -72,9 +72,11 @@ runs:
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Set up Docker Buildx
+      env:
+        PLATFORMS: ${{ inputs.PLATFORMS || 'linux/amd64' }}
       uses: docker/setup-buildx-action@v3
       with:
-        platforms: linux/amd64,linux/arm64
+        platforms: $PLATFORMS
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
