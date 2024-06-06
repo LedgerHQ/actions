@@ -62,7 +62,7 @@ runs:
 
         echo "Generating text diff"
         txt_output=${{ inputs.output }}/diff.txt
-        bump diff -f txt ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
+        bump diff -f text ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
         echo "text=${txt_output}" >> "$GITHUB_OUTPUT"
       shell: bash
 
