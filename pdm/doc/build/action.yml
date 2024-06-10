@@ -89,7 +89,10 @@ runs:
 
     - name: Checkout base ref
       if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      run: git checkout ${{ github.base_ref }}
+      run: |
+        # Clean dirty state before trying to switch branch
+        git restore .
+        git checkout ${{ github.base_ref }}
       shell: bash
 
     - name: Synchronize dependencies
