@@ -47,6 +47,9 @@ outputs:
   has_src:
     description: Whether the project is using a `src` layout or not
     value: ${{ steps.meta.outputs.has_src }}
+  has_backstage:
+    description: Whether the project is exposing Backstage catalog infos
+    value: ${{ steps.meta.outputs.has_backstage }}
   is_pr:
     description: Is the current workflow run a pull-request
     value: ${{ steps.meta.outputs.is_pr }}
@@ -115,6 +118,9 @@ runs:
 
         [ -d src/ ] && HAS_SRC='true' || HAS_SRC='false'
         echo "has_src=${HAS_SRC}" >> $GITHUB_OUTPUT
+
+        [ -f catalog-info.yaml ] && HAS_BACKSTAGE='true' || HAS_BACKSTAGE='false'
+        echo "has_backstage=${HAS_BACKSTAGE}" >> $GITHUB_OUTPUT
 
         IS_PR="${{ github.event_name == 'pull_request' }}"
         echo "is_pr=${IS_PR}" >> $GITHUB_OUTPUT
