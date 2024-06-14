@@ -34,4 +34,5 @@ jobs:
 | `has_openapi` | Whether the project has an OpenAPI specification exposed through the `doc:openapi` command |
 | `has_docker` | Whether the project a Docker image (aka. a `Dockerfile` present at root) |
 | `has_src` | Whether the project is using a `src` layout or not |
+| `has_backstage` | Whether the project is exposing Backstage catalog infos |
 | `is_pr` | Is the current workflow run a pull-request |
