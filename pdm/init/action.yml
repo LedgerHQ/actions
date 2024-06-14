@@ -26,6 +26,9 @@ inputs:
     default: ${{ github.token }}
 
 outputs:
+  identifier:
+    description: The short project identifier
+    value: ${{ steps.meta.output.identifier }}
   has_tests:
     description: Whether the project has tests exposed through the `test` command
     value: ${{ steps.meta.outputs.has_tests }}
@@ -91,6 +94,8 @@ runs:
     - name: Extract some metadata
       id: meta
       run: |
+        echo "identifier=$(pdm show --name)" >> $GITHUB_OUTPUT
+
         COMMANDS=$(pdm run --json)
 
         HAS_TESTS=$(jq 'has("test")' <<< "$COMMANDS")
