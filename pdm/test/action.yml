@@ -92,10 +92,21 @@ runs:
       continue-on-error: true
       uses: thollander/actions-comment-pull-request@v2
       with:
-        message: 📊 [Allure test report](${{ steps.allure.outputs.report-url }})
+        message: "[📊 Allure test report](${{ steps.allure.outputs.report-url }})"
         comment_tag: allure
 
     - name: Add Allure report link to the summary
       if: steps.allure.outcome == 'success'
-      run: echo "📊 [Allure test report](${{ steps.allure.outputs.report-url }})" >> $GITHUB_STEP_SUMMARY
+      run: echo "[📊 Allure test report](${{ steps.allure.outputs.report-url }})" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Send coverage report to Backstage
+      if: steps.meta.outputs.has_backstage && vars.BACKSTAGE_URL && github.ref_name == "main"
+      continue-on-error: true  # Not critical
+      run: |
+        # See:
+        # - https://github.com/backstage/community-plugins/tree/main/workspaces/code-coverage/plugins/code-coverage-backend
+        REPORT_URL="${BACKSTAGE_URL}/api/code-coverage/report?entity=component:${{ steps.meta.outputs.identifier }}"
+        curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
+        echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" >> $GITHUB_STEP_SUMMARY
       shell: bash
