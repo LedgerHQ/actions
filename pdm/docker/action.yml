@@ -81,7 +81,7 @@ runs:
 
     - name: Build docker image
       if: steps.vars.outputs.has_goss == 'true'
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       with:
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
@@ -111,7 +111,7 @@ runs:
       shell: bash
 
     - name: Push docker image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       id: docker
       if: steps.vars.outputs.has_docker == 'true'
       with:
