@@ -103,7 +103,7 @@ runs:
       shell: bash
 
     - name: Send coverage report to Backstage
-      if: steps.meta.outputs.has_backstage && env.BACKSTAGE_URL && github.ref_name == "main"
+      if: steps.meta.outputs.has_backstage && env.BACKSTAGE_URL && github.ref_name == 'main'
       continue-on-error: true  # Not critical
       run: |
         # See:
