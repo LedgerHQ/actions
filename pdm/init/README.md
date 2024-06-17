@@ -27,6 +27,7 @@ jobs:
 
 | Output | Description |
 |--------|-------------|
+| `identifier` | The short project identifier |
 | `has_tests` | Whether the project has tests exposed through the `test` command |
 | `has_coverage` | Whether the project has tests with coverage exposed through the `cover` command |
 | `has_docs` | Whether the project has a documentation exposed through the `doc` command |

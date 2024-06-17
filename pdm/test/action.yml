@@ -59,3 +59,43 @@ runs:
     - name: Add coverage report to summary
       run: echo -e ${{ steps.coverage.outputs.summaryReport }} >> $GITHUB_STEP_SUMMARY
       shell: bash
+
+    - name: Detect Allure report presence
+      id: check-allure
+      continue-on-error: true
+      run: |
+        [ -d reports/allure ] && REPORT='true' || REPORT='false'
+        echo "has_report=${REPORT}" >> $GITHUB_OUTPUT
+        [ -z "$ALLURE_USERNAME" ] && ACCESS='false' || ACCESS='true'
+        echo "can_access=${ACCESS}" >> $GITHUB_OUTPUT
+        echo "path_suffix=${{ github.ref_name == 'main' && '' || format('@{0}', github.ref_name) }}" >> $GITHUB_OUTPUT
+      env:
+        ALLURE_USERNAME: ${{ vars.ALLURE_USERNAME }}
+      shell: bash
+
+    - name: Publish Allure report
+      id: allure
+      if: steps.check-allure.outputs.has_report && steps.check-allure.outputs.can_access
+      continue-on-error: true
+      uses: LedgerHQ/send-to-allure-server-action@2.1.2
+      with:
+        allure-server-url: "https://vault.allure.green.ledgerlabs.net"
+        build-name: ${{ github.workflow }}
+        build-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        username: ${{ vars.ALLURE_USERNAME }}
+        password: ${{ secrets.ALLURE_VAULT_PASSWORD }}
+        path: ${{ steps.meta.outputs.identifier }}${{ step.check-allure.outputs.path_suffix }}
+        allure-results: reports/allure
+
+    - name: Add Allure report link to the pull-request
+      if: steps.allure.outcome == 'success' && steps.meta.outputs.is_pr
+      continue-on-error: true
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        message: 📊 [Allure test report](${{ steps.allure.outputs.report-url }})
+        comment_tag: allure
+
+    - name: Add Allure report link to the summary
+      if: steps.allure.outcome == 'success'
+      run: echo "📊 [Allure test report](${{ steps.allure.outputs.report-url }})" >> $GITHUB_STEP_SUMMARY
+      shell: bash
