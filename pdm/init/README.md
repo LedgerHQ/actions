@@ -36,3 +36,4 @@ jobs:
 | `has_src` | Whether the project is using a `src` layout or not |
 | `has_backstage` | Whether the project is exposing Backstage catalog infos |
 | `is_pr` | Is the current workflow run a pull-request |
+| `branch` | The branch from which workflow has been triggered |
