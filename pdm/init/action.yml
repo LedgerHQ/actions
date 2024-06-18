@@ -53,6 +53,9 @@ outputs:
   is_pr:
     description: Is the current workflow run a pull-request
     value: ${{ steps.meta.outputs.is_pr }}
+  branch:
+    description: The branch from which workflow has been triggered
+    value: ${{ steps.meta.outputs.branch }}
 
 
 runs:
@@ -98,6 +101,7 @@ runs:
       id: meta
       run: |
         echo "identifier=$(pdm show --name)" >> $GITHUB_OUTPUT
+        echo "branch=${{ github.head_ref || github.ref_name }}" >> $GITHUB_OUTPUT
 
         COMMANDS=$(pdm run --json)
 

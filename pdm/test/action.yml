@@ -72,7 +72,7 @@ runs:
       run: |
         [ -d reports/allure ] && REPORT='true' || REPORT='false'
         echo "has_report=${REPORT}" >> $GITHUB_OUTPUT
-        echo "path_suffix=${{ github.ref_name == 'main' && '' || format('@{0}', github.ref_name) }}" >> $GITHUB_OUTPUT
+        echo "path_suffix=${{ github.ref_name == 'main' && '' || format('@{0}', steps.meta.outputs.branch) }}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Publish Allure report
