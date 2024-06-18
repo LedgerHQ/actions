@@ -75,6 +75,29 @@ runs:
         echo "path_suffix=${{ github.ref_name == 'main' && '' || format('@{0}', steps.meta.outputs.branch) }}" >> $GITHUB_OUTPUT
       shell: bash
 
+    - name: Generate Allure environment file
+      if: steps.check-allure.outputs.has_report && inputs.allure-username && inputs.allure-password
+      continue-on-error: true
+      run: |
+        ENV_FILE=reports/allure/environment.properties
+        echo "language = python"
+        echo "python_version = ${{ inputs.python-version }}" >> $ENV_FILE
+        echo "os = ${{ runner.os }}" >> $ENV_FILE
+        echo "arch = ${{ runner.arch }}" >> $ENV_FILE
+        echo "github_runner = ${{ runner.name }}" >> $ENV_FILE
+        echo "github_runner_env = ${{ runner.environment }}" >> $ENV_FILE
+        echo "repository = ${{ github.repository }}" >> $ENV_FILE
+        echo "branch = ${{ steps.meta.outputs.branch }}" >> $ENV_FILE
+        echo "commit = ${{ github.sha }}" >> $ENV_FILE
+        echo "actor = ${{ github.triggering_actor }}" >> $ENV_FILE
+        if [ "${{ steps.meta.outputs.is_pr }}" == "true" ]; then
+          echo "pull_request = https://github.com/${{ github.repository }}/pull/${{ github.event.number }}" >> $ENV_FILE
+        fi
+        if [ "${{ github.ref_type }}" == "tag" ]; then
+          echo "tag = ${{ github.ref_name }}" >> $ENV_FILE
+        fi
+      shell: bash
+
     - name: Publish Allure report
       id: allure
       if: steps.check-allure.outputs.has_report && inputs.allure-username && inputs.allure-password
