@@ -28,7 +28,7 @@ inputs:
 outputs:
   identifier:
     description: The short project identifier
-    value: ${{ steps.meta.output.identifier }}
+    value: ${{ steps.meta.outputs.identifier }}
   has_tests:
     description: Whether the project has tests exposed through the `test` command
     value: ${{ steps.meta.outputs.has_tests }}
