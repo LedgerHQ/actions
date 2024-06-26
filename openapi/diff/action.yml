@@ -56,7 +56,7 @@ runs:
 
         # Format diff has PR comment
         comment=${{ inputs.output }}/pr-comment.md
-        echo "## OpenAPI changes\n" >> ${comment}
+        echo "## OpenAPI changes" >> ${comment}
         cat ${md_output} >> ${comment}
         echo "comment=${comment}" >> "$GITHUB_OUTPUT"
         # Display diff in the summary
