@@ -112,7 +112,7 @@ runs:
       shell: bash
 
     - name: Move base OpenAPI specifications
-      if: success() && teps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
+      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true  # OpenAPI diff is optional
       run: mv docs/openapi.yaml openapi.base.yaml
       shell: bash
