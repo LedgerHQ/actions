@@ -72,7 +72,6 @@ runs:
       run: |
         [ -d reports/allure ] && REPORT='true' || REPORT='false'
         echo "has_report=${REPORT}" >> $GITHUB_OUTPUT
-        echo "path_suffix=${{ github.ref_name == 'main' && '' || format('@{0}', steps.meta.outputs.branch) }}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Generate Allure environment file
@@ -109,7 +108,7 @@ runs:
         build-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         username: ${{ inputs.allure-username }}
         password: ${{ inputs.allure-password }}
-        path: ${{ steps.meta.outputs.identifier }}${{ steps.check-allure.outputs.path_suffix }}
+        path: ${{ steps.meta.outputs.identifier }}@${{ steps.meta.outputs.branch }}
         allure-results: reports/allure
 
     - name: Add Allure report link to the pull-request
