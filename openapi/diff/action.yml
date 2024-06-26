@@ -30,7 +30,7 @@ runs:
 
     - name: Install bump CLI
       run: |
-        npm install -g bump-cli
+        npm install bump-cli
       shell: bash
 
     - name: Create outputs directory
@@ -47,9 +47,11 @@ runs:
         # but we want to stop if the diff fail for other reasons
         unset CI
 
+        BUMP=node_modules/.bin/bump
+
         echo "Generating Markdown diff"
         md_output=${{ inputs.output }}/diff.md
-        bump diff -f markdown ${{ inputs.base }} ${{ inputs.head }} > ${md_output}
+        ${BUMP} diff -f markdown ${{ inputs.base }} ${{ inputs.head }} > ${md_output}
         echo "markdown=${md_output}" >> "$GITHUB_OUTPUT"
 
         # Format diff has PR comment
@@ -62,7 +64,7 @@ runs:
 
         echo "Generating text diff"
         txt_output=${{ inputs.output }}/diff.txt
-        bump diff -f text ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
+        ${BUMP} diff -f text ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
         echo "text=${txt_output}" >> "$GITHUB_OUTPUT"
       shell: bash
 
