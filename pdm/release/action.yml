@@ -25,6 +25,9 @@ inputs:
   public:
     description: Is it a public library ?
     default: 'false'
+  dgoss-args:
+    description: dgoss extra docker parameters
+    default: ""
 
 
 
@@ -119,6 +122,7 @@ runs:
         version: ${{ env.REVISION }}
         pypi-token: ${{ inputs.pypi-token }}
         github-token: ${{ inputs.github-token }}
+        dgoss-args: ${{ inputs.dgoss-args }}
 
     - name: Add docker image to release body
       if: steps.docker.outputs.image
