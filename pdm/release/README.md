@@ -23,6 +23,7 @@ jobs:
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `public` | Is it a public library ? | `false` | `false` |
+| `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
 
 ## Environment variables
 
