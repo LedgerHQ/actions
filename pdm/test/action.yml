@@ -53,7 +53,7 @@ runs:
 
     - name: Pytest coverage comment
       id: coverage
-      uses: MishaKav/pytest-coverage-comment@v1.1.51
+      uses: MishaKav/pytest-coverage-comment@v1.1.52
       with:
         github-token: ${{ inputs.github-token }}
         coverage-path-prefix: ${{ steps.meta.outputs.has_src && 'src/' || '' }}
