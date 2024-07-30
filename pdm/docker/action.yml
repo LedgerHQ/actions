@@ -104,10 +104,16 @@ runs:
 
     - name: Run GOSS validation
       run: dgoss run ${{ inputs.dgoss-args }} ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
+      id: goss
       if: steps.vars.outputs.has_goss == 'true'
       env:
         # Make dgoss works with Ledger dind runners
         GOSS_FILES_STRATEGY: cp
+        CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
+      shell: bash
+
+    - if: failure() && steps.vars.outputs.has_goss == 'true' && steps.goss.conclusion == 'failure'
+      run: cat ${{ runner.temp }}/goss.log
       shell: bash
 
     - name: Push docker image
