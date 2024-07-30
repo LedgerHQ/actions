@@ -52,7 +52,13 @@ runs:
 
     - if: ${{ steps.goss_file.outputs.goss_enabled == 'true' }}
       name: Run GOSS validation
+      id: goss
       run: dgoss run --network "host" ${{ inputs.GOSS_IMAGE }}
       env:
         GOSS_FILES_PATH: ${{ inputs.GOSS_FILES_PATH }}
+        CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
+      shell: bash
+
+    - if: failure() && steps.goss.conclusion == 'failure'
+      run: cat ${{ runner.temp }}/goss.log
       shell: bash
