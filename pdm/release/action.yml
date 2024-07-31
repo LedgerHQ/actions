@@ -116,7 +116,7 @@ runs:
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
-      if: inputs.kind == 'app' && steps.meta.outputs.has_docker
+      if: inputs.kind == 'app' && steps.meta.outputs.has_docker == 'true'
       with:
         clone: false
         version: ${{ env.REVISION }}
@@ -138,7 +138,7 @@ runs:
       with:
         version: ${{ env.REVISION }}
         pypi-token: ${{ inputs.pypi-token }}
-        openapi: ${{ inputs.kind == 'app' && steps.meta.outputs.has_openapi }}
+        openapi: ${{ inputs.kind == 'app' && steps.meta.outputs.has_openapi == 'true' }}
         site: true
         init: false
 
