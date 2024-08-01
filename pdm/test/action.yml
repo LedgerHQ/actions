@@ -56,7 +56,7 @@ runs:
       uses: MishaKav/pytest-coverage-comment@v1.1.52
       with:
         github-token: ${{ inputs.github-token }}
-        coverage-path-prefix: ${{ steps.meta.outputs.has_src && 'src/' || '' }}
+        coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
         pytest-xml-coverage-path: ./reports/coverage.xml
         junitxml-path: ./reports/tests.xml
         title: Coverage Report for Python ${{ inputs.python-version }}
@@ -75,7 +75,7 @@ runs:
       shell: bash
 
     - name: Generate Allure environment file
-      if: steps.check-allure.outputs.has_report && inputs.allure-username && inputs.allure-password
+      if: steps.check-allure.outputs.has_report == 'true' && inputs.allure-username && inputs.allure-password
       continue-on-error: true
       run: |
         ENV_FILE=reports/allure/environment.properties
@@ -99,7 +99,7 @@ runs:
 
     - name: Publish Allure report
       id: allure
-      if: steps.check-allure.outputs.has_report && inputs.allure-username && inputs.allure-password
+      if: steps.check-allure.outputs.has_report == 'true' && inputs.allure-username && inputs.allure-password
       continue-on-error: true
       uses: LedgerHQ/send-to-allure-server-action@2.1.2
       with:
@@ -112,7 +112,7 @@ runs:
         allure-results: reports/allure
 
     - name: Add Allure report link to the pull-request
-      if: steps.allure.outcome == 'success' && steps.meta.outputs.is_pr
+      if: steps.allure.outcome == 'success' && steps.meta.outputs.is_pr == 'true'
       continue-on-error: true
       uses: thollander/actions-comment-pull-request@v2
       with:
@@ -125,7 +125,7 @@ runs:
       shell: bash
 
     - name: Send coverage report to Backstage
-      if: steps.meta.outputs.has_backstage && env.BACKSTAGE_URL && github.ref_name == 'main'
+      if: steps.meta.outputs.has_backstage == 'true' && env.BACKSTAGE_URL && github.ref_name == 'main'
       continue-on-error: true  # Not critical
       run: |
         # See:
