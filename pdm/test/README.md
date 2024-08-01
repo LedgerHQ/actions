@@ -16,6 +16,7 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
+| `kind` | Kind of project to release (`lib`/`app`) | `app` | `true` |
 | `python-version` | Python version to run the tests with | `3.11` | `true` |
 | `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |

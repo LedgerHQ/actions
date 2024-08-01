@@ -2,6 +2,9 @@ name: Test
 description: Execute test using `pdm` scripts
 
 inputs:
+  kind:
+    description: Kind of project to release (lib/app)
+    default: app
   python-version:
     description: Python version to run the tests with
     required: true
@@ -134,3 +137,35 @@ runs:
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
         echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" >> $GITHUB_STEP_SUMMARY
       shell: bash
+
+    - name: Build the library
+      if: inputs.kind == 'lib'
+      run: pdm build
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    - name: Attached built library (wheel & sdist) as a workflow artifact
+      id: upload-lib
+      if: inputs.kind == 'lib'
+      uses: actions/upload-artifact@v4
+      with:
+        name: library
+        path: |
+          dist/*.whl
+          dist/*.tar.gz
+        retention-days: 7
+        if-no-files-found: error
+
+    - name: Add built library link to the summary
+      if: inputs.kind == 'lib'
+      run: echo "[📦 Built library (wheel & sdist)](${{ steps.upload-lib.outputs.artifact-url }})" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Add built library link to the pull-request
+      if: inputs.kind == 'lib' && steps.meta.outputs.is_pr
+      continue-on-error: true
+      uses: thollander/actions-comment-pull-request@v2
+      with:
+        message: "[📦 Built library (wheel & sdist)](${{ steps.upload-lib.outputs.artifact-url }})"
+        comment_tag: library
