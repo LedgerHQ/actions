@@ -1,0 +1,77 @@
+name: "Set Slack message reaction by search text"
+description: "A GitHub Action to set Slack reactions on messages by search text"
+
+inputs:
+  SLACK_BOT_TOKEN:
+    description: "Slack bot token"
+    required: true
+  SLACK_CHANNEL_ID:
+    description: "Slack channel ID"
+    required: true
+  SLACK_SEARCH_TEXT:
+    description: "Search text to find the message"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: pip install slack_sdk==3.31.0
+      shell: bash
+    - run: |
+        import slack_sdk
+        import os
+
+        from slack_sdk import WebClient
+        from slack_sdk.errors import SlackApiError
+
+        search_text = os.getenv('SLACK_SEARCH_TEXT')
+        channel_id = os.getenv('SLACK_CHANNEL_ID')
+        emoji_name = os.getenv('SLACK_EMOJI_NAME', 'check')
+
+        client = WebClient(token=os.getenv('SLACK_BOT_TOKEN'))
+
+        def get_latest_message_id_with_text(channel_id, search_text):
+            try:
+                # Fetch messages from the channel
+                response = client.conversations_history(channel=channel_id, limit=100)
+                messages = response['messages']
+
+                # Iterate through the messages and find the latest one containing the search text
+                for message in messages:
+                    if search_text in message.get('text', ''):
+                        return message['ts']  # Return the message ID (timestamp)
+
+                return None  # If no message with the search text is found
+
+            except SlackApiError as e:
+                print(f"Error fetching messages: {e.response['error']}")
+                return None
+
+        def add_reaction_to_message(channel_id, message_id, emoji_name):
+            try:
+                # Add a reaction to the message
+                client.reactions_add(
+                    channel=channel_id,
+                    timestamp=message_id,
+                    name=emoji_name
+                )
+                print(f"Reaction :{emoji_name}: added to message {message_id}")
+            except SlackApiError as e:
+                print(f"Error adding reaction: {e.response['error']}")
+
+        latest_message_id = get_latest_message_id_with_text(channel_id, search_text)
+
+        if latest_message_id:
+            print("Found message ID:", latest_message_id)
+        else:
+            print("No message found with the specified text.")
+
+        if latest_message_id:
+            add_reaction_to_message(channel_id, latest_message_id, emoji_name)
+        else:
+            print("No message found with the specified text.")
+      shell: python
+      env:
+        SLACK_BOT_TOKEN: ${{ inputs.SLACK_BOT_TOKEN }}
+        SLACK_CHANNEL_ID: ${{ inputs.SLACK_CHANNEL_ID }}
+        SLACK_SEARCH_TEXT: ${{ inputs.SLACK_SEARCH_TEXT }}
