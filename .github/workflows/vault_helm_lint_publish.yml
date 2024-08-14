@@ -17,7 +17,7 @@ on:
 
 jobs:
   lint-chart:
-    runs-on: [self-hosted, shared]
+    runs-on: ledgerhq-shared-small
     steps:
       - name: Run Chart lint
         uses: LedgerHQ/actions/helm/lint@main
@@ -25,7 +25,7 @@ jobs:
           charts-dir: ${{ inputs.charts-path }}
 
   kubeconform-chart:
-    runs-on: [self-hosted, shared]
+    runs-on: ledgerhq-shared-small
     strategy:
       matrix:
         k8s:
@@ -42,7 +42,7 @@ jobs:
   publish-chartmuseum-dev:
     name: publish-chartmuseum-dev
     if: inputs.version != ''
-    runs-on: [self-hosted, shared]
+    runs-on: ledgerhq-shared-small
     needs: [lint-chart, kubeconform-chart]
     steps:
       - name: Push chart to chartmuseum-prd repo
@@ -58,7 +58,7 @@ jobs:
   publish-chartmuseum-prd:
     name: publish-chartmuseum-prd
     if: inputs.version != '' && inputs.release != false
-    runs-on: [self-hosted, shared]
+    runs-on: ledgerhq-shared-small
     needs: [publish-chartmuseum-dev]
     steps:
       - name: Push chart to chartmuseum-prd repo
