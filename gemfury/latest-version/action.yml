@@ -36,9 +36,11 @@ runs:
           grep_filter=$(echo "rc[0-9]+\+${dotted_feature_name}" | tr '[:upper:]' '[:lower:]')
         fi
 
-        matching_versions=$(fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} ${{ inputs.package-name }} | grep -E "^[0-9]" | grep "${grep_filter}")
-        count_matching =$(echo $matching_versions | wc -l)
-        echo "found $count_matching version"
+        matching_versions=$(fury versions --api-token=${{ env.FULL_ACCESS_TOKEN }} ${{ inputs.package-name }} | grep -E "^v?[0-9]" | grep "${grep_filter}")
+        if [[ -n $matching_versions ]]; then
+          count_matching =$(echo $matching_versions | wc -l)
+          echo "found $count_matching version"
+        fi
         last_version=$(echo $matching_versions | head -n 1 | awk '{print $1}')
         echo "last-version=${last_version}" >> $GITHUB_OUTPUT
 
