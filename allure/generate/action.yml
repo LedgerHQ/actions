@@ -1,0 +1,102 @@
+name: Generate Allure report
+description: Generate an allure report for a set of results (given their uuids)
+
+inputs:
+  url:
+    description: Full url of your deployed allure-server'
+    required: true
+  username:
+    description: 'If your allure-server has basic auth enabled, specify username here'
+    required: false
+  password:
+    description: 'If your allure-server has basic auth enabled, specify password here'
+    required: false
+  path:
+    description: Allure server identifier used to aggregate reports (default to repository name)
+    required: true
+  results:
+    description: line separated list of results UUIDs to process
+    required: true
+  report-name:
+    description: >
+      [Report Overview top name](https://allurereport.org/docs/how-it-works-executor-file/#report-properties)
+      *(default to `<repository name>`)*
+    required: false
+  build-name:
+    description: >
+      [Executor](https://allurereport.org/docs/how-it-works-executor-file/) build name
+      *(default to `<workflow name> #<buildno>`)*
+    required: false
+  build-url:
+    description: >
+      [Executor](https://allurereport.org/docs/how-it-works-executor-file/#build-properties) link to the build
+      *(default to the current workflow run URL)*
+    required: false
+  delete-results:
+    description: Whether or not to delete the raw results after the report generation.
+    default: "true"
+    required: false
+
+outputs:
+  response:
+    description: The Allure Server generation JSON response
+    value: ${{ steps.generate.outputs.response }}
+  uuid:
+    description: The generated report UUID
+    value: ${{ steps.generate.outputs.uuid }}
+  url:
+    description: The generated report unique URL
+    value: ${{ steps.generate.outputs.url }}
+
+runs:
+  using: composite
+  steps:
+
+    - name: Format UUIDs list
+      id: uuids
+      run: |
+        : Format UUIDs list
+        echo "json<<EOF" >> $GITHUB_OUTPUT
+        echo "${RESULTS}" | jq -nR "[inputs]" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      env:
+        RESULTS: ${{ inputs.results }}
+      shell: bash
+
+    - name: Generate report
+      id: generate
+      run: |
+        : Generate report
+        response=$(\
+          curl -X POST '${{ inputs.url }}/api/report' \
+          --location --no-progress-meter \
+          --header 'Content-Type: application/json' \
+          --user '${{ inputs.username }}:${{ inputs.password }}' \
+          --data-raw '{
+            "reportSpec": {
+              "path": ["${{ inputs.path }}"],
+              "executorInfo": {
+                "name": "GitHub",
+                "type": "github",
+                "reportName": "${{ inputs.report-name || github.event.repository.name }}",
+                "buildName": "${{ inputs.build-name || env.DEFAULT_BUILD_NAME }}",
+                "buildUrl": "${{ inputs.build-url || env.DEFAULT_BUILD_URL }}"
+              }
+            },
+            "results": ${{ steps.uuids.outputs.json }},
+            "deleteResults": ${{ inputs.delete-results }}
+          }' \
+        )
+        UUID=$(echo "${response}" | jq -r .uuid)
+        REPORT_URL=$(echo "${response}" | jq -r .url)
+
+        echo "response<<EOF" >> $GITHUB_OUTPUT
+        echo "${response}" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "uuid=${UUID}" >> $GITHUB_OUTPUT
+        echo "url=${REPORT_URL}" >> $GITHUB_OUTPUT
+        echo "📊 Generated report ${UUID}: ${REPORT_URL}"
+      env:
+        DEFAULT_BUILD_NAME: "${{ github.workflow }} #${{ github.run_number }}"
+        DEFAULT_BUILD_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      shell: bash
