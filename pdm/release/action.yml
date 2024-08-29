@@ -232,9 +232,9 @@ runs:
         #   - https://github.com/gemfury/cli/blob/main/api/yank.go
         #   - https://github.com/gemfury/cli/blob/main/api/client.go
         curl -X DELETE \
-             -H "Accept: application/vnd.fury.v1" \
-             -H "Authorization: ${{ inputs.pypi-token }}" \
-             https://api.fury.io/packages/${DIST}/versions/${REVISION}
+          -H "Accept: application/vnd.fury.v1" \
+          -H "Authorization: ${{ inputs.pypi-token }}" \
+          https://api.fury.io/packages/${DIST}/versions/${REVISION}
         echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
