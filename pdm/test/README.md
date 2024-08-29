@@ -23,14 +23,18 @@ jobs:
 | `parameters` | Some extra parameters to pass to `pdm cover` | `""` | `false` |
 | `group` | Dependency group(s) to install | `test` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
-| `allure-username` | Allure username (requires both username and password to enable Allure) | `""` | `false` |
-| `allure-password` | Allure password (requires both username and password to enable Allure) | `""` | `false` |
+| `matrix-id` | An optional unique ID for matrix builds (triggers parallelism) | `""` | `false` |
+| `report-only` | Only perform aggregation and reporting (parallelism closure) | `""` | `false` |
 
 ## Environment variables
 
 | Variable | Description |
-|----------|-------------|
+|--------|-------------|
 | `BACKSTAGE_URL` | URL to an optional Backstage instance to upload coverage to |
+| `ALLURE_URL` | URL to an optional Allure instance to upload test results to |
+| `ALLURE_USERNAME` | Allure instance authentication username |
+| `ALLURE_PASSWORD` | Allure instance authentication password |
+| `ALLURE_UUIDS` | Allure results UUIDS in case of matrix testing |
 
 ## Outputs
 
