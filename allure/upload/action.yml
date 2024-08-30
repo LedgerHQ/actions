@@ -1,0 +1,56 @@
+name: Upload to Allure server
+description: Upload some Allure results to an Allure Server instance
+
+inputs:
+  url:
+    description: Allure Server root url
+    required: true
+  username:
+    description: Allure Server authentication username (Basic Auth)
+    required: true
+  password:
+    description: Allure Server authentication password (Basic Auth)
+    required: true
+  results:
+    description: Path to the Allure results directory to upload
+    required: false
+    default: allure-result
+
+outputs:
+  response:
+    description: The Allure Server upload JSON response
+    value: ${{ steps.upload.outputs.response }}
+  uuid:
+    description: The result upload unique identifier
+    value: ${{ steps.upload.outputs.uuid }}
+
+runs:
+  using: composite
+  steps:
+
+    - name: Zip Allure results
+      run: |
+        : Zip Allure results
+        cd ${{ inputs.results }} && zip -r ${{ github.workspace }}/allure.zip *
+      shell: bash
+
+    - name: Upload Allure results
+      id: upload
+      run: |
+        : Upload Allure results
+        response=$(\
+          curl -X POST '${{ inputs.url }}/api/result' \
+          --no-progress-meter \
+          --header  "accept: */*" \
+          --header  "Content-Type: multipart/form-data" \
+          --user '${{ inputs.username }}:${{ inputs.password }}' \
+          --form "allureResults=@allure.zip;type=application/x-zip-compressed" \
+        )
+        UUID=$(echo "${response}" | jq -r .uuid)
+
+        echo "response<<EOF" >> $GITHUB_OUTPUT
+        echo "${response}" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        echo "uuid=${UUID}" >> $GITHUB_OUTPUT
+        echo "📊 Uploaded result ${UUID}"
+      shell: bash
