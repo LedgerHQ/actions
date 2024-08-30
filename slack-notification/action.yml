@@ -20,14 +20,14 @@ runs:
     - name: clone repo
       uses: actions/checkout@v4
       with:
-       fetch-depth: 0
+        fetch-depth: 0
 
     - name: fill the baddies
       id: baddies-email
       run: |
-       LOWERCASED_NAME=$(git log -s -n1 --pretty='format:%an' $(git diff --name-only) | awk '{print tolower($0)}' | tr ' ' .)
-       BIG_BADDIES_EMAIL="${LOWERCASED_NAME}@ledger.fr"
-       echo 'BIG_BADDIES_EMAIL='"${BIG_BADDIES_EMAIL}" >> $GITHUB_OUTPUT
+        LOWERCASED_NAME=$(git log -s -n1 --pretty='format:%an' $(git diff --name-only) | awk '{print tolower($0)}' | tr ' ' .)
+        BIG_BADDIES_EMAIL="${LOWERCASED_NAME}@ledger.fr"
+        echo 'BIG_BADDIES_EMAIL='"${BIG_BADDIES_EMAIL}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Find Slack user
@@ -40,8 +40,8 @@ runs:
     - name: Get MEMBER_ID
       if: ${{ !env.SLACK_MEMBER_ID }}
       run: |
-       SLACK_MEMBER_ID=${{ steps.find-slack-user.outputs.member-id }}
-       echo "SLACK_MEMBER_ID=$SLACK_MEMBER_ID" >> $GITHUB_ENV
+        SLACK_MEMBER_ID=${{ steps.find-slack-user.outputs.member-id }}
+        echo "SLACK_MEMBER_ID=$SLACK_MEMBER_ID" >> $GITHUB_ENV
       shell: bash
 
     - name: Set MEMBER_ID in payload
