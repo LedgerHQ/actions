@@ -185,7 +185,7 @@ runs:
       run: |
         : Build Allure UUIDS list
         echo 'uuids<<EOF' >> $GITHUB_OUTPUT
-        cat reports/allure.uuid* >> $GITHUB_OUTPUT
+        (cat reports/allure.uuid* >> $GITHUB_OUTPUT || true)
         echo 'EOF' >> $GITHUB_OUTPUT
       shell: bash
 
