@@ -119,7 +119,7 @@ runs:
 
     - name: Push to our internal JFrog Artifactory
       id: artifactory
-      if: step.jfrog-login.outputs.oidc-user
+      if: steps.jfrog-login.outputs.oidc-user
       env:
         PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/vault-pypi-prod-green/simple
         PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
