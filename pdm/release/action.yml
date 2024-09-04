@@ -113,6 +113,21 @@ runs:
       run: pdm publish --no-build
       shell: bash
 
+    - name: Login to JFrog Ledger
+      id: jfrog-login
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+    - name: Push to our internal JFrog Artifactory
+      id: artifactory
+      if: step.jfrog-login.outputs.oidc-user
+      env:
+        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/vault-pypi-prod-green/simple
+        PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
+        PDM_PUBLISH_PASSWORD: ${{ steps.jfrog-login.outputs.oidc-token }}
+        FORCE_COLOR: 'true'
+      run: pdm publish --no-build
+      shell: bash
+
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
