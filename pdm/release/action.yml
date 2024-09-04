@@ -121,7 +121,7 @@ runs:
       id: artifactory
       if: steps.jfrog-login.outputs.oidc-user
       env:
-        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/vault-pypi-prod-green/simple
+        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/vault-pypi-prod-green
         PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
         PDM_PUBLISH_PASSWORD: ${{ steps.jfrog-login.outputs.oidc-token }}
         FORCE_COLOR: 'true'
