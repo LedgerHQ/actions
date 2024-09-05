@@ -115,6 +115,7 @@ runs:
 
     - name: Login to JFrog Ledger
       id: jfrog-login
+      continue-on-error: true  # Not yet mandatory
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Push to our internal JFrog Artifactory
