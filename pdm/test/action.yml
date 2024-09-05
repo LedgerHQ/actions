@@ -179,26 +179,28 @@ runs:
         echo -e ${{ steps.coverage.outputs.summaryReport }} >> summary.md
       shell: bash
 
-    - name: Build Allure UUIDS list
-      id: allure-data
+    - name: Prepare Allure report metadata
+      id: allure-report-meta
       if: inputs.matrix-id == null
       run: |
-        : Build Allure UUIDS list
+        : Prepare Allure report metadata
         echo 'uuids<<EOF' >> $GITHUB_OUTPUT
         (cat reports/allure.uuid* >> $GITHUB_OUTPUT || true)
         echo 'EOF' >> $GITHUB_OUTPUT
+        [ "${{ steps.meta.outputs.branch }}" == "main" ] && suffix="" || suffix="@${{ steps.meta.outputs.branch }}"
+        echo "suffix=${suffix}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Generate Allure report
-      if: steps.allure-data.outputs.uuids && !inputs.matrix-id
+      if: steps.allure-report-meta.outputs.uuids && !inputs.matrix-id
       id: allure-generate
       uses: LedgerHQ/actions/allure/generate@main
       with:
         url: ${{ env.ALLURE_URL }}
         username: ${{ env.ALLURE_USERNAME }}
         password: ${{ env.ALLURE_PASSWORD }}
-        path: ${{ steps.meta.outputs.identifier }}@${{ steps.meta.outputs.branch }}
-        results: ${{ steps.allure-data.outputs.uuids }}
+        path: ${{ steps.meta.outputs.identifier }}${{ steps.allure-report-meta.outputs.suffix }}
+        results: ${{ steps.allure-report-meta.outputs.uuids }}
         report-name: ${{ steps.meta.outputs.identifier }}
 
     - name: Add Allure report link to the summary
