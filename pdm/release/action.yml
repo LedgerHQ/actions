@@ -119,20 +119,9 @@ runs:
         pdm publish --no-build
       shell: bash
 
-    - name: Push to PyPI
-      id: pypi
-      if: inputs.kind == 'lib' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
-      env:
-        PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
-        FORCE_COLOR: 'true'
-      run: |
-        : Push to PyPI
-        pdm publish --no-build
-      shell: bash
-
     - name: Login to JFrog Ledger
       id: jfrog-login
-      continue-on-error: true  # Not yet mandatory
+      if: inputs.kind == 'lib' && inputs.public != 'true'
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Push to our internal JFrog Artifactory
@@ -145,6 +134,17 @@ runs:
         FORCE_COLOR: 'true'
       run: |
         : Push to our internal JFrog Artifactory
+        pdm publish --no-build
+      shell: bash
+
+    - name: Push to PyPI
+      id: pypi
+      if: inputs.kind == 'lib' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      env:
+        PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
+        FORCE_COLOR: 'true'
+      run: |
+        : Push to PyPI
         pdm publish --no-build
       shell: bash
 
@@ -187,6 +187,7 @@ runs:
       shell: bash
 
     - name: Push release commit and tag
+      id: tag
       run: |
         : Push release commit and tag
         git push -f
@@ -214,27 +215,26 @@ runs:
         echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
-    ################################################################################################################
-    #                                                                                                              #
-    #                                            🧹 Cleanup actions 🧹                                             #
-    #                                                                                                              #
-    # You must ensure workflow always reach this point even in case of failure if you reach the side-effect zone ! #
-    #                                                                                                              #
-    ################################################################################################################
+    #################################################################################################
+    #                                                                                               #
+    #                                     🧹 Cleanup actions 🧹                                     #
+    #                                                                                               #
+    # You must ensure workflow always reach this point in case of failure in the side-effect zone ! #
+    #                                                                                               #
+    #################################################################################################
 
     # Cleanup published artifacts if tag push failed
     - name: Show release failure in summary
-      # Runs on release failure if doc has been published
-      if: always() && job.status == 'failure'
+      if: failure()
       run: |
         : Show release failure in summary
         echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
-        echo "DIST=$(pdm show --name)" >> $GITHUB_ENV
+        echo "DIST=${{ steps.meta.outputs.identifier }}" >> $GITHUB_ENV
       shell: bash
 
     - name: Cleanup documentation
       # Runs on release failure if doc has been published
-      if: always() && job.status == 'failure' && steps.doc.outcome == 'success'
+      if: failure() && steps.doc.outcome == 'success'
       run: |
         : Cleanup documentation
         pdm run mike delete --push ${REVISION}
@@ -243,7 +243,7 @@ runs:
 
     - name: Cleanup docker
       # Runs on release failure if docker has been published
-      if: always() && job.status == 'failure' && steps.docker.outcome == 'success'
+      if: failure() && steps.docker.outcome == 'success'
       run: |
         : Cleanup docker
         # See:
@@ -261,7 +261,7 @@ runs:
 
     - name: Cleanup Nexus
       # Runs on release failure if package has been published on Nexus
-      if: always() && job.status == 'failure' && steps.nexus.outcome == 'success'
+      if: failure() && steps.nexus.outcome == 'success'
       run: |
         : Cleanup Nexus
         # See:
@@ -278,7 +278,7 @@ runs:
 
     - name: Cleanup GemFury
       # Runs on release failure if package has been published to GemFury
-      if: always() && job.status == 'failure' && steps.gemfury.outcome == 'success'
+      if: failure() && steps.gemfury.outcome == 'success'
       run: |
         : Cleanup GemFury
         # See:
@@ -293,7 +293,7 @@ runs:
 
     - name: Cleanup PyPI
       # Runs on release failure if package has been published to PyPI
-      if: always() && job.status == 'failure' && steps.pypi.outcome == 'success'
+      if: failure() && steps.pypi.outcome == 'success'
       run: |
         : Cleanup PyPI
         # See: https://pypi.org/help/#file-name-reuse
