@@ -60,6 +60,7 @@ runs:
     - name: Bump using commitizen
       id: bump
       run: |
+        : Bump using commitizen
         CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
         if [[ $INPUT_INCREMENT ]]; then
           CMD+=('--increment' "$INPUT_INCREMENT")
@@ -77,7 +78,9 @@ runs:
     # Build once to publish the same package on every repository
     - name: Build distribution
       if: inputs.kind == 'lib'
-      run: pdm build
+      run: |
+        : Build distribution
+        pdm build
       env:
         FORCE_COLOR: 'true'
       shell: bash
@@ -90,7 +93,9 @@ runs:
         PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
         PDM_PUBLISH_PASSWORD: "-" # tricks github actions YAML parser and PDM test for empty password
         FORCE_COLOR: 'true'
-      run: pdm publish --no-build
+      run: |
+        : Push to GenFury
+        pdm publish --no-build
       shell: bash
 
     - name: Push to our internal Nexus
@@ -101,7 +106,9 @@ runs:
         PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
         PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
         FORCE_COLOR: 'true'
-      run: pdm publish --no-build
+      run: |
+        : Push to our internal Nexus
+        pdm publish --no-build
       shell: bash
 
     - name: Push to PyPI
@@ -110,7 +117,9 @@ runs:
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
         FORCE_COLOR: 'true'
-      run: pdm publish --no-build
+      run: |
+        : Push to PyPI
+        pdm publish --no-build
       shell: bash
 
     - name: Login to JFrog Ledger
@@ -126,7 +135,9 @@ runs:
         PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
         PDM_PUBLISH_PASSWORD: ${{ steps.jfrog-login.outputs.oidc-token }}
         FORCE_COLOR: 'true'
-      run: pdm publish --no-build
+      run: |
+        : Push to our internal JFrog Artifactory
+        pdm publish --no-build
       shell: bash
 
     - name: Docker image
@@ -140,10 +151,11 @@ runs:
         github-token: ${{ inputs.github-token }}
         dgoss-args: ${{ inputs.dgoss-args }}
 
-    - name: Add docker image to release body
+    - name: Add Docker image to release body
       if: steps.docker.outputs.image
       continue-on-error: true  # Not critical
       run: |
+        : Add Docker image to release body
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
       shell: bash
 
@@ -158,15 +170,17 @@ runs:
         site: true
         init: false
 
-    - name: Add doc to release body
+    - name: Add documentation URL to release body
       if: steps.doc.outputs.url
       continue-on-error: true  # Not critical
       run: |
+        : Add documentation URL to release body
         echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
       shell: bash
 
     - name: Push release commit and tag
       run: |
+        : Push release commit and tag
         git push -f
         git push -f origin ${{ env.REVISION }}
       shell: bash
@@ -187,7 +201,9 @@ runs:
 
     - name: Publish summary
       continue-on-error: true
-      run: echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
+      run: |
+        : Publish summary
+        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     # Cleanup published artifacts if tag push failed
@@ -195,6 +211,7 @@ runs:
       # Runs on release failure if doc has been published
       if: always() && job.status == 'failure'
       run: |
+        : Show release failure in summary
         echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
         echo "DIST=$(pdm show --name)" >> $GITHUB_ENV
       shell: bash
@@ -203,6 +220,7 @@ runs:
       # Runs on release failure if doc has been published
       if: always() && job.status == 'failure' && steps.doc.outcome == 'success'
       run: |
+        : Cleanup documentation
         pdm run mike delete --push ${REVISION}
         echo "🧹 Documentation for version ${REVISION} has been removed" >> $GITHUB_STEP_SUMMARY
       shell: bash
@@ -211,6 +229,7 @@ runs:
       # Runs on release failure if docker has been published
       if: always() && job.status == 'failure' && steps.docker.outcome == 'success'
       run: |
+        : Cleanup docker
         # See:
         #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
         #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
@@ -228,6 +247,7 @@ runs:
       # Runs on release failure if package has been published on Nexus
       if: always() && job.status == 'failure' && steps.nexus.outcome == 'success'
       run: |
+        : Cleanup Nexus
         # See:
         #   - https://help.sonatype.com/en/search-api.html#SearchAPI-SearchComponents
         #   - https://help.sonatype.com/en/components-api.html#delete-component
@@ -244,6 +264,7 @@ runs:
       # Runs on release failure if package has been published to GemFury
       if: always() && job.status == 'failure' && steps.gemfury.outcome == 'success'
       run: |
+        : Cleanup GemFury
         # See:
         #   - https://github.com/gemfury/cli/blob/main/api/yank.go
         #   - https://github.com/gemfury/cli/blob/main/api/client.go
@@ -258,6 +279,7 @@ runs:
       # Runs on release failure if package has been published to PyPI
       if: always() && job.status == 'failure' && steps.pypi.outcome == 'success'
       run: |
+        : Cleanup PyPI
         # See: https://pypi.org/help/#file-name-reuse
         echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." >> $GITHUB_STEP_SUMMARY
         echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." >> $GITHUB_STEP_SUMMARY
