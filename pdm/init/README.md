@@ -22,6 +22,7 @@ jobs:
 | `history` | Fetch the full history | `false` | `false` |
 | `pypi-token` | Private PyPI token (read) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
+| `skip-dependencies` | Skip dependencies installation | `""` | `false` |
 
 ## Outputs
 

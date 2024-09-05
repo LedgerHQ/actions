@@ -25,12 +25,10 @@ inputs:
   exclude-group:
     description: Dependency group(s) to exclude from install
     default: ''
-  allure-username:
-    description: Allure username (requires both username and password to enable Allure)
-    default: ''
-  allure-password:
-    description: Allure password (requires both username and password to enable Allure)
-    default: ''
+  matrix-id:
+    description: An optional unique ID for matrix builds (triggers parallelism)
+  report-only:
+    description: Only perform aggregation and reporting (parallelism closure)
 
 runs:
   using: composite
@@ -44,90 +42,192 @@ runs:
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         pypi-token: ${{ inputs.pypi-token }}
+        skip-dependencies: ${{ inputs.report-only }}
 
-    - name: Run Tests
-      run: pdm cover -v --force-sugar --color=yes ${{ inputs.parameters }}
-      env:
-        FORCE_COLOR: 'true'
+    - name: Compute unique matrix hashable ID
+      if: inputs.matrix-id
+      id: matrix-meta
+      run: |
+        : Compute unique matrix hashable ID
+        # Generate a unique hash for each matrix path test path
+        id=$(echo "${{ inputs.matrix-id }}" | sha256sum | cut -c 1-8)
+        echo "id=${id}" >> $GITHUB_OUTPUT
+        echo "suffix=.${id}" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Pytest coverage comment
-      id: coverage
-      uses: MishaKav/pytest-coverage-comment@v1.1.52
-      with:
-        github-token: ${{ inputs.github-token }}
-        coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
-        pytest-xml-coverage-path: ./reports/coverage.xml
-        junitxml-path: ./reports/tests.xml
-        title: Coverage Report for Python ${{ inputs.python-version }}
-        unique-id-for-comment: ${{ inputs.python-version }}
-
-    - name: Add coverage report to summary
-      run: echo -e ${{ steps.coverage.outputs.summaryReport }} >> $GITHUB_STEP_SUMMARY
+    - name: Run tests
+      if: inputs.report-only == null
+      run: |
+        : Run tests
+        pdm cover -v --force-sugar --color=yes ${{ inputs.parameters }}
+      env:
+        FORCE_COLOR: 'true'
+        COVERAGE_FILE: reports/coverage${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.data
+        COVERAGE_XML: reports/coverage${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.xml
+        JUNIT_XML: reports/junit${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.xml
       shell: bash
 
     - name: Detect Allure report presence
       id: check-allure
+      if: inputs.report-only == null
       continue-on-error: true
       run: |
-        [ -d reports/allure ] && REPORT='true' || REPORT='false'
+        : Detect Allure report presence
+        [ -d reports/allure ] && REPORT='true' || REPORT=''
+        [ "${{ env.ALLURE_USERNAME && env.ALLURE_PASSWORD }}" != "" ] && CREDENTIALS='true' || CREDENTIALS=''
+        [ "${REPORT}${CREDENTIALS}" == "truetrue" ] && ALLURE='true' || ALLURE=''
+
         echo "has_report=${REPORT}" >> $GITHUB_OUTPUT
+        echo "has_credentials=${CREDENTIALS}" >> $GITHUB_OUTPUT
+        echo "has_allure=${ALLURE}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Generate Allure environment file
-      if: steps.check-allure.outputs.has_report == 'true' && inputs.allure-username && inputs.allure-password
+      if: steps.check-allure.outputs.has_allure
       continue-on-error: true
       run: |
+        : Generate Allure environment file
         ENV_FILE=reports/allure/environment.properties
-        echo "language = python"
+        echo "language = python" >> $ENV_FILE
         echo "python_version = ${{ inputs.python-version }}" >> $ENV_FILE
         echo "os = ${{ runner.os }}" >> $ENV_FILE
         echo "arch = ${{ runner.arch }}" >> $ENV_FILE
         echo "github_runner = ${{ runner.name }}" >> $ENV_FILE
         echo "github_runner_env = ${{ runner.environment }}" >> $ENV_FILE
         echo "repository = ${{ github.repository }}" >> $ENV_FILE
-        echo "branch = ${{ steps.meta.outputs.branch }}" >> $ENV_FILE
+        echo "${{ github.ref_type }} = ${{ github.head_ref || github.ref_name }}" >> $ENV_FILE
         echo "commit = ${{ github.sha }}" >> $ENV_FILE
         echo "actor = ${{ github.triggering_actor }}" >> $ENV_FILE
         if [ "${{ steps.meta.outputs.is_pr }}" == "true" ]; then
           echo "pull_request = https://github.com/${{ github.repository }}/pull/${{ github.event.number }}" >> $ENV_FILE
         fi
-        if [ "${{ github.ref_type }}" == "tag" ]; then
-          echo "tag = ${{ github.ref_name }}" >> $ENV_FILE
-        fi
       shell: bash
 
-    - name: Publish Allure report
-      id: allure
-      if: steps.check-allure.outputs.has_report == 'true' && inputs.allure-username && inputs.allure-password
-      continue-on-error: true
-      uses: LedgerHQ/send-to-allure-server-action@2.1.2
+    - name: Upload Allure results
+      if: steps.check-allure.outputs.has_allure
+      id: allure-upload
+      uses: LedgerHQ/actions/allure/upload@main
       with:
-        allure-server-url: "https://vault.allure.green.ledgerlabs.net"
-        build-name: ${{ github.workflow }}
-        build-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        username: ${{ inputs.allure-username }}
-        password: ${{ inputs.allure-password }}
-        path: ${{ steps.meta.outputs.identifier }}@${{ steps.meta.outputs.branch }}
-        allure-results: reports/allure
+        url: ${{ env.ALLURE_URL }}
+        username: ${{ env.ALLURE_USERNAME }}
+        password: ${{ env.ALLURE_PASSWORD }}
+        results: reports/allure
 
-    - name: Add Allure report link to the pull-request
-      if: steps.allure.outcome == 'success' && steps.meta.outputs.is_pr == 'true'
+    - name: Save Allure UUID
+      if: steps.allure-upload.outputs.uuid
+      run: |
+        : Save Allure UUID
+        echo $UUID > reports/allure.uuid${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}
+      env:
+        UUID: ${{ steps.allure-upload.outputs.uuid }}
+      shell: bash
+
+    - name: Store reports
+      if: inputs.matrix-id
+      uses: actions/upload-artifact@v4
+      with:
+        name: reports${{ inputs.matrix-id && format('-{0}', steps.matrix-meta.outputs.id) || '' }}
+        path: |
+          reports/coverage*
+          reports/junit*
+          reports/allure.uuid*
+
+    - name: Merge reports artifacts
+      if: inputs.report-only
+      uses: actions/upload-artifact/merge@v4
+      with:
+        name: reports
+        pattern: reports-*
+        delete-merged: true
+
+    - name: Download reports
+      if: inputs.report-only
+      uses: actions/download-artifact@v4
+      with:
+        name: reports
+        path: reports
+
+    - name: Merge reports
+      if: inputs.report-only
+      run: |
+        : Merge reports
+        echo "Install merge tooling"
+        pip install coverage[toml] junitparser
+        echo "Merge JUnit reports"
+        junitparser merge --glob reports/junit.*.xml reports/junit.xml
+        echo "Combine coverage report"
+        coverage combine --data-file reports/coverage.all reports/coverage.*.data
+        echo "Generate XML coverage report"
+        coverage xml --data-file reports/coverage.all -o reports/coverage.xml
+      shell: bash
+
+    - name: Generate Pytest coverage report
+      id: coverage
+      if: inputs.matrix-id == null
+      uses: MishaKav/pytest-coverage-comment@v1.1.52
+      with:
+        github-token: ${{ inputs.github-token }}
+        coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
+        pytest-xml-coverage-path: ./reports/coverage.xml
+        junitxml-path: ./reports/junit.xml
+        hide-comment: true
+
+    - name: Add coverage report to summary
+      if: inputs.matrix-id == null
+      run: |
+        : Add coverage report to summary
+        echo -e ${{ steps.coverage.outputs.summaryReport }} >> summary.md
+      shell: bash
+
+    - name: Build Allure UUIDS list
+      id: allure-data
+      if: inputs.matrix-id == null
+      run: |
+        : Build Allure UUIDS list
+        echo 'uuids<<EOF' >> $GITHUB_OUTPUT
+        (cat reports/allure.uuid* >> $GITHUB_OUTPUT || true)
+        echo 'EOF' >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Generate Allure report
+      if: steps.allure-data.outputs.uuids && !inputs.matrix-id
+      id: allure-generate
+      uses: LedgerHQ/actions/allure/generate@main
+      with:
+        url: ${{ env.ALLURE_URL }}
+        username: ${{ env.ALLURE_USERNAME }}
+        password: ${{ env.ALLURE_PASSWORD }}
+        path: ${{ steps.meta.outputs.identifier }}@${{ steps.meta.outputs.branch }}
+        results: ${{ steps.allure-data.outputs.uuids }}
+        report-name: ${{ steps.meta.outputs.identifier }}
+
+    - name: Add Allure report link to the summary
+      if: steps.allure-generate.outcome == 'success'
+      run: |
+        : Add Allure report link to the summary
+        echo "[📊 Allure test report](${{ steps.allure-generate.outputs.url }})" >> summary.md
+      shell: bash
+
+    - name: Export summary
+      if: inputs.matrix-id == null
+      run: |
+        : Export summary
+        cat summary.md >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Add reports to the pull-request
+      if: github.event_name == 'pull_request' && !inputs.matrix-id
       continue-on-error: true
       uses: thollander/actions-comment-pull-request@v2
       with:
-        message: "[📊 Allure test report](${{ steps.allure.outputs.report-url }})"
-        comment_tag: allure
-
-    - name: Add Allure report link to the summary
-      if: steps.allure.outcome == 'success'
-      run: echo "[📊 Allure test report](${{ steps.allure.outputs.report-url }})" >> $GITHUB_STEP_SUMMARY
-      shell: bash
+        filePath: summary.md
+        comment_tag: test-reports
 
     - name: Send coverage report to Backstage
-      if: steps.meta.outputs.has_backstage == 'true' && env.BACKSTAGE_URL && github.ref_name == 'main'
+      if: steps.meta.outputs.has_backstage == 'true' && env.BACKSTAGE_URL && github.ref_name == 'main' && !inputs.matrix-id
       continue-on-error: true  # Not critical
       run: |
+        : Send coverage report to Backstage
         # See:
         # - https://github.com/backstage/community-plugins/tree/main/workspaces/code-coverage/plugins/code-coverage-backend
         REPORT_URL="${BACKSTAGE_URL}/api/code-coverage/report?entity=component:${{ steps.meta.outputs.identifier }}"

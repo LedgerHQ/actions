@@ -436,6 +436,18 @@ updates:
       prefix: "ci"
       include: "scope"
   -
+    # Maintain dependencies for allure/generate
+    package-ecosystem: github-actions
+    directory: /allure/generate
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci
+      include: scope
+  -
     # Maintain dependencies for allure/publish
     package-ecosystem: github-actions
     directory: /allure/publish
@@ -447,6 +459,18 @@ updates:
     commit-message:
       prefix: "ci"
       include: "scope"
+  -
+    # Maintain dependencies for allure/upload
+    package-ecosystem: github-actions
+    directory: /allure/upload
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci
+      include: scope
   -
     # Maintain dependencies for helm/conform
     package-ecosystem: github-actions

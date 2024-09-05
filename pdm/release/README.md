@@ -2,6 +2,14 @@
 
 Bump version and publish release assets
 
+For JFrog Artifactory, repository needs to be authorized on Artifactory.
+Calling workflow need to have OIDC permissions:
+
+```yaml
+  permissions:
+    id-token: write
+```
+
 ## Usage
 
 ```yaml
