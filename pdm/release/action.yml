@@ -85,6 +85,14 @@ runs:
         FORCE_COLOR: 'true'
       shell: bash
 
+    ################################################################
+    #                                                              #
+    #                  💥 Side-effect zone 💥                      #
+    #                                                              #
+    # Successful actions will need cleanup 🧹 in case of failure ! #
+    #                                                              #
+    ################################################################
+
     - name: Push to GemFury
       id: gemfury
       if: inputs.kind == 'lib' && inputs.public != 'true' && env.PDM_PUBLISH_USERNAME != null
@@ -205,6 +213,14 @@ runs:
         : Publish summary
         echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
       shell: bash
+
+    ################################################################################################################
+    #                                                                                                              #
+    #                                            🧹 Cleanup actions 🧹                                             #
+    #                                                                                                              #
+    # You must ensure workflow always reach this point even in case of failure if you reach the side-effect zone ! #
+    #                                                                                                              #
+    ################################################################################################################
 
     # Cleanup published artifacts if tag push failed
     - name: Show release failure in summary
