@@ -1,0 +1,30 @@
+name: Check release pre-conditions
+description: Check that all requirements for a release are met
+
+inputs:
+  workflow:
+    description: Required workflow file
+    default: ci.yml
+  github-token:
+    description: A Github token with proper permissions
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Ensure CI success
+      uses: noirbizarre/need-checks@0.1
+      with:
+        workflow: ${{ inputs.workflow }}
+        token: ${{ inputs.github-token }}
+    - name: Notify failure
+      if: failure()
+      run: |
+        : Notify failure
+        echo "${MESSAGE}" >> $GITHUB_SUMMARY
+        echo "${MESSAGE}"
+      env:
+        MESSAGE: |
+          👮 Pre-conditions check has failed ❌
+          ⚠️ You can only release a commit where all checks from `${{ inputs.workflow }}` workflow are green 🟢
+      shell: bash
