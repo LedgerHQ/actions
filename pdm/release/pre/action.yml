@@ -21,7 +21,7 @@ runs:
       if: failure()
       run: |
         : Notify failure
-        echo "${MESSAGE}" >> $GITHUB_SUMMARY
+        echo "${MESSAGE}" >> $GITHUB_STEP_SUMMARY
         echo "${MESSAGE}"
       env:
         MESSAGE: |
