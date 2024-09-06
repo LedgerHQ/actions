@@ -28,7 +28,9 @@ inputs:
   dgoss-args:
     description: dgoss extra docker parameters
     default: ""
-
+  artifactory-repository:
+    description: Artifactory repository to publish to
+    default: vault-pypi-prod-green
 
 
 outputs:
@@ -128,7 +130,7 @@ runs:
       id: artifactory
       if: steps.jfrog-login.outputs.oidc-user
       env:
-        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/vault-pypi-prod-green
+        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/${{ inputs.artifactory-repository }}
         PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
         PDM_PUBLISH_PASSWORD: ${{ steps.jfrog-login.outputs.oidc-token }}
         FORCE_COLOR: 'true'
@@ -302,8 +304,8 @@ runs:
         #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
         curl -X DELETE \
           -u ${{ steps.jfrog-login.outputs.oidc-user }}:${{ steps.jfrog-login.outputs.oidc-token }} \
-          ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/vault-pypi-prod-green/${DIST}/${REVISION}
-        echo "🧹 JFrog Artifactory package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+          ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/${{ inputs.artifactory-repository }}/${DIST}/${REVISION}
+        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${{ inputs.artifactory-repository }}\` repository" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup PyPI
