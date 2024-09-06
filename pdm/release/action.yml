@@ -169,6 +169,7 @@ runs:
 
     - name: Documentation
       id: doc
+      if: steps.meta.outputs.has_docs == 'true'
       continue-on-error: true  # Can be manually published after
       uses: LedgerHQ/actions/pdm/doc@main
       with:
