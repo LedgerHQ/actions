@@ -291,6 +291,20 @@ runs:
         echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
+    - name: Cleanup JFrog Artifactory
+      # Runs on release failure if package has been published to JFrog Artifactory
+      if: failure() && steps.artifactory.outcome == 'success'
+      run: |
+        : Cleanup JFrog Artifactory
+        # See:
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
+        curl -X DELETE \
+          -u ${{ steps.jfrog-login.outputs.oidc-user }}:${{ steps.jfrog-login.outputs.oidc-token }} \
+          ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/vault-pypi-prod-green/${DIST}/${REVISION}
+        echo "🧹 JFrog Artifactory package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+      shell: bash
+
     - name: Cleanup PyPI
       # Runs on release failure if package has been published to PyPI
       if: failure() && steps.pypi.outcome == 'success'
