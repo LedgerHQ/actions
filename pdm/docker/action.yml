@@ -60,15 +60,13 @@ runs:
     - name: Compute some variables
       id: vars
       run: |
+        : Compute some variables
         VERSION=${{ inputs.version || github.ref_type == 'tag' && github.ref_name || format('0.dev+{0}.{1}', env.DOCKER_METADATA_OUTPUT_VERSION, github.sha) }}
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         [ -f Dockerfile ] && HAS_DOCKER='true' || HAS_DOCKER='false'
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
         [ -f goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
         echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
-      shell: bash
-    - name: Display vars output
-      run: echo "${{ toJson(steps.vars.outputs) }}"
       shell: bash
 
     - name: Login to GitHub Container Registry
@@ -103,17 +101,22 @@ runs:
       if: steps.vars.outputs.has_goss == 'true'
 
     - name: Run GOSS validation
-      run: dgoss run ${{ inputs.dgoss-args }} ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
       id: goss
       if: steps.vars.outputs.has_goss == 'true'
+      run: |
+        : Run GOSS validation
+        dgoss run ${{ inputs.dgoss-args }} ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
       env:
         # Make dgoss works with Ledger dind runners
         GOSS_FILES_STRATEGY: cp
         CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
       shell: bash
 
-    - if: failure() && steps.vars.outputs.has_goss == 'true' && steps.goss.conclusion == 'failure'
-      run: cat ${{ runner.temp }}/goss.log
+    - name: Display GOSS failure log
+      if: failure() && steps.vars.outputs.has_goss == 'true' && steps.goss.conclusion == 'failure'
+      run: |
+        : Display GOSS failure log
+        cat ${{ runner.temp }}/goss.log
       shell: bash
 
     - name: Push docker image
@@ -140,6 +143,7 @@ runs:
       id: summary
       if: steps.vars.outputs.has_docker == 'true'
       run: |
+        : Create Summary
         IMAGE="${{ fromJSON(steps.docker.outputs.metadata)['image.name'] }}"
         IMAGE=${IMAGE##*,}
         DIGEST="${{ fromJSON(steps.docker.outputs.metadata)['containerimage.digest'] }}"
