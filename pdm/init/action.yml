@@ -81,6 +81,8 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: true
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
 
     - name: Set some settings
       run: |
@@ -135,4 +137,6 @@ runs:
 
         IS_PR="${{ github.event_name == 'pull_request' }}"
         echo "is_pr=${IS_PR}" >> $GITHUB_OUTPUT
+      env:
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
       shell: bash
