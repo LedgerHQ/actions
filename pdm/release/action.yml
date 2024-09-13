@@ -1,5 +1,14 @@
 name: Release
-description: Bump version and publish release assets
+description: |
+  Bump version and publish release assets
+
+  For JFrog Artifactory, repository needs to be authorized on Artifactory.
+  Calling workflow need to have OIDC permissions:
+
+  ```yaml
+    permissions:
+      id-token: write
+  ```
 
 inputs:
   kind:
@@ -14,7 +23,7 @@ inputs:
     description: A Github token with
     required: true
   increment:
-    description: "Kind of increment (optional: MAJOR|MINOR|PATCH)"
+    description: "Kind of increment (optional: `MAJOR|MINOR|PATCH`)"
     required: false
   group:
     description: Dependency group(s) to install
@@ -26,7 +35,7 @@ inputs:
     description: Is it a public library ?
     default: 'false'
   dgoss-args:
-    description: dgoss extra docker parameters
+    description: "`dgoss` extra docker parameters"
     default: ""
   artifactory-repository:
     description: Artifactory repository to publish to
@@ -105,19 +114,6 @@ runs:
         FORCE_COLOR: 'true'
       run: |
         : Push to GenFury
-        pdm publish --no-build
-      shell: bash
-
-    - name: Push to our internal Nexus
-      id: nexus
-      if: inputs.kind == 'lib' && inputs.public != 'true' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
-      env:
-        PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/${{ env.NEXUS_REPO || 'pypi-internal'}}/
-        PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
-        PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
-        FORCE_COLOR: 'true'
-      run: |
-        : Push to our internal Nexus
         pdm publish --no-build
       shell: bash
 
@@ -260,23 +256,6 @@ runs:
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
         IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
         echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
-      shell: bash
-
-    - name: Cleanup Nexus
-      # Runs on release failure if package has been published on Nexus
-      if: failure() && steps.nexus.outcome == 'success'
-      run: |
-        : Cleanup Nexus
-        # See:
-        #   - https://help.sonatype.com/en/search-api.html#SearchAPI-SearchComponents
-        #   - https://help.sonatype.com/en/components-api.html#delete-component
-        API="https://${NEXUS_HOST}/service/rest/v1"
-        CURL=("curl" "-u" "${NEXUS_USER}:${NEXUS_PASSWORD}")
-        REPO=${NEXUS_REPO:-'pypi-internal'}
-        CANDIDATES=$(${CURL[@]} "${API}/search?repository=${REPO}&name=${DIST}&version=${REVISION}")
-        COMPONENT_ID=$(echo ${CANDIDATES} | jq --raw-output ".items[0].id")
-        ${CURL[@]} -X DELETE "${API}/components/${COMPONENT_ID}"
-        echo "🧹 Nexus package for \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup GemFury
