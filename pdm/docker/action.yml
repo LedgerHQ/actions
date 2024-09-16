@@ -8,8 +8,8 @@ inputs:
   version:
     description: Force the built version
   pypi-token:
-    description: A Token to Ledger private PyPI with read permissions
-    required: true
+    description: A Token to Ledger private PyPI with read permissions (GemFury, deprecated)
+    required: false
   github-token:
     description: A Github token with proper permissions
   build-args:
@@ -42,20 +42,10 @@ runs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Compute docker metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/ledgerhq/${{ github.event.repository.name }}
-        flavor: latest=false
-        tags: |
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-          type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
-          type=ref,event=branch
-          type=ref,event=tag
-          type=ref,event=pr
-          type=pep440,pattern={{major}}
-          type=pep440,pattern={{major}}.{{minor}}
+    - name: Authenticate against JFrog Artifactory
+      id: jfrog-login
+      if: env.JFROG_REPOSITORY || env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Compute some variables
       id: vars
@@ -67,7 +57,36 @@ runs:
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
         [ -f goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
         echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
+        echo "images<<EOF" >> $GITHUB_OUTPUT
+        if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
+          JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ github.event.repository.name }}
+          echo "${JFROG_IMAGE}" >> $GITHUB_OUTPUT
+        fi
+        GHCR_IMAGE=ghcr.io/ledgerhq/${{ github.event.repository.name }}
+        echo "${GHCR_IMAGE}" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+        # Keep only one image as canonical reference
+        if [ -n "${JFROG_IMAGE}" ]; then
+          echo "image=${JFROG_IMAGE}" >> $GITHUB_OUTPUT
+        else
+          echo "image=${GHCR_IMAGE}" >> $GITHUB_OUTPUT
+        fi
       shell: bash
+
+    - name: Compute docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.vars.outputs.images }}
+        flavor: latest=false
+        tags: |
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          type=raw,value=${{ inputs.version }},enable=${{ inputs.version != '' }}
+          type=ref,event=branch
+          type=ref,event=tag
+          type=ref,event=pr
+          type=pep440,pattern={{major}}
+          type=pep440,pattern={{major}}.{{minor}}
 
     - name: Login to GitHub Container Registry
       if: steps.vars.outputs.has_docker == 'true'
@@ -77,6 +96,14 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
+    - name: Login to JFrog Artifactory internal registry
+      if: env.JFROG_DOCKER_REPOSITORY
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.JFROG_DOMAIN }}/${{ env.JFROG_DOCKER_REPOSITORY }}
+        username: ${{ env.JFROG_USER }}
+        password: ${{ env.JFROG_TOKEN }}
+
     - name: Build docker image
       if: steps.vars.outputs.has_goss == 'true'
       uses: docker/build-push-action@v6
@@ -85,9 +112,12 @@ runs:
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
           DD_GIT_COMMIT_SHA=${{ github.sha }}
+          JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           ${{ inputs.build-args }}
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token }}
+          JFROG_USER=${{ env.JFROG_USER }}
+          JFROG_TOKEN=${{ env.JFROG_TOKEN }}
           ${{ inputs.secrets }}
         pull: true
         load: true
@@ -105,7 +135,7 @@ runs:
       if: steps.vars.outputs.has_goss == 'true'
       run: |
         : Run GOSS validation
-        dgoss run ${{ inputs.dgoss-args }} ghcr.io/ledgerhq/${{ github.event.repository.name }}:${DOCKER_METADATA_OUTPUT_VERSION}
+        dgoss run ${{ inputs.dgoss-args }} ${{ steps.vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}
       env:
         # Make dgoss works with Ledger dind runners
         GOSS_FILES_STRATEGY: cp
@@ -128,9 +158,12 @@ runs:
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
           DD_GIT_COMMIT_SHA=${{ github.sha }}
+          JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           ${{ inputs.build-args }}
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token }}
+          JFROG_USER=${{ steps.jfrog-login.outputs.oidc-user }}
+          JFROG_TOKEN=${{ steps.jfrog-login.outputs.oidc-token }}
           ${{ inputs.secrets }}
         pull: ${{ steps.vars.outputs.has_goss != 'true' }}
         push: true
@@ -139,16 +172,47 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
+    - name: Attest Docker image for JFrog Artifactory
+      if: env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-name: ${{ steps.vars.outputs.image }}
+        subject-digest: ${{ steps.docker.outputs.digest }}
+
+    - name: Sign Docker image for JFrog Artifactory
+      if: env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/sign-container@actions/sign-container-1
+      with:
+        tags: ${{ steps.meta.outputs.tags }}
+        digest: ${{ steps.docker.outputs.digest }}
+
     - name: Create Summary
       id: summary
       if: steps.vars.outputs.has_docker == 'true'
       run: |
         : Create Summary
-        IMAGE="${{ fromJSON(steps.docker.outputs.metadata)['image.name'] }}"
-        IMAGE=${IMAGE##*,}
-        DIGEST="${{ fromJSON(steps.docker.outputs.metadata)['containerimage.digest'] }}"
-        echo "**Image:** \`${IMAGE}\`" >> $GITHUB_STEP_SUMMARY
+        IMAGES=$(echo "${DOCKER_META}" | jq -r '."image.name"')
+        case $IMAGES in
+          *","*)
+            # Multiple image
+            echo "**Images:**" >> $GITHUB_STEP_SUMMARY
+            for image in ${IMAGES//,/$'\n'}; do
+              echo "- \`${image}\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            ;;
+          *)
+            # Single image
+            echo "**Image:** \`${IMAGES}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+        esac
+
+        DIGEST=$(echo ${DOCKER_META} | jq -r '."containerimage.digest"')
         echo "**Digest:** \`${DIGEST}\`" >> $GITHUB_STEP_SUMMARY
-        echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+
+        # Only export the first image tag, aka. the canonical one
+        echo "image=${IMAGES%%,*}" >> $GITHUB_OUTPUT
         echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+      env:
+        DOCKER_META: ${{ steps.docker.outputs.metadata }}
       shell: bash
