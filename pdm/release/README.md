@@ -25,7 +25,7 @@ jobs:
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
 | `kind` | Kind of project to release (lib/app) | `app` | `true` |
-| `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `true` |
+| `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
 | `github-token` | A Github token with | `""` | `true` |
 | `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
 | `group` | Dependency group(s) to install | `docs` | `false` |
@@ -34,6 +34,13 @@ jobs:
 | `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
 | `artifactory-repository` | Artifactory repository to publish to | `vault-pypi-prod-green` | `false` |
 
+## Environment variables
+
+| Variable | Description |
+|--------|-------------|
+| `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
+| `JFROG_DOCKER_REPOSITORY` | JFrog repository to publish images to (triggers authentication and publication) |
+
 ## Outputs
 
 | Output | Description |
@@ -41,3 +48,4 @@ jobs:
 | `url` | The generated Github Release URL |
 | `version` | The released version |
 | `documentation` | The released documentation URL |
+| `image` | The released documentation URL |
