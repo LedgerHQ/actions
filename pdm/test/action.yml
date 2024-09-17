@@ -59,7 +59,9 @@ runs:
       if: inputs.report-only == null
       run: |
         : Run tests
-        pdm cover -v --force-sugar --color=yes ${{ inputs.parameters }}
+        params=(--force-sugar --color=yes ${{ inputs.parameters }})
+        [ "${{ runner.debug }}" == "1" ] && params+=(-vv) || params+=(-v)
+        pdm cover "${params[@]}"
       env:
         FORCE_COLOR: 'true'
         COVERAGE_FILE: reports/coverage${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.data

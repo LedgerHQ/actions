@@ -115,6 +115,7 @@ runs:
         params=(--group :all --dev)
         [ -z "${GROUPS}" ] || params+=(--group ${GROUPS})
         [ -z "${EXCLUDED_GROUPS}" ] || params+=(--without ${EXCLUDED_GROUPS})
+        [ "${{ runner.debug }}" == "1" ] && params+=(-vv)
         pdm sync "${params[@]}"
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
