@@ -236,5 +236,5 @@ runs:
         # - https://github.com/backstage/community-plugins/tree/main/workspaces/code-coverage/plugins/code-coverage-backend
         REPORT_URL="${BACKSTAGE_URL}/api/code-coverage/report?entity=component:${{ steps.meta.outputs.identifier }}"
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
-        echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash

@@ -233,7 +233,7 @@ runs:
       continue-on-error: true
       run: |
         : Publish summary
-        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     #################################################################################################
@@ -249,7 +249,7 @@ runs:
       if: failure()
       run: |
         : Show release failure in summary
-        echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Release ${REVISION} failed" | tee -a $GITHUB_STEP_SUMMARY
         echo "DIST=${{ steps.meta.outputs.identifier }}" >> $GITHUB_ENV
       shell: bash
 
@@ -259,7 +259,7 @@ runs:
       run: |
         : Cleanup documentation
         pdm run mike delete --push ${REVISION}
-        echo "🧹 Documentation for version ${REVISION} has been removed" >> $GITHUB_STEP_SUMMARY
+        echo "🧹 Documentation for version ${REVISION} has been removed" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup docker GHCR image
@@ -277,7 +277,7 @@ runs:
         VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
         IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
-        echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup docker JFrog Artifactory image
@@ -289,8 +289,8 @@ runs:
         #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
         #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
         curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${DIST}/${REVISION}
-        echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
-        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${JFROG_DOCKER_REPOSITORY}\` repository" >> $GITHUB_STEP_SUMMARY
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${JFROG_DOCKER_REPOSITORY}\` repository" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup GemFury
@@ -313,7 +313,7 @@ runs:
             version_id=$(echo "$i" | jq -r .id)
             package_id=$(echo "$i" | jq -r .package_id)
             "${FURY[@]}/packages/${package_id}/versions/${version_id}" -X DELETE > /dev/null
-            echo "🧹 GemFury package \`${filename}\` have been deleted" | tee $GITHUB_STEP_SUMMARY
+            echo "🧹 GemFury package \`${filename}\` have been deleted" | tee -a $GITHUB_STEP_SUMMARY
         done
       shell: bash
 
@@ -326,7 +326,7 @@ runs:
         #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
         #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
         curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_REPOSITORY}/${DIST}/${REVISION}
-        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${{ inputs.artifactory-repository }}\` repository" >> $GITHUB_STEP_SUMMARY
+        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${{ inputs.artifactory-repository }}\` repository" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup PyPI
@@ -335,6 +335,6 @@ runs:
       run: |
         : Cleanup PyPI
         # See: https://pypi.org/help/#file-name-reuse
-        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." >> $GITHUB_STEP_SUMMARY
-        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." >> $GITHUB_STEP_SUMMARY
+        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." | tee -a $GITHUB_STEP_SUMMARY
+        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
