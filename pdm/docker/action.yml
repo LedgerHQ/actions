@@ -129,6 +129,8 @@ runs:
     - name: Install goss
       uses: e1himself/goss-installation-action@v1.2.1
       if: steps.vars.outputs.has_goss == 'true'
+      with:
+        version: v0.4.7
 
     - name: Run GOSS validation
       id: goss
