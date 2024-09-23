@@ -263,14 +263,23 @@ runs:
       if: failure() && steps.gemfury.outcome == 'success'
       run: |
         : Cleanup GemFury
+        # GemFury is unable to cleanup standard Python versions as it sees wheel+sdist
+        # as 2 Python versions, but doesn't provide distinct kind for them.
+        # So we delete by ID
         # See:
         #   - https://github.com/gemfury/cli/blob/main/api/yank.go
         #   - https://github.com/gemfury/cli/blob/main/api/client.go
-        curl -X DELETE \
-          -H "Accept: application/vnd.fury.v1" \
-          -H "Authorization: ${{ inputs.pypi-token }}" \
-          https://api.fury.io/packages/${DIST}/versions/${REVISION}
-        echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+        #   - https://github.com/gemfury/cli/blob/main/cli/yank.go
+        FURY=(curl --no-progress-meter -H "Accept: application/vnd.fury.v1" -H "Authorization: ${{ inputs.pypi-token }}" https://api.fury.io)
+        VERSIONS=$("${FURY[@]}/versions?name=${DIST}&version=${REVISION}")
+
+        echo "$VERSIONS" | jq -c ".[]" | while read i; do
+            filename=$(echo "$i" | jq -r .filename)
+            version_id=$(echo "$i" | jq -r .id)
+            package_id=$(echo "$i" | jq -r .package_id)
+            "${FURY[@]}/packages/${package_id}/versions/${version_id}" -X DELETE > /dev/null
+            echo "🧹 GemFury package \`${filename}\` have been deleted" | tee $GITHUB_STEP_SUMMARY
+        done
       shell: bash
 
     - name: Cleanup JFrog Artifactory
