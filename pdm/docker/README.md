@@ -12,6 +12,30 @@ jobs:
       - uses: LedgerHQ/actions/pdm/docker@main
 ```
 
+> [!IMPORTANT]
+> JFrog Artifactory dependencies requires authentication.
+> As a consequence, you need to enable the `id-token` permission if you rely on it (to build or publish).
+>
+> When publishing on JFrog Artifactory, this action will also sign and attest the produced images,
+> so it will also need the `attestations` permission.
+>
+> ```yaml
+> jobs:
+>   docker:
+>     runs-on: ubuntu-latest
+>     permissions:
+>       contents: read
+>       id-token: write
+>       attestations: write
+>     steps:
+>       - uses: LedgerHQ/actions/pdm/docker@main
+>         env:
+>           JFROG_REPOSITORY: my-team-repository
+>           JFROG_DOCKER_REPOSITORY: my-team-docker-repository
+> ```
+>
+> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+
 ## Inputs
 
 | Input | Description | Default | Required |

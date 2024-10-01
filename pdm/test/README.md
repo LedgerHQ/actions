@@ -12,6 +12,25 @@ jobs:
       - uses: LedgerHQ/actions/pdm/test@main
 ```
 
+> [!IMPORTANT]
+> JFrog Artifactory dependencies requires authentication.
+> As a consequence, you need to enable the `id-token` permission if you rely on it.
+>
+> ```yaml
+> jobs:
+>   test:
+>     runs-on: ubuntu-latest
+>     permissions:
+>       contents: read
+>       id-token: write
+>     steps:
+>       - uses: LedgerHQ/actions/pdm/test@main
+>         env:
+>           JFROG_REPOSITORY: my-team-repository
+> ```
+>
+> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+
 ## Inputs
 
 | Input | Description | Default | Required |
@@ -35,6 +54,7 @@ jobs:
 | `ALLURE_USERNAME` | Allure instance authentication username |
 | `ALLURE_PASSWORD` | Allure instance authentication password |
 | `ALLURE_UUIDS` | Allure results UUIDS in case of matrix testing |
+| `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 
 ## Outputs
 
