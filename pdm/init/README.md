@@ -10,7 +10,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: LedgerHQ/actions/pdm/init@main
+        with:
+          group: test
 ```
+
+> [!IMPORTANT]
+> JFrog Artifactory dependencies requires authentication.
+> As a consequence, you need to enable the `id-token` permission if you rely on it.
+>
+> ```yaml
+> jobs:
+>   init:
+>     runs-on: ubuntu-latest
+>     permissions:
+>       contents: read
+>       id-token: write
+>     steps:
+>       - uses: LedgerHQ/actions/pdm/init@main
+>         with:
+>           group: test
+>         env:
+>           JFROG_REPOSITORY: my-team-repository
+> ```
+>
+> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
 ## Inputs
 
