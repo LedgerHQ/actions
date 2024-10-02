@@ -20,7 +20,7 @@ inputs:
     required: false
     default: ""
   github-token:
-    description: A Github token with
+    description: A Github token with proper permissions
     required: true
   increment:
     description: "Kind of increment (optional: `MAJOR|MINOR|PATCH`)"
