@@ -226,6 +226,7 @@ runs:
       with:
         filePath: summary.md
         comment_tag: test-reports
+        GITHUB_TOKEN: ${{ inputs.github-token }}
 
     - name: Send coverage report to Backstage
       if: steps.meta.outputs.has_backstage == 'true' && env.BACKSTAGE_URL && github.ref_name == 'main' && !inputs.matrix-id
