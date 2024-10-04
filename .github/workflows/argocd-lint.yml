@@ -1,0 +1,39 @@
+name: "Lint Helm Chart"
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        type: boolean
+        required: false
+        default: false
+      version:
+        type: string
+        required: false
+      charts-path:
+        type: string
+        required: false
+        default: "argocd/"
+
+jobs:
+  lint-chart:
+    runs-on: ledgerhq-shared-small
+    steps:
+      - name: Run Chart lint
+        uses: LedgerHQ/actions/helm/lint@main
+        with:
+          charts-dir: ${{ inputs.charts-path }}
+
+  kubeconform-chart:
+    runs-on: ledgerhq-shared-small
+    strategy:
+      matrix:
+        k8s:
+          - v1.29.8
+          - v1.29.7
+    steps:
+      - name: Run the helm conform
+        uses: LedgerHQ/actions/helm/conform@main
+        with:
+          kubernetes-version: ${{ matrix.k8s }}
+          charts-path: ${{ inputs.charts-path }}
