@@ -18,6 +18,19 @@ runs:
   using: "composite"
 
   steps:
+    - name: Authenticate against JFrog Artifactory
+      id: jfrog-login
+      if: env.JFROG_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+    - name: URL Encode credentials
+      if: steps.jfrog-login.outcome == 'success'
+      run: |
+        : URL Encode credentials
+        echo "JFROG_USER=$(echo $JFROG_USER | jq -Rr '@uri')" >> $GITHUB_ENV
+        echo "JFROG_TOKEN=$(echo $JFROG_TOKEN | jq -Rr '@uri')" >> $GITHUB_ENV
+      shell: bash
+
     - name: set up python
       uses: actions/setup-python@v4
       with:
