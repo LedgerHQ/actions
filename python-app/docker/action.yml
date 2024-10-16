@@ -37,9 +37,21 @@ runs:
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Info for build
       run: |
-        # lowercase image name
-        echo IMAGE="ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
         echo VERSION=$(git describe --tags) >> $GITHUB_ENV
+        echo "IMAGES<<EOF" >> $GITHUB_ENV
+        if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
+          JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ github.event.repository.name }}
+          echo "${JFROG_IMAGE}" >> $GITHUB_ENV
+        fi
+        GHCR_IMAGE=ghcr.io/ledgerhq/${{ github.event.repository.name }}
+        echo "${GHCR_IMAGE}" >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+        # Keep only one image as canonical reference
+        if [ -n "${JFROG_IMAGE}" ]; then
+          echo "IMAGE=${JFROG_IMAGE}" >> $GITHUB_ENV
+        else
+          echo "IMAGE=${GHCR_IMAGE}" >> $GITHUB_ENV
+        fi
       shell: bash
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
@@ -60,7 +72,7 @@ runs:
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.IMAGE }}
+        images: ${{ env.IMAGES }}
         flavor: |
             latest=false
         tags: |
@@ -80,6 +92,28 @@ runs:
       with:
         platforms: ${{ inputs.platforms }}
 
+    - name: Authenticate against JFrog Artifactory
+      id: jfrog-login
+      if: steps.check-docker.outputs.is-docker-needed == 'true' && env.JFROG_REPOSITORY || env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+    - name: Login to JFrog Artifactory internal registry
+      if: steps.check-docker.outputs.is-docker-needed == 'true' && env.JFROG_DOCKER_REPOSITORY
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.JFROG_DOMAIN }}/${{ env.JFROG_DOCKER_REPOSITORY }}
+        username: ${{ env.JFROG_USER }}
+        password: ${{ env.JFROG_TOKEN }}
+
+    # Needed for Pipenv only, so has to be done after Docker Authentication
+    - name: URL Encode credentials
+      if: steps.jfrog-login.outcome == 'success'
+      run: |
+        : URL Encode credentials
+        echo "JFROG_USER=$(echo $JFROG_USER | jq -Rr '@uri')" >> $GITHUB_ENV
+        echo "JFROG_TOKEN=$(echo $JFROG_TOKEN | jq -Rr '@uri')" >> $GITHUB_ENV
+      shell: bash
+
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
       id: docker_build
@@ -90,10 +124,27 @@ runs:
         # `Dockerfile` can mount and use the secret at: /run/secrets/PYPI_DEPLOY_TOKEN
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
+          JFROG_USER=${{ env.JFROG_USER }}
+          JFROG_TOKEN=${{ env.JFROG_TOKEN }}
         build-args: |
           ${{ inputs.build-args }}
           PYPI_DEPLOY_TOKEN=${{ env.PYPI_DEPLOY_TOKEN }}
+          JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           VERSION=${{ env.VERSION }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         push: true
+
+    - name: Attest Docker image for JFrog Artifactory
+      if: steps.check-docker.outputs.is-docker-needed == 'true' && env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-name: ${{ env.IMAGE }}
+        subject-digest: ${{ steps.docker_build.outputs.digest }}
+
+    - name: Sign Docker image for JFrog Artifactory
+      if: steps.check-docker.outputs.is-docker-needed == 'true' && env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/sign-container@actions/sign-container-1
+      with:
+        tags: ${{ steps.meta.outputs.tags }}
+        digest: ${{ steps.docker_build.outputs.digest }}

@@ -51,3 +51,7 @@ This step is only active if `redocly-project` is given.
 
 For convenience, we also provide `LedgerHQ/actions/python-app/init` that setup
 python and run `pipenv sync` (with `--dev` optionally)
+
+JFrog Artifactory support is automatically enabled with:
+- `JFROG_REPOSITORY` environment variable for PyPI repository as source
+- `JFROG_DOCKER_REPOSITORY` environment variable for Docker/OCI image publication
