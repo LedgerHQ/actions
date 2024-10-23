@@ -26,6 +26,8 @@ jobs:
           CI_BOT_USERNAME: ${{ secrets.CI_BOT_USERNAME }}
           CI_BOT_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
           REDOCLY_AUTHORIZATION: ${{ secrets.REDOCLY_AUTHORIZATION }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 ```
 
 This action is a `composite` of
