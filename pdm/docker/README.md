@@ -54,6 +54,8 @@ jobs:
 |--------|-------------|
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 | `JFROG_DOCKER_REPOSITORY` | JFrog repository to publish images to (triggers authentication and publication) |
+| `DOCKERHUB_USERNAME` | Optional Docker Hub username (in case you depend on it and to avoir rate limiting) |
+| `DOCKERHUB_PASSWORD` | Optional Docker Hub password (in case you depend on it and to avoir rate limiting) |
 
 ## Outputs
 
