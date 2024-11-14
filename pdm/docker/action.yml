@@ -21,6 +21,12 @@ inputs:
   dgoss-args:
     description: dgoss extra docker parameters
     default: ""
+  name:
+    description: Optional image name (default to repository name)
+    default: ""
+  suffix:
+    description: Optional Dockerfile suffix
+    default: ""
 
 
 outputs:
@@ -76,18 +82,26 @@ runs:
       id: vars
       run: |
         : Compute some variables
+        NAME=${{ inputs.name || github.event.repository.name }}
         VERSION=${{ inputs.version || github.ref_type == 'tag' && github.ref_name || format('0.dev+{0}.{1}', env.DOCKER_METADATA_OUTPUT_VERSION, github.sha) }}
+        DOCKERFILE=${{ inputs.suffix && format('Dockerfile.{0}', inputs.suffix) || 'Dockerfile' }}
+        GOSSPATH=${{ inputs.suffix || '.' }}
+
+        echo "name=${NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        [ -f Dockerfile ] && HAS_DOCKER='true' || HAS_DOCKER='false'
+        echo "dockerfile=${DOCKERFILE}" >> $GITHUB_OUTPUT
+        echo "gosspath=${GOSSPATH}" >> $GITHUB_OUTPUT
+
+        [ -f ${DOCKERFILE} ] && HAS_DOCKER='true' || HAS_DOCKER='false'
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
-        [ -f goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
+        [ -f ${GOSSPATH}/goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
         echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
         echo "images<<EOF" >> $GITHUB_OUTPUT
         if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
-          JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ github.event.repository.name }}
+          JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${NAME}
           echo "${JFROG_IMAGE}" >> $GITHUB_OUTPUT
         fi
-        GHCR_IMAGE=ghcr.io/ledgerhq/${{ github.event.repository.name }}
+        GHCR_IMAGE=ghcr.io/ledgerhq/${NAME}
         echo "${GHCR_IMAGE}" >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
         # Keep only one image as canonical reference
@@ -112,11 +126,14 @@ runs:
           type=ref,event=pr
           type=pep440,pattern={{major}}
           type=pep440,pattern={{major}}.{{minor}}
+        labels: |
+          org.opencontainers.image.title=${{ steps.vars.outputs.name }}
 
     - name: Build docker image
       if: steps.vars.outputs.has_goss == 'true'
       uses: docker/build-push-action@v6
       with:
+        file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
@@ -132,6 +149,7 @@ runs:
         load: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
@@ -148,6 +166,7 @@ runs:
         : Run GOSS validation
         dgoss run ${{ inputs.dgoss-args }} ${{ steps.vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}
       env:
+        GOSS_FILES_PATH: ${{ steps.vars.outputs.gosspath }}
         # Make dgoss works with Ledger dind runners
         GOSS_FILES_STRATEGY: cp
         CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
@@ -165,6 +184,7 @@ runs:
       id: docker
       if: steps.vars.outputs.has_docker == 'true'
       with:
+        file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
           DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
@@ -180,6 +200,7 @@ runs:
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
 

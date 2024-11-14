@@ -40,6 +40,9 @@ inputs:
   artifactory-repository:
     description: Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`)
     default: ""
+  extra-docker:
+    description: An optional extra docker image to build
+    default: ""
 
 
 outputs:
@@ -187,6 +190,26 @@ runs:
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
       shell: bash
 
+    - name: Extra Docker image
+      uses: LedgerHQ/actions/pdm/docker@main
+      id: extra-docker
+      if: inputs.kind == 'app' && inputs.extra-docker
+      with:
+        clone: false
+        version: ${{ env.REVISION }}
+        pypi-token: ${{ inputs.pypi-token }}
+        github-token: ${{ inputs.github-token }}
+        name: ${{ inputs.extra-docker }}
+        suffix: ${{ inputs.extra-docker }}
+
+    - name: Add Extra Docker image to release body
+      if: steps.extra-docker.outputs.image
+      continue-on-error: true  # Not critical
+      run: |
+        : Add extra Docker image to release body
+        echo -e "\n**Additional Docker image**: \`${{ steps.extra-docker.outputs.image }}@${{ steps.extra-docker.outputs.digest }}\`\n" >> body.md
+      shell: bash
+
     - name: Documentation
       id: doc
       if: steps.meta.outputs.has_docs == 'true'
@@ -266,7 +289,7 @@ runs:
       # Runs on release failure if docker has been published
       if: failure() && steps.docker.outcome == 'success'
       run: |
-        : Cleanup docker
+        : Cleanup docker GHCR image
         # See:
         #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
         #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
@@ -276,7 +299,7 @@ runs:
         QUERY='.[] | select(.name == "${{ steps.docker.outputs.digest }}") | .id'
         VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
-        IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
+        IMAGE="ghcr.io/${{ github.repository }}:${REVISION}@${{ steps.docker.outputs.digest }}"
         echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
@@ -289,8 +312,39 @@ runs:
         #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
         #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
         curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${DIST}/${REVISION}
+        IMAGE="${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${DIST}:${REVISION}@${{ steps.docker.outputs.digest }}"
         echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
-        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${JFROG_DOCKER_REPOSITORY}\` repository" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup extra docker GHCR image
+      # Runs on release failure if extra docker image has been published
+      if: failure() && steps.extra-docker.outcome == 'success'
+      run: |
+        : Cleanup extra docker GHCR image
+        # See:
+        #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
+        #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
+        GHAPI=("gh" "api" "-H" "Accept: application/vnd.github+json" "-H" "X-GitHub-Api-Version: 2022-11-28")
+        PKG='${{ inputs.extra-docker }}'
+        VERSIONS=$(${GHAPI[@]} /orgs/LedgerHQ/packages/container/${PKG}/versions)
+        QUERY='.[] | select(.name == "${{ steps.extra-docker.outputs.digest }}") | .id'
+        VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
+        ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
+        IMAGE="ghcr.io/${{ github.repository_owner }}/${{ inputs.extra-docker }}:${REVISION}@${{ steps.extra-docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup extra docker JFrog Artifactory image
+      # Runs on release failure if docker has been published
+      if: failure() && steps.extra-docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
+      run: |
+        : Cleanup extra docker JFrog Artifactory image
+        # See:
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${{ inputs.extra-docker }}/${REVISION}
+        IMAGE="${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ inputs.extra-docker }}:${REVISION}@${{ steps.docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup GemFury

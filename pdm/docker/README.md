@@ -47,6 +47,8 @@ jobs:
 | `build-args` | Docker build command extra `build-args` (multiline supported) | `""` | `false` |
 | `secrets` | Docker build command extra `secrets` (multiline supported) | `""` | `false` |
 | `dgoss-args` | dgoss extra docker parameters | `""` | `false` |
+| `name` | Optional image name (default to repository name) | `""` | `false` |
+| `suffix` | Optional Dockerfile suffix | `""` | `false` |
 
 ## Environment variables
 

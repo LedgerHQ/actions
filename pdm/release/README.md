@@ -50,13 +50,14 @@ jobs:
 |-------|-------------|---------|----------|
 | `kind` | Kind of project to release (lib/app) | `app` | `true` |
 | `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
-| `github-token` | A Github token with | `""` | `true` |
+| `github-token` | A Github token with proper permissions | `""` | `true` |
 | `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `public` | Is it a public library ? | `false` | `false` |
 | `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
 | `artifactory-repository` | Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`) | `""` | `false` |
+| `extra-docker` | An optional extra docker image to build | `""` | `false` |
 
 ## Environment variables
 
