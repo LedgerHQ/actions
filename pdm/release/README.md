@@ -57,6 +57,7 @@ jobs:
 | `public` | Is it a public library ? | `false` | `false` |
 | `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
 | `artifactory-repository` | Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`) | `""` | `false` |
+| `docker-name` | Optionally override the docker image name (default to the repository name) | `""` | `false` |
 | `extra-docker` | An optional extra docker image to build | `""` | `false` |
 
 ## Environment variables
