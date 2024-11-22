@@ -177,7 +177,7 @@ runs:
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
-      if: inputs.kind == 'app' && steps.meta.outputs.has_docker == 'true'
+      if: steps.meta.outputs.has_docker == 'true'
       with:
         clone: false
         version: ${{ env.REVISION }}
@@ -197,7 +197,7 @@ runs:
     - name: Extra Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: extra-docker
-      if: inputs.kind == 'app' && inputs.extra-docker
+      if: inputs.extra-docker
       with:
         clone: false
         version: ${{ env.REVISION }}
