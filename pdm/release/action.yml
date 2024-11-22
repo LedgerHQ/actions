@@ -40,6 +40,9 @@ inputs:
   artifactory-repository:
     description: Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`)
     default: ""
+  docker-name:
+    description: Optionally override the docker image name (default to the repository name)
+    default: ""
   extra-docker:
     description: An optional extra docker image to build
     default: ""
@@ -181,6 +184,7 @@ runs:
         pypi-token: ${{ inputs.pypi-token }}
         github-token: ${{ inputs.github-token }}
         dgoss-args: ${{ inputs.dgoss-args }}
+        name: ${{ inputs.docker-name }}
 
     - name: Add Docker image to release body
       if: steps.docker.outputs.image
