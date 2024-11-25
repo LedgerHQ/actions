@@ -77,5 +77,5 @@ runs:
         version=${{ inputs.version || github.ref == 'refs/heads/main' && 'latest' || github.head_ref || github.ref_name }}
         url="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${version}"
         echo "url=${url}" >> $GITHUB_OUTPUT
-        echo "📖 A new documentation has been published: ${url}" >> $GITHUB_STEP_SUMMARY
+        echo "📖 A new documentation has been published: ${url}" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash

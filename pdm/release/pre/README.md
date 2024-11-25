@@ -9,7 +9,7 @@ jobs:
   pre:
     runs-on: ubuntu-latest
     steps:
-      - uses: LedgerHQ/actions/pdm/release/pre@main
+      - uses: LedgerHQ/actions/pdm/pre@main
         with:
           workflow: check.yml
           github-token: ${{ github.token }}

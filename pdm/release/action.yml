@@ -1,5 +1,14 @@
 name: Release
-description: Bump version and publish release assets
+description: |
+  Bump version and publish release assets
+
+  For JFrog Artifactory, repository needs to be authorized on Artifactory.
+  Calling workflow need to have OIDC permissions:
+
+  ```yaml
+    permissions:
+      id-token: write
+  ```
 
 inputs:
   kind:
@@ -8,13 +17,13 @@ inputs:
     default: app
   pypi-token:
     description: A Token to publish on PyPI (private or public)
-    required: true
+    required: false
     default: ""
   github-token:
-    description: A Github token with
+    description: A Github token with proper permissions
     required: true
   increment:
-    description: "Kind of increment (optional: MAJOR|MINOR|PATCH)"
+    description: "Kind of increment (optional: `MAJOR|MINOR|PATCH`)"
     required: false
   group:
     description: Dependency group(s) to install
@@ -26,11 +35,17 @@ inputs:
     description: Is it a public library ?
     default: 'false'
   dgoss-args:
-    description: dgoss extra docker parameters
+    description: "`dgoss` extra docker parameters"
     default: ""
   artifactory-repository:
-    description: Artifactory repository to publish to
-    default: vault-pypi-prod-green
+    description: Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`)
+    default: ""
+  docker-name:
+    description: Optionally override the docker image name (default to the repository name)
+    default: ""
+  extra-docker:
+    description: An optional extra docker image to build
+    default: ""
 
 
 outputs:
@@ -43,11 +58,22 @@ outputs:
   documentation:
     description: The released documentation URL
     value: ${{ steps.doc.outputs.url }}
+  image:
+    description: The released documentation URL
+    value: ${{ steps.docker.outputs.image }}
 
 
 runs:
   using: composite
   steps:
+    - name: Handle deprecations
+      run: |
+        : Handle deprecations
+        if [ "${{ inputs.artifactory-repository }}" != "" ]; then
+          echo "⚠️ \`artifactory-repository\` input is deprecated, use the \`JFROG_REPOSITORY\` environment variable"
+          echo "JFROG_REPOSITORY=${{ inputs.artifactory-repository }}" >> $GITHUB_ENV
+        fi
+      shell: bash
     - name: Clone and install dependencies
       uses: LedgerHQ/actions/pdm/init@main
       id: meta
@@ -108,36 +134,34 @@ runs:
         pdm publish --no-build
       shell: bash
 
-    - name: Push to our internal Nexus
-      id: nexus
-      if: inputs.kind == 'lib' && inputs.public != 'true' && env.NEXUS_HOST != null && env.NEXUS_USER != null && env.NEXUS_PASSWORD != null
-      env:
-        PDM_PUBLISH_REPO: https://${{ env.NEXUS_HOST }}/repository/${{ env.NEXUS_REPO || 'pypi-internal'}}/
-        PDM_PUBLISH_USERNAME: ${{ env.NEXUS_USER }}
-        PDM_PUBLISH_PASSWORD: ${{ env.NEXUS_PASSWORD }}
-        FORCE_COLOR: 'true'
-      run: |
-        : Push to our internal Nexus
-        pdm publish --no-build
-      shell: bash
-
     - name: Login to JFrog Ledger
-      id: jfrog-login
       if: inputs.kind == 'lib' && inputs.public != 'true'
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Push to our internal JFrog Artifactory
       id: artifactory
-      if: steps.jfrog-login.outputs.oidc-user
+      if: inputs.kind == 'lib' && inputs.public != 'true' && env.JFROG_URL
       env:
-        PDM_PUBLISH_REPO: ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/api/pypi/${{ inputs.artifactory-repository }}
-        PDM_PUBLISH_USERNAME: ${{ steps.jfrog-login.outputs.oidc-user }}
-        PDM_PUBLISH_PASSWORD: ${{ steps.jfrog-login.outputs.oidc-token }}
+        PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
+        PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
+        PDM_PUBLISH_PASSWORD: ${{ env.JFROG_TOKEN }}
         FORCE_COLOR: 'true'
       run: |
         : Push to our internal JFrog Artifactory
         pdm publish --no-build
       shell: bash
+
+    - name: Attest
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-path: dist/*
+
+    - name: Sign
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+      with:
+        path: dist/*
 
     - name: Push to PyPI
       id: pypi
@@ -153,13 +177,14 @@ runs:
     - name: Docker image
       uses: LedgerHQ/actions/pdm/docker@main
       id: docker
-      if: inputs.kind == 'app' && steps.meta.outputs.has_docker == 'true'
+      if: steps.meta.outputs.has_docker == 'true'
       with:
         clone: false
         version: ${{ env.REVISION }}
         pypi-token: ${{ inputs.pypi-token }}
         github-token: ${{ inputs.github-token }}
         dgoss-args: ${{ inputs.dgoss-args }}
+        name: ${{ inputs.docker-name }}
 
     - name: Add Docker image to release body
       if: steps.docker.outputs.image
@@ -167,6 +192,26 @@ runs:
       run: |
         : Add Docker image to release body
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
+      shell: bash
+
+    - name: Extra Docker image
+      uses: LedgerHQ/actions/pdm/docker@main
+      id: extra-docker
+      if: inputs.extra-docker
+      with:
+        clone: false
+        version: ${{ env.REVISION }}
+        pypi-token: ${{ inputs.pypi-token }}
+        github-token: ${{ inputs.github-token }}
+        name: ${{ inputs.extra-docker }}
+        suffix: ${{ inputs.extra-docker }}
+
+    - name: Add Extra Docker image to release body
+      if: steps.extra-docker.outputs.image
+      continue-on-error: true  # Not critical
+      run: |
+        : Add extra Docker image to release body
+        echo -e "\n**Additional Docker image**: \`${{ steps.extra-docker.outputs.image }}@${{ steps.extra-docker.outputs.digest }}\`\n" >> body.md
       shell: bash
 
     - name: Documentation
@@ -215,7 +260,7 @@ runs:
       continue-on-error: true
       run: |
         : Publish summary
-        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" >> $GITHUB_STEP_SUMMARY
+        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     #################################################################################################
@@ -231,7 +276,7 @@ runs:
       if: failure()
       run: |
         : Show release failure in summary
-        echo "❌ Release ${REVISION} failed" >> $GITHUB_STEP_SUMMARY
+        echo "❌ Release ${REVISION} failed" | tee -a $GITHUB_STEP_SUMMARY
         echo "DIST=${{ steps.meta.outputs.identifier }}" >> $GITHUB_ENV
       shell: bash
 
@@ -241,14 +286,14 @@ runs:
       run: |
         : Cleanup documentation
         pdm run mike delete --push ${REVISION}
-        echo "🧹 Documentation for version ${REVISION} has been removed" >> $GITHUB_STEP_SUMMARY
+        echo "🧹 Documentation for version ${REVISION} has been removed" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Cleanup docker
+    - name: Cleanup docker GHCR image
       # Runs on release failure if docker has been published
       if: failure() && steps.docker.outcome == 'success'
       run: |
-        : Cleanup docker
+        : Cleanup docker GHCR image
         # See:
         #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
         #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
@@ -258,25 +303,52 @@ runs:
         QUERY='.[] | select(.name == "${{ steps.docker.outputs.digest }}") | .id'
         VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
-        IMAGE='${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}'
-        echo "🧹 Docker image \`${IMAGE}\` has been deleted" >> $GITHUB_STEP_SUMMARY
+        IMAGE="ghcr.io/${{ github.repository }}:${REVISION}@${{ steps.docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
-    - name: Cleanup Nexus
-      # Runs on release failure if package has been published on Nexus
-      if: failure() && steps.nexus.outcome == 'success'
+    - name: Cleanup docker JFrog Artifactory image
+      # Runs on release failure if docker has been published
+      if: failure() && steps.docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
       run: |
-        : Cleanup Nexus
+        : Cleanup docker JFrog Artifactory image
         # See:
-        #   - https://help.sonatype.com/en/search-api.html#SearchAPI-SearchComponents
-        #   - https://help.sonatype.com/en/components-api.html#delete-component
-        API="https://${NEXUS_HOST}/service/rest/v1"
-        CURL=("curl" "-u" "${NEXUS_USER}:${NEXUS_PASSWORD}")
-        REPO=${NEXUS_REPO:-'pypi-internal'}
-        CANDIDATES=$(${CURL[@]} "${API}/search?repository=${REPO}&name=${DIST}&version=${REVISION}")
-        COMPONENT_ID=$(echo ${CANDIDATES} | jq --raw-output ".items[0].id")
-        ${CURL[@]} -X DELETE "${API}/components/${COMPONENT_ID}"
-        echo "🧹 Nexus package for \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${DIST}/${REVISION}
+        IMAGE="${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${DIST}:${REVISION}@${{ steps.docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup extra docker GHCR image
+      # Runs on release failure if extra docker image has been published
+      if: failure() && steps.extra-docker.outcome == 'success'
+      run: |
+        : Cleanup extra docker GHCR image
+        # See:
+        #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
+        #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
+        GHAPI=("gh" "api" "-H" "Accept: application/vnd.github+json" "-H" "X-GitHub-Api-Version: 2022-11-28")
+        PKG='${{ inputs.extra-docker }}'
+        VERSIONS=$(${GHAPI[@]} /orgs/LedgerHQ/packages/container/${PKG}/versions)
+        QUERY='.[] | select(.name == "${{ steps.extra-docker.outputs.digest }}") | .id'
+        VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
+        ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
+        IMAGE="ghcr.io/${{ github.repository_owner }}/${{ inputs.extra-docker }}:${REVISION}@${{ steps.extra-docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup extra docker JFrog Artifactory image
+      # Runs on release failure if docker has been published
+      if: failure() && steps.extra-docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
+      run: |
+        : Cleanup extra docker JFrog Artifactory image
+        # See:
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${{ inputs.extra-docker }}/${REVISION}
+        IMAGE="${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ inputs.extra-docker }}:${REVISION}@${{ steps.docker.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup GemFury
@@ -284,14 +356,23 @@ runs:
       if: failure() && steps.gemfury.outcome == 'success'
       run: |
         : Cleanup GemFury
+        # GemFury is unable to cleanup standard Python versions as it sees wheel+sdist
+        # as 2 Python versions, but doesn't provide distinct kind for them.
+        # So we delete by ID
         # See:
         #   - https://github.com/gemfury/cli/blob/main/api/yank.go
         #   - https://github.com/gemfury/cli/blob/main/api/client.go
-        curl -X DELETE \
-          -H "Accept: application/vnd.fury.v1" \
-          -H "Authorization: ${{ inputs.pypi-token }}" \
-          https://api.fury.io/packages/${DIST}/versions/${REVISION}
-        echo "🧹 GemFury package \`${DIST}==${REVISION}\` have been deleted" >> $GITHUB_STEP_SUMMARY
+        #   - https://github.com/gemfury/cli/blob/main/cli/yank.go
+        FURY=(curl --no-progress-meter -H "Accept: application/vnd.fury.v1" -H "Authorization: ${{ inputs.pypi-token }}" https://api.fury.io)
+        VERSIONS=$("${FURY[@]}/versions?name=${DIST}&version=${REVISION}")
+
+        echo "$VERSIONS" | jq -c ".[]" | while read i; do
+            filename=$(echo "$i" | jq -r .filename)
+            version_id=$(echo "$i" | jq -r .id)
+            package_id=$(echo "$i" | jq -r .package_id)
+            "${FURY[@]}/packages/${package_id}/versions/${version_id}" -X DELETE > /dev/null
+            echo "🧹 GemFury package \`${filename}\` have been deleted" | tee -a $GITHUB_STEP_SUMMARY
+        done
       shell: bash
 
     - name: Cleanup JFrog Artifactory
@@ -302,10 +383,8 @@ runs:
         # See:
         #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
         #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
-        curl -X DELETE \
-          -u ${{ steps.jfrog-login.outputs.oidc-user }}:${{ steps.jfrog-login.outputs.oidc-token }} \
-          ${{ steps.jfrog-login.outputs.jfrog-url }}/artifactory/${{ inputs.artifactory-repository }}/${DIST}/${REVISION}
-        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${{ inputs.artifactory-repository }}\` repository" >> $GITHUB_STEP_SUMMARY
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_REPOSITORY}/${DIST}/${REVISION}
+        echo "🧹 Package \`${DIST}==${REVISION}\` have been deleted from JFrog Artifactory \`${{ inputs.artifactory-repository }}\` repository" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Cleanup PyPI
@@ -314,6 +393,6 @@ runs:
       run: |
         : Cleanup PyPI
         # See: https://pypi.org/help/#file-name-reuse
-        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." >> $GITHUB_STEP_SUMMARY
-        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." >> $GITHUB_STEP_SUMMARY
+        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." | tee -a $GITHUB_STEP_SUMMARY
+        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." | tee -a $GITHUB_STEP_SUMMARY
       shell: bash

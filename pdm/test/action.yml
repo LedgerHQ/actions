@@ -59,7 +59,9 @@ runs:
       if: inputs.report-only == null
       run: |
         : Run tests
-        pdm cover -v --force-sugar --color=yes ${{ inputs.parameters }}
+        params=(--force-sugar --color=yes ${{ inputs.parameters }})
+        [ "${{ runner.debug }}" == "1" ] && params+=(-vv) || params+=(-v)
+        pdm cover "${params[@]}"
       env:
         FORCE_COLOR: 'true'
         COVERAGE_FILE: reports/coverage${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.data
@@ -164,7 +166,7 @@ runs:
     - name: Generate Pytest coverage report
       id: coverage
       if: inputs.matrix-id == null
-      uses: MishaKav/pytest-coverage-comment@v1.1.52
+      uses: MishaKav/pytest-coverage-comment@v1.1.53
       with:
         github-token: ${{ inputs.github-token }}
         coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
@@ -220,10 +222,11 @@ runs:
     - name: Add reports to the pull-request
       if: github.event_name == 'pull_request' && !inputs.matrix-id
       continue-on-error: true
-      uses: thollander/actions-comment-pull-request@v2
+      uses: thollander/actions-comment-pull-request@v3
       with:
-        filePath: summary.md
-        comment_tag: test-reports
+        file-path: summary.md
+        comment-tag: test-reports
+        github-token: ${{ inputs.github-token }}
 
     - name: Send coverage report to Backstage
       if: steps.meta.outputs.has_backstage == 'true' && env.BACKSTAGE_URL && github.ref_name == 'main' && !inputs.matrix-id
@@ -234,5 +237,5 @@ runs:
         # - https://github.com/backstage/community-plugins/tree/main/workspaces/code-coverage/plugins/code-coverage-backend
         REPORT_URL="${BACKSTAGE_URL}/api/code-coverage/report?entity=component:${{ steps.meta.outputs.identifier }}"
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
-        echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" >> $GITHUB_STEP_SUMMARY
+        echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
