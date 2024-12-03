@@ -12,9 +12,8 @@ description: |
 
 inputs:
   kind:
-    description: Kind of project to release (lib/app)
-    required: true
-    default: app
+    description: DEPRECATED (Set `tool.pdm.distribution=true` on libraries)
+    default: ""
   pypi-token:
     description: A Token to publish on PyPI (private or public)
     required: false
@@ -38,7 +37,7 @@ inputs:
     description: "`dgoss` extra docker parameters"
     default: ""
   artifactory-repository:
-    description: Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`)
+    description: DEPRECATED (Use `JFROG_REPOSITORY` environment variable)
     default: ""
   docker-name:
     description: Optionally override the docker image name (default to the repository name)
@@ -76,6 +75,9 @@ runs:
           echo "⚠️ \`artifactory-repository\` input is deprecated, use the \`JFROG_REPOSITORY\` environment variable"
           echo "JFROG_REPOSITORY=${{ inputs.artifactory-repository }}" >> $GITHUB_ENV
         fi
+        if [ "${{ inputs.kind }}" != "" ]; then
+          echo "⚠️ \`input\` input is deprecated, set \`tool.pdm.distribution=true\` in \`pyproject.toml\` instead"
+        fi
       shell: bash
     - name: Clone and install dependencies
       uses: LedgerHQ/actions/pdm/init@main
@@ -108,7 +110,7 @@ runs:
 
     # Build once to publish the same package on every repository
     - name: Build distribution
-      if: inputs.kind == 'lib'
+      if: inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true'
       run: |
         : Build distribution
         pdm build
@@ -126,7 +128,7 @@ runs:
 
     - name: Push to GemFury
       id: gemfury
-      if: inputs.kind == 'lib' && inputs.public != 'true' && env.PDM_PUBLISH_USERNAME != null
+      if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.PDM_PUBLISH_USERNAME != null
       env:
         PDM_PUBLISH_REPO: https://push.fury.io/ledger
         PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
@@ -137,13 +139,9 @@ runs:
         pdm publish --no-build
       shell: bash
 
-    - name: Login to JFrog Ledger
-      if: inputs.kind == 'lib' && inputs.public != 'true'
-      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
-
     - name: Push to our internal JFrog Artifactory
       id: artifactory
-      if: inputs.kind == 'lib' && inputs.public != 'true' && env.JFROG_URL
+      if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.JFROG_REPOSITORY
       env:
         PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
         PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
@@ -168,7 +166,7 @@ runs:
 
     - name: Push to PyPI
       id: pypi
-      if: inputs.kind == 'lib' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
         FORCE_COLOR: 'true'

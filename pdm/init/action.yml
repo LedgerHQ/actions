@@ -52,12 +52,18 @@ outputs:
   has_backstage:
     description: Whether the project is exposing Backstage catalog infos
     value: ${{ steps.meta.outputs.has_backstage }}
+  is_distribution:
+    description: Whether the project is a distribution or not
+    value: ${{ steps.meta.outputs.is_distribution }}
   is_pr:
     description: Is the current workflow run a pull-request
     value: ${{ steps.meta.outputs.is_pr }}
   branch:
     description: The branch from which workflow has been triggered
     value: ${{ steps.meta.outputs.branch }}
+  has_jfrog:
+    description: Whether this project uses JFrog Artifactory or not
+    value: ${{ steps.detect-jfrog.outputs.has_jfrog }}
   jfrog-domain:
     description: Base domain of Ledger's JFrog platform if authenticated
     value: ${{ steps.jfrog-login.outputs.jfrog-domain }}
@@ -88,9 +94,17 @@ runs:
         git config user.email github-actions@ledger.fr
       shell: bash
 
+    - name: detect-jfrog
+      id: detect-jfrog
+      run: |
+        : Detect JFrog requirement
+        HAS_JFROG=$(grep "jfrog" pyproject.toml > /dev/null && echo "true" || echo "false")
+        echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
+      shell: bash
+
     - name: Authenticate against JFrog Artifactory
       id: jfrog-login
-      if: env.JFROG_REPOSITORY
+      if: steps.detect-jfrog.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Set up Python and PDM
@@ -155,6 +169,9 @@ runs:
 
         IS_PR="${{ github.event_name == 'pull_request' }}"
         echo "is_pr=${IS_PR}" >> $GITHUB_OUTPUT
+
+        IS_DIST==$(grep -E "distribution\s*=\s*true" pyproject.toml > /dev/null && echo "true" || echo "false")
+        echo "is_distribution=${IS_DIST}" >> $GITHUB_OUTPUT
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
       shell: bash

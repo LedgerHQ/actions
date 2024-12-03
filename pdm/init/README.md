@@ -65,8 +65,10 @@ jobs:
 | `has_docker` | Whether the project a Docker image (aka. a `Dockerfile` present at root) |
 | `has_src` | Whether the project is using a `src` layout or not |
 | `has_backstage` | Whether the project is exposing Backstage catalog infos |
+| `is_distribution` | Whether the project is a distribution or not |
 | `is_pr` | Is the current workflow run a pull-request |
 | `branch` | The branch from which workflow has been triggered |
+| `has_jfrog` | Whether this project uses JFrog Artifactory or not |
 | `jfrog-domain` | Base domain of Ledger's JFrog platform if authenticated |
 | `jfrog-url` | Base URL of Ledger's JFrog platform if authenticated |
 | `jfrog-user` | Username extracted from the OIDC token if authenticated |

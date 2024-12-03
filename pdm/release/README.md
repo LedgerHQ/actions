@@ -48,7 +48,7 @@ jobs:
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
-| `kind` | Kind of project to release (lib/app) | `app` | `true` |
+| `kind` | DEPRECATED (Set `tool.pdm.distribution=true` on libraries) | `app` | `false` |
 | `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `""` | `true` |
 | `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
@@ -56,7 +56,7 @@ jobs:
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `public` | Is it a public library ? | `false` | `false` |
 | `dgoss-args` | `dgoss` extra docker parameters | `""` | `false` |
-| `artifactory-repository` | Artifactory repository to publish to (deprecated for `JFROG_REPOSITORY`) | `""` | `false` |
+| `artifactory-repository` | DEPRECATED (Use `JFROG_REPOSITORY` environment variable) | `""` | `false` |
 | `docker-name` | Optionally override the docker image name (default to the repository name) | `""` | `false` |
 | `extra-docker` | An optional extra docker image to build | `""` | `false` |
 
@@ -64,7 +64,7 @@ jobs:
 
 | Variable | Description |
 |--------|-------------|
-| `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
+| `JFROG_REPOSITORY` | JFrog repository to publish libraries on (triggers authentication and publication) |
 | `JFROG_DOCKER_REPOSITORY` | JFrog repository to publish images to (triggers authentication and publication) |
 
 ## Outputs
