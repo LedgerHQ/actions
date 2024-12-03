@@ -62,7 +62,7 @@ runs:
 
     - name: Authenticate against JFrog Artifactory
       id: jfrog-login
-      if: env.JFROG_REPOSITORY || env.JFROG_DOCKER_REPOSITORY
+      if: (env.JFROG_REPOSITORY || env.JFROG_DOCKER_REPOSITORY) && !env.JFROG_TOKEN
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Login to JFrog Artifactory internal registry
