@@ -64,7 +64,8 @@ runs:
       if: inputs.site == 'true' && inputs.version || startsWith(github.ref, 'refs/tags')
       run: |
         : Deploy the documentation site \(tag\)
-        pdm doc:deploy --push ${{ inputs.version || github.head_ref || github.ref_name }}
+        version="${{ inputs.version || github.head_ref || github.ref_name }}"
+        pdm doc:deploy --push ${version%.*}
       env:
         FORCE_COLOR: 'true'
       shell: bash
