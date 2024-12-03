@@ -137,6 +137,7 @@ runs:
     - name: Merge reports artifacts
       if: inputs.report-only
       uses: actions/upload-artifact/merge@v4
+      continue-on-error: true
       with:
         name: reports
         pattern: reports-*
