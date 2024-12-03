@@ -104,7 +104,7 @@ runs:
 
     - name: Authenticate against JFrog Artifactory
       id: jfrog-login
-      if: steps.detect-jfrog.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY
+      if: (steps.detect-jfrog.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY) && !env.JFROG_TOKEN
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Set up Python and PDM
