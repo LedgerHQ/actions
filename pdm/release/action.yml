@@ -58,9 +58,12 @@ outputs:
   documentation:
     description: The released documentation URL
     value: ${{ steps.doc.outputs.url }}
-  image:
-    description: The released documentation URL
+  docker:
+    description: The released docker image URL
     value: ${{ steps.docker.outputs.image }}
+  extra-docker:
+    description: The released additional docker image URL
+    value: ${{ steps.extra-docker.outputs.image }}
 
 
 runs:

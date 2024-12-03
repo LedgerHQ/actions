@@ -22,6 +22,7 @@ jobs:
 | `channel` | Channel to notify in | `#vault-ci-notifications` | `false` |
 | `github-release` | An optional github release URL | `""` | `false` |
 | `docker` | An optional Docker image URL | `""` | `false` |
+| `extra-docker` | An optional extra Docker image URL | `""` | `false` |
 | `documentation` | An optional documentation URL | `""` | `false` |
 
 ## Outputs

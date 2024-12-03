@@ -74,4 +74,5 @@ jobs:
 | `url` | The generated Github Release URL |
 | `version` | The released version |
 | `documentation` | The released documentation URL |
-| `image` | The released documentation URL |
+| `docker` | The released docker image URL |
+| `extra-docker` | The released additional docker image URL |

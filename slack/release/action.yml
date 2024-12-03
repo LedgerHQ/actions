@@ -18,6 +18,8 @@ inputs:
     description: An optional github release URL
   docker:
     description: An optional Docker image URL
+  extra-docker:
+    description: An optional extra Docker image URL
   documentation:
     description: An optional documentation URL
 
@@ -33,6 +35,7 @@ runs:
         SLUG="${{ github.event.repository.name }}"
         VERSION="${{ inputs.version }}"
         DOCKER="${{ inputs.docker }}"
+        EXTRA_DOCKER="${{ inputs.extra-docker }}"
         DOC="${{ inputs.documentation }}"
         GH_RELEASE="${{ inputs.github-release }}"
 
@@ -74,6 +77,23 @@ runs:
           ]
           }')
           JSON=$(echo $JSON | jq --argjson docker "$DOCKER_SEGMENT" '.blocks += [$docker]')
+        fi
+
+        if [[ "$EXTRA_DOCKER" ]]; then
+          EXTRA_DOCKER_SEGMENT=$(jq -n --arg docker ${EXTRA_DOCKER} '{
+          "type": "context",
+          "elements": [
+            {
+              "type": "mrkdwn",
+              "text": ":docker: *Additional Docker image*"
+            },
+            {
+              "type": "mrkdwn",
+              "text": "`\($docker)`"
+            }
+          ]
+          }')
+          JSON=$(echo $JSON | jq --argjson docker "$EXTRA_DOCKER_SEGMENT" '.blocks += [$docker]')
         fi
 
         ACTIONS=$(jq -n '{
