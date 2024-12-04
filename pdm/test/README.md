@@ -44,6 +44,7 @@ jobs:
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `matrix-id` | An optional unique ID for matrix builds (triggers parallelism) | `""` | `false` |
 | `report-only` | Only perform aggregation and reporting (parallelism closure) | `""` | `false` |
+| `docker-compose` | Start and wait Docker Compose | `""` | `false` |
 
 ## Environment variables
 
