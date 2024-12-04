@@ -29,6 +29,8 @@ inputs:
     description: An optional unique ID for matrix builds (triggers parallelism)
   report-only:
     description: Only perform aggregation and reporting (parallelism closure)
+  docker-compose:
+    description: Start and wait Docker Compose
 
 runs:
   using: composite
@@ -53,6 +55,13 @@ runs:
         id=$(echo "${{ inputs.matrix-id }}" | sha256sum | cut -c 1-8)
         echo "id=${id}" >> $GITHUB_OUTPUT
         echo "suffix=.${id}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Start and wait Docker Compose
+      if: inputs.docker-compose == 'true' and report-only == null
+      run: |
+        : Start and wait Docker Compoose
+        docker compose up --detach --wait
       shell: bash
 
     - name: Run tests
