@@ -58,7 +58,7 @@ runs:
       shell: bash
 
     - name: Start and wait Docker Compose
-      if: inputs.docker-compose == 'true' && report-only == null
+      if: inputs.docker-compose == 'true' && inputs.report-only == null
       run: |
         : Start and wait Docker Compoose
         docker compose up --detach --wait
