@@ -50,8 +50,8 @@ jobs:
         with:
           charts-path: ${{ inputs.charts-path }}
           version: ${{ inputs.version }}
-          chartmuseum-url: ${{ secrets.CHARTMUSEUM_DEV_URL }}
-          chartmuseum-user: ${{ secrets.CHARTMUSEUM_DEV_USER }}
+          chartmuseum-url: ${{ vars.CHARTMUSEUM_DEV_URL }}
+          chartmuseum-user: ${{ vars.CHARTMUSEUM_DEV_USER }}
           chartmuseum-password: ${{ secrets.CHARTMUSEUM_DEV_PASSWORD }}
           force: ${{ startsWith(inputs.version, '0.0.0' ) }}
 
