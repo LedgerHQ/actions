@@ -14,8 +14,7 @@ on:
         required: true
       GREEN_SONAR_TOKEN:
         required: true
-      GREEN_SONAR_HOST_URL:
-        required: true
+
 jobs:
   sonarqube:
     name: SonarQube Analysis
