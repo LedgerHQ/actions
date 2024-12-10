@@ -15,8 +15,8 @@ For slack notifications:
 - uses: LedgerHQ/actions/allure/publish@main
   if: always()
   with:
-    allure-username: ${{ secrets.ALLURE_SERVER_USERNAME }}
-    allure-password: ${{ secrets.ALLURE_SERVER_PASSWORD }}
+    allure-username: ${{ secrets.ALLURE_SERVER_USERNAME }} # decommissioned
+    allure-password: ${{ secrets.ALLURE_SERVER_PASSWORD }} # decommissioned
     slack-webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
 
