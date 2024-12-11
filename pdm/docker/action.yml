@@ -193,8 +193,8 @@ runs:
           ${{ inputs.build-args }}
         secrets: |
           PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token }}
-          JFROG_USER=${{ steps.jfrog-login.outputs.oidc-user }}
-          JFROG_TOKEN=${{ steps.jfrog-login.outputs.oidc-token }}
+          JFROG_USER=${{ env.JFROG_USER }}
+          JFROG_TOKEN=${{ env.JFROG_TOKEN }}
           ${{ inputs.secrets }}
         pull: ${{ steps.vars.outputs.has_goss != 'true' }}
         push: true
