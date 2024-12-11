@@ -14,8 +14,7 @@ on:
         required: true
       GREEN_SONAR_TOKEN:
         required: true
-      GREEN_SONAR_HOST_URL:
-        required: true
+
 jobs:
   sonarqube:
     name: SonarQube Analysis
@@ -53,4 +52,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
           SONAR_TOKEN: ${{ secrets.GREEN_SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.GREEN_SONAR_HOST_URL }}
+          SONAR_HOST_URL: ${{ vars.GREEN_SONAR_HOST_URL }}
