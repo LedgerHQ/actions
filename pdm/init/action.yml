@@ -170,7 +170,7 @@ runs:
         IS_PR="${{ github.event_name == 'pull_request' }}"
         echo "is_pr=${IS_PR}" >> $GITHUB_OUTPUT
 
-        IS_DIST==$(grep -E "distribution\s*=\s*true" pyproject.toml > /dev/null && echo "true" || echo "false")
+        IS_DIST=$(grep -E "distribution\s*=\s*true" pyproject.toml > /dev/null && echo "true" || echo "false")
         echo "is_distribution=${IS_DIST}" >> $GITHUB_OUTPUT
       env:
         PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
