@@ -11,8 +11,8 @@ Action to interact with Nexus.
   with:
     feature-name: my-awesome-feature
   env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_HOST: ${{ vars.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ vars.GREEN_NEXUS_USER }}
     GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
 ```
 
@@ -26,7 +26,7 @@ Outputs:
 ```yaml
 - uses: LedgerHQ/actions/nexus/publish@main
   env:
-    GREEN_NEXUS_HOST: ${{ secrets.GREEN_NEXUS_HOST }}
-    GREEN_NEXUS_USER: ${{ secrets.GREEN_NEXUS_USER }}
+    GREEN_NEXUS_HOST: ${{ vars.GREEN_NEXUS_HOST }}
+    GREEN_NEXUS_USER: ${{ vars.GREEN_NEXUS_USER }}
     GREEN_NEXUS_PASSWORD: ${{ secrets.GREEN_NEXUS_PASSWORD }}
 ```
