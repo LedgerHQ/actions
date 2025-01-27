@@ -223,7 +223,7 @@ runs:
       with:
         version: ${{ env.REVISION }}
         pypi-token: ${{ inputs.pypi-token }}
-        openapi: ${{ inputs.kind == 'app' && steps.meta.outputs.has_openapi == 'true' }}
+        openapi: ${{ steps.meta.outputs.has_openapi == 'true' }}
         site: true
         init: false
 
