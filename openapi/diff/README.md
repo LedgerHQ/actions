@@ -10,6 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: LedgerHQ/actions/openapi/diff@main
+        with
+          base: path/to/base/openapi.yaml
+          head: path/to/head/openapi.yaml
+          output: path/to/output/directory
+          github-token: ${{ github.token }}
+```
+
+## Permissions
+
+This action interact with the GitHub API using the GitHub token and requires the following permissions:
+
+```yaml
+pull-requests: write  # to comment on the PR
 ```
 
 ## Inputs
@@ -19,6 +32,7 @@ jobs:
 | `base` | Base diff specification file | `""` | `true` |
 | `head` | Head diff specification file | `""` | `true` |
 | `output` | Output directory | `reports/openapi` | `true` |
+| `github-token` | A GitHub token with `pull-requests: write` permissions | `${{ github.token }}` | `false` |
 
 ## Outputs
 

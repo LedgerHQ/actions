@@ -35,6 +35,17 @@ jobs:
 >
 > See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
+## Permissions
+
+This action interact with the GitHub API using the GitHub token and requires the following permissions:
+
+```yaml
+contents: read  # Checkout
+id-token: write # Authenticate to JFrog Artifactory
+```
+
+See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+
 ## Inputs
 
 | Input | Description | Default | Required |
@@ -43,7 +54,7 @@ jobs:
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `history` | Fetch the full history | `false` | `false` |
-| `pypi-token` | Private PyPI token (GemFury read, deprecated) | `""` | `false` |
+| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `skip-dependencies` | Skip dependencies installation | `""` | `false` |
 

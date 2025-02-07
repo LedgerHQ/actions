@@ -7,9 +7,10 @@ inputs:
     required: true
     default: "3.11"
   pypi-token:
-    description: A Token to Ledger private PyPI with read permissions
-    required: true
+    description: Private PyPI token (GemFury read)
+    required: false
     default: ""
+    deprecationMessage: use JFrog instead
   github-token:
     description: A Github token with proper permissions
     default: ${{ github.token }}

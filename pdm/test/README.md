@@ -12,31 +12,24 @@ jobs:
       - uses: LedgerHQ/actions/pdm/test@main
 ```
 
-> [!IMPORTANT]
-> JFrog Artifactory dependencies requires authentication.
-> As a consequence, you need to enable the `id-token` permission if you rely on it.
->
-> ```yaml
-> jobs:
->   test:
->     runs-on: ubuntu-latest
->     permissions:
->       contents: read
->       id-token: write
->     steps:
->       - uses: LedgerHQ/actions/pdm/test@main
->         env:
->           JFROG_REPOSITORY: my-team-repository
-> ```
->
-> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+## Permissions
+
+This action interact with the GitHub API using the GitHub token and requires the following permissions:
+
+```yaml
+contents: read  # Checkout
+id-token: write  # JFrog Artifactory authentication
+pull-requests: write  # to comment on the PR (OpenAPI diff only)
+```
+
+See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
 ## Inputs
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
 | `python-version` | Python version to run the tests with | `3.11` | `true` |
-| `pypi-token` | A Token to Ledger private PyPI with read permissions | `""` | `true` |
+| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `init` | Clone & sync | `true` | `false` |
 | `parameters` | Some extra parameters to pass to `pdm cover` | `""` | `false` |
