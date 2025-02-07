@@ -17,9 +17,10 @@ jobs:
 This action interact with the GitHub API using the GitHub token and requires the following permissions:
 
 ```yaml
-contents: read  # Checkout
-id-token: write  # JFrog Artifactory authentication
+contents: read       # Checkout
+id-token: write      # JFrog Artifactory authentication
 attestations: write  # Attestation permission
+packages: write      # Docker image publication on ghcr
 ```
 
 See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
