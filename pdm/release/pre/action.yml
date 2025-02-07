@@ -7,7 +7,7 @@ inputs:
     default: ci.yml
   github-token:
     description: A Github token with proper permissions
-    required: true
+    default: ${{ github.token }}
 
 runs:
   using: composite

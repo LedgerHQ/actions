@@ -6,9 +6,15 @@ inputs:
     description: Python version used to build
     required: false
     default: "3.11"
-  pypi-token:
-    description: A read token for private PyPI access
+  github-token:
+    description: A Github token with proper permissions
     required: false
+    default: ${{ github.token }}
+  pypi-token:
+    description: Private PyPI token (GemFury read)
+    required: false
+    default: ""
+    deprecationMessage: use JFrog instead
   openapi:
     description: Whether or not to build OpenAPI specs
     default: 'false'
@@ -139,3 +145,4 @@ runs:
       with:
         base: openapi.base.yaml
         head: openapi.head.yaml
+        github-token: ${{ inputs.github-token }}

@@ -8,10 +8,13 @@ inputs:
   version:
     description: Force the built version
   pypi-token:
-    description: A Token to Ledger private PyPI with read permissions (GemFury, deprecated)
+    description: Private PyPI token (GemFury read)
     required: false
+    default: ""
+    deprecationMessage: use JFrog instead
   github-token:
-    description: A Github token with proper permissions
+    description: A GitHub token with proper permissions
+    default: ${{ github.token }}
   build-args:
     description: Docker build command extra `build-args` (multiline supported)
     default: ""

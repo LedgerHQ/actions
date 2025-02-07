@@ -12,29 +12,17 @@ jobs:
       - uses: LedgerHQ/actions/pdm/docker@main
 ```
 
-> [!IMPORTANT]
-> JFrog Artifactory dependencies requires authentication.
-> As a consequence, you need to enable the `id-token` permission if you rely on it (to build or publish).
->
-> When publishing on JFrog Artifactory, this action will also sign and attest the produced images,
-> so it will also need the `attestations` permission.
->
-> ```yaml
-> jobs:
->   docker:
->     runs-on: ubuntu-latest
->     permissions:
->       contents: read
->       id-token: write
->       attestations: write
->     steps:
->       - uses: LedgerHQ/actions/pdm/docker@main
->         env:
->           JFROG_REPOSITORY: my-team-repository
->           JFROG_DOCKER_REPOSITORY: my-team-docker-repository
-> ```
->
-> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+## Permissions
+
+This action interact with the GitHub API using the GitHub token and requires the following permissions:
+
+```yaml
+contents: read  # Checkout
+id-token: write  # JFrog Artifactory authentication
+attestations: write  # Attestation permission
+```
+
+See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
 ## Inputs
 
@@ -42,8 +30,8 @@ jobs:
 |-------|-------------|---------|----------|
 | `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
-| `pypi-token` | A Token to Ledger private PyPI with read permissions (GemFury, deprecated) | `""` | `false` |
-| `github-token` | A Github token with proper permissions | `""` | `false` |
+| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
+| `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
 | `build-args` | Docker build command extra `build-args` (multiline supported) | `""` | `false` |
 | `secrets` | Docker build command extra `secrets` (multiline supported) | `""` | `false` |
 | `dgoss-args` | dgoss extra docker parameters | `""` | `false` |
