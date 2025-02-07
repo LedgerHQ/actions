@@ -12,6 +12,10 @@ inputs:
   doc_output:
     description: "output file of the openapi generation"
     required: true
+  python-version:
+    description: Python version to use
+    required: true
+    default: "3.11"
 
 
 runs:
@@ -34,7 +38,7 @@ runs:
     - name: set up python
       uses: actions/setup-python@v4
       with:
-        python-version: "3.11"
+        python-version: ${{ inputs.python-version }}
 
     - uses: actions/checkout@v3
       with:
