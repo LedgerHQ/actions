@@ -17,9 +17,10 @@ inputs:
     required: false
     default: 'false'
   pypi-token:
-    description: Private PyPI token (GemFury read, deprecated)
+    description: Private PyPI token (GemFury read)
     required: false
     default: ""
+    deprecationMessage: use JFrog instead
   github-token:
     description: A Github token with proper permissions
     required: false

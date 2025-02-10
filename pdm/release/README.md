@@ -20,35 +20,23 @@ jobs:
       - uses: LedgerHQ/actions/pdm/release@main
 ```
 
-> [!IMPORTANT]
-> JFrog Artifactory dependencies requires authentication.
-> As a consequence, you need to enable the `id-token` permission if you rely on it.
->
-> When publishing on JFrog Artifactory, this action will also sign and attest the produced packages,
-> so it will also need the `attestations` permission.
->
-> ```yaml
-> jobs:
->   test:
->     runs-on: ubuntu-latest
->     permissions:
->       contents: read
->       id-token: write
->       attestations: write
->     steps:
->       - uses: LedgerHQ/actions/pdm/release@main
->         env:
->           JFROG_REPOSITORY: my-team-repository
->           JFROG_DOCKER_REPOSITORY: my-team-docker-repository
-> ```
->
-> See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
+## Permissions
+
+This action interact with the GitHub API using the GitHub token and requires the following permissions:
+
+```yaml
+contents: read       # Checkout
+id-token: write      # JFrog Artifactory authentication
+attestations: write  # Attestation permission
+```
+
+See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
 ## Inputs
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
-| `kind` | DEPRECATED (Set `tool.pdm.distribution=true` on libraries) | `app` | `false` |
+| `kind` | DEPRECATED (Set `tool.pdm.distribution=true` on libraries) | `""` | `false` |
 | `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `""` | `true` |
 | `increment` | Kind of increment (optional: `MAJOR\|MINOR\|PATCH`) | `""` | `false` |
