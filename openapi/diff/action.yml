@@ -75,8 +75,8 @@ runs:
       if: github.event_name == 'pull_request'
       uses: thollander/actions-comment-pull-request@v3
       with:
-        filePath: ${{ steps.generate.outputs.comment }}
-        comment_tag: openapi-diff
+        file-path: ${{ steps.generate.outputs.comment }}
+        comment-tag: openapi-diff
         github-token: ${{ inputs.github-token }}
 
     - uses: actions/upload-artifact@v4
