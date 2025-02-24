@@ -17,7 +17,6 @@ inputs:
   pypi-token:
     description: A Token to publish on PyPI (private or public)
     required: false
-    default: ""
   github-token:
     description: A Github token with proper permissions
     required: true
@@ -131,7 +130,7 @@ runs:
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.PDM_PUBLISH_USERNAME != null
       env:
         PDM_PUBLISH_REPO: https://push.fury.io/ledger
-        PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token }}
+        PDM_PUBLISH_USERNAME: ${{ inputs.pypi-token || '' }}
         PDM_PUBLISH_PASSWORD: "-" # tricks github actions YAML parser and PDM test for empty password
         FORCE_COLOR: 'true'
       run: |
