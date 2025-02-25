@@ -19,7 +19,6 @@ inputs:
   pypi-token:
     description: Private PyPI token (GemFury read)
     required: false
-    default: ""
     deprecationMessage: use JFrog instead
   github-token:
     description: A Github token with proper permissions
@@ -114,7 +113,7 @@ runs:
         python-version: ${{ inputs.python-version }}
         cache: true
       env:
-        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token || '' }}
 
     - name: Set some settings
       run: |
@@ -133,7 +132,7 @@ runs:
         [ "${{ runner.debug }}" == "1" ] && params+=(-vv)
         pdm sync "${params[@]}"
       env:
-        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token || ''  }}
         GROUPS: ${{ inputs.group }}
         EXCLUDED_GROUPS: ${{ inputs.exclude-group }}
       shell: bash
@@ -174,5 +173,5 @@ runs:
         IS_DIST=$(grep -E "distribution\s*=\s*true" pyproject.toml > /dev/null && echo "true" || echo "false")
         echo "is_distribution=${IS_DIST}" >> $GITHUB_OUTPUT
       env:
-        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token }}
+        PYPI_DEPLOY_TOKEN: ${{ inputs.pypi-token || ''  }}
       shell: bash

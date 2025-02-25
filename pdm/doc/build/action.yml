@@ -13,7 +13,6 @@ inputs:
   pypi-token:
     description: Private PyPI token (GemFury read)
     required: false
-    default: ""
     deprecationMessage: use JFrog instead
   openapi:
     description: Whether or not to build OpenAPI specs
