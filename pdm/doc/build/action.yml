@@ -102,10 +102,15 @@ runs:
       shell: bash
 
     - name: Checkout base ref
+      id: checkout-base
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true  # OpenAPI diff is optional
       run: |
         : Checkout base ref
+        # Store the ref to restore it later
+        CURRENT_REF=$(git rev-parse HEAD)
+        echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
+
         # Clean dirty state before trying to switch branch
         git restore .
         git checkout ${{ github.base_ref }}
@@ -145,3 +150,12 @@ runs:
         base: openapi.base.yaml
         head: openapi.head.yaml
         github-token: ${{ inputs.github-token }}
+
+    - name: Restore checked out ref and state
+      if: success() && steps.checkout-base.outcome == 'success'
+      run: |
+        : Restore the checked out ref and state
+        git restore .
+        git checkout ${{ steps.checkout-base.outputs.backup-ref }}
+        mv openapi.head.yaml docs/openapi.yaml
+      shell: bash
