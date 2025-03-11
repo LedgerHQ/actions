@@ -13,7 +13,13 @@ jobs:
         with:
           workflow: check.yml
           github-token: ${{ github.token }}
+          wait-interval: 60
+          wait-timeout: 300
 ```
+
+> [!WARNING]
+> Each poll use performimg multiple GitHub API calls.
+> Be careful with the `wait-interval` and `wait-timeout` values.
 
 ## Permissions
 
@@ -30,7 +36,10 @@ contents: read
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
 | `workflow` | Required workflow file | `ci.yml` | `false` |
-| `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
+| `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
+| `wait` | Wait for the workflow to finish | `true` | `false` |
+| `wait-interval` | Interval (in seconds) to check the workflow status | `30` | `false` |
+| `wait-timeout` | Timeout (in seconds) to stop checking the workflow status | `600` | `false` |
 
 ## Outputs
 

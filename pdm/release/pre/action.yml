@@ -6,8 +6,17 @@ inputs:
     description: Required workflow file
     default: ci.yml
   github-token:
-    description: A Github token with proper permissions
+    description: A GitHub token with proper permissions
     default: ${{ github.token }}
+  wait:
+    description: Wait for the workflow to finish
+    default: "true"
+  wait-interval:
+    description: Interval (in seconds) to check the workflow status
+    default: "30"
+  wait-timeout:
+    description: Timeout (in seconds) to stop checking the workflow status
+    default: "600"
 
 runs:
   using: composite
@@ -17,6 +26,9 @@ runs:
       with:
         workflow: ${{ inputs.workflow }}
         token: ${{ inputs.github-token }}
+        wait: ${{ inputs.wait }}
+        wait_interval: ${{ inputs.wait-interval }}
+        wait_timeout: ${{ inputs.wait-timeout }}
     - name: Notify failure
       if: failure()
       run: |
