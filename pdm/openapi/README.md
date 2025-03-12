@@ -14,7 +14,7 @@ jobs:
 
 ## Permissions
 
-This action interact with the GitHub API using the GitHub token and requires the following permissions:
+This action interact with the GitHub API and [Spectral](https://github.com/stoplightio/spectral) and requires the following permissions:
 
 ```yaml
 contents: read  # Checkout
