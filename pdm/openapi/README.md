@@ -37,7 +37,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `spectral-file-glob`| Glob for Spectral to run on (e.g. docs/*.yaml) | `docs/openapi.yaml` | `false` |
-| `spectral-ruleset` | Spectral ruleset to enforce	 | `.github/openapi.spectral.yaml` | `false` |
+| `spectral-ruleset` | Spectral ruleset to enforce  | `.github/openapi.spectral.yaml` | `false` |
 
 ## Environment variables
 
