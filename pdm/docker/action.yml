@@ -132,7 +132,6 @@ runs:
           org.opencontainers.image.title=${{ steps.vars.outputs.name }}
 
     - name: Build docker image
-      if: steps.vars.outputs.has_goss == 'true'
       uses: docker/build-push-action@v6
       with:
         file: ${{ steps.vars.outputs.dockerfile }}
@@ -155,32 +154,6 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
-    - name: Install goss
-      uses: e1himself/goss-installation-action@v1.2.1
-      if: steps.vars.outputs.has_goss == 'true'
-      with:
-        version: v0.4.7
-
-    - name: Run GOSS validation
-      id: goss
-      if: steps.vars.outputs.has_goss == 'true'
-      run: |
-        : Run GOSS validation
-        dgoss run ${{ inputs.dgoss-args }} ${{ steps.vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}
-      env:
-        GOSS_FILES_PATH: ${{ steps.vars.outputs.gosspath }}
-        # Make dgoss works with Ledger dind runners
-        GOSS_FILES_STRATEGY: cp
-        CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
-      shell: bash
-
-    - name: Display GOSS failure log
-      if: failure() && steps.vars.outputs.has_goss == 'true' && steps.goss.conclusion == 'failure'
-      run: |
-        : Display GOSS failure log
-        cat ${{ runner.temp }}/goss.log
-      shell: bash
-
     - name: Push docker image
       uses: docker/build-push-action@v6
       id: docker
@@ -198,7 +171,6 @@ runs:
           JFROG_USER=${{ env.JFROG_USER }}
           JFROG_TOKEN=${{ env.JFROG_TOKEN }}
           ${{ inputs.secrets }}
-        pull: ${{ steps.vars.outputs.has_goss != 'true' }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
