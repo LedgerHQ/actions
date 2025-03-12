@@ -1,0 +1,129 @@
+# .github/actions/openapi/action.yml
+name: Generate OpenAPI
+description: Generate and compare OpenAPI specifications
+
+inputs:
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
+  github-token:
+    description: A Github token with proper permissions
+    required: false
+    default: ${{ github.token }}
+  pypi-token:
+    description: Private PyPI token (GemFury read)
+    required: false
+  init:
+    description: Clone & sync
+    default: 'true'
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
+  spectral-file-glob:
+    description: Glob for Spectral to run on
+    default: 'docs/openapi.yaml'
+  spectral-ruleset:
+    description: Ruleset to enforce
+    default: '.github/openapi.spectral.yaml'
+
+runs:
+  using: composite
+  steps:
+  - name: Clone and install dependencies
+    uses: LedgerHQ/actions/pdm/init@main
+    id: init
+    if: inputs.init == 'true'
+    with:
+      group: ${{ inputs.group }}
+      exclude-group: ${{ inputs.exclude-group }}
+      pypi-token: ${{ inputs.pypi-token }}
+      python-version: ${{ inputs.python-version }}
+
+  - name: Generate the OpenAPI specifications
+    run: |
+      : Generate the OpenAPI specifications
+      pdm doc:openapi
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
+
+  - name: Upload the OpenAPI specifications
+    uses: actions/upload-artifact@v4
+    with:
+      name: openapi
+      path: docs/openapi.yaml
+
+  - name: Move current OpenAPI specifications
+    if: steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    run: |
+      : Move current OpenAPI specifications
+      mv docs/openapi.yaml openapi.head.yaml
+    shell: bash
+
+  - name: Checkout base ref
+    id: checkout-base
+    if: success() && steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    run: |
+      : Checkout base ref
+      CURRENT_REF=$(git rev-parse HEAD)
+      echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
+
+      git restore .
+      git checkout ${{ github.base_ref }}
+    shell: bash
+
+  - name: Synchronize dependencies
+    if: success() && steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    run: |
+      : Synchronize dependencies
+      pdm sync
+    shell: bash
+
+  - name: Generate the base OpenAPI specifications
+    if: success() && steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    run: |
+      : Generate the base OpenAPI specifications
+      pdm doc:openapi
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
+
+  - name: Move base OpenAPI specifications
+    if: success() && steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    run: |
+      : Move base OpenAPI specifications
+      mv docs/openapi.yaml openapi.base.yaml
+    shell: bash
+
+  - name: Generate the OpenAPI diff
+    if: success() && steps.init.outputs.is_pr == 'true'
+    continue-on-error: true
+    uses: LedgerHQ/actions/openapi/diff@main
+    with:
+      base: openapi.base.yaml
+      head: openapi.head.yaml
+      github-token: ${{ inputs.github-token }}
+
+  - name: Restore checked out ref and state
+    if: success() && steps.checkout-base.outcome == 'success'
+    run: |
+      git restore .
+      git checkout ${{ steps.checkout-base.outputs.backup-ref }}
+      mv openapi.head.yaml docs/openapi.yaml
+    shell: bash
+
+  - name: Run Spectral
+    uses: stoplightio/spectral-action@latest
+    with:
+      file_glob: ${{ inputs.spectral-file-glob }}
+      spectral_ruleset: ${{ inputs.spectral-ruleset }}
+      args: "--fail"
