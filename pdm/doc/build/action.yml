@@ -33,129 +33,118 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Clone and install dependencies
-      uses: LedgerHQ/actions/pdm/init@main
-      id: init
-      if: inputs.init == 'true'
-      with:
-        group: ${{ inputs.group }}
-        exclude-group: ${{ inputs.exclude-group }}
-        history: true
-        pypi-token: ${{ inputs.pypi-token }}
-        python-version: ${{ inputs.python-version }}
+  - name: Clone and install dependencies
+    uses: LedgerHQ/actions/pdm/init@main
+    id: init
+    if: inputs.init == 'true'
+    with:
+      group: ${{ inputs.group }}
+      exclude-group: ${{ inputs.exclude-group }}
+      history: true
+      pypi-token: ${{ inputs.pypi-token }}
+      python-version: ${{ inputs.python-version }}
 
-    - name: Update the CHANGELOG
-      # Failsafe changelog too avoid failure when there is no update
-      run: |
-        : Update the CHANGELOG
-        pdm changelog || true
-      env:
-        FORCE_COLOR: 'true'
-      shell: bash
+  - name: Update the CHANGELOG
+    # Failsafe changelog to avoid failure when there is no update
+    run: |
+      pdm changelog || true
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
 
-    - name: Upload the CHANGELOG
-      uses: actions/upload-artifact@v4
-      with:
-        name: changelog
-        path: CHANGELOG.md
+  - name: Upload the CHANGELOG
+    uses: actions/upload-artifact@v4
+    with:
+      name: changelog
+      path: CHANGELOG.md
 
-    - name: Generate the OpenAPI specifications
-      if: inputs.openapi == 'true'
-      run: |
-        : Generate the OpenAPI specifications
-        pdm doc:openapi
-      env:
-        FORCE_COLOR: 'true'
-      shell: bash
+  - name: Download existing OpenAPI specs
+    if: inputs.openapi == 'true'
+    continue-on-error: true
+    uses: actions/download-artifact@v4
+    with:
+      name: openapi
+      path: docs
 
-    - name: Upload the OpenAPI specifications
-      if: inputs.openapi == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: openapi
-        path: docs/openapi.yaml
+  - name: Generate OpenAPI specifications (fallback)
+    if: inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    run: |
+      pdm doc:openapi
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
 
-    - name: Generate the documentation
-      if: inputs.site == 'true'
-      run: |
-        : Generate the documentation
-        pdm doc:build
-      env:
-        FORCE_COLOR: 'true'
-      shell: bash
+  - name: Upload OpenAPI specs (fallback)
+    if: inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    uses: actions/upload-artifact@v4
+    with:
+      name: openapi
+      path: docs/openapi.yaml
 
-    - name: Upload the generated documentation
-      if: inputs.site == 'true'
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: site/
-        retention-days: 7
-        if-no-files-found: error
+  - name: Generate the documentation
+    if: inputs.site == 'true'
+    run: |
+      pdm doc:build
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
 
-    - name: Move current OpenAPI specifications
-      if: steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      run: |
-        : Move current OpenAPI specifications
-        mv docs/openapi.yaml openapi.head.yaml
-      shell: bash
+  - name: Upload the generated documentation
+    if: inputs.site == 'true'
+    uses: actions/upload-artifact@v4
+    with:
+      name: documentation
+      path: site/
+      retention-days: 7
+      if-no-files-found: error
 
-    - name: Checkout base ref
-      id: checkout-base
-      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      run: |
-        : Checkout base ref
-        # Store the ref to restore it later
-        CURRENT_REF=$(git rev-parse HEAD)
-        echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
+  - name: Move current OpenAPI specs
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    run: |
+      mv docs/openapi.yaml openapi.head.yaml
+    shell: bash
 
-        # Clean dirty state before trying to switch branch
-        git restore .
-        git checkout ${{ github.base_ref }}
-      shell: bash
+  - name: Checkout base ref
+    id: checkout-base
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    run: |
+      CURRENT_REF=$(git rev-parse HEAD)
+      echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
 
-    - name: Synchronize dependencies
-      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      run: |
-        : Synchronize dependencies
-        pdm sync
-      shell: bash
+      git restore .
+      git checkout ${{ github.base_ref }}
+    shell: bash
 
-    - name: Generate the base OpenAPI specifications
-      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      run: |
-        : Generate the base OpenAPI specifications
-        pdm doc:openapi
-      env:
-        FORCE_COLOR: 'true'
-      shell: bash
+  - name: Synchronize dependencies (base ref)
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    run: |
+      pdm sync
+    shell: bash
 
-    - name: Move base OpenAPI specifications
-      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      run: |
-        : Move base OpenAPI specifications
-        mv docs/openapi.yaml openapi.base.yaml
-      shell: bash
+  - name: Generate base OpenAPI specs
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    run: |
+      pdm doc:openapi
+    env:
+      FORCE_COLOR: 'true'
+    shell: bash
 
-    - name: Generate the OpenAPI diff
-      if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
-      continue-on-error: true  # OpenAPI diff is optional
-      uses: LedgerHQ/actions/openapi/diff@main
-      with:
-        base: openapi.base.yaml
-        head: openapi.head.yaml
-        github-token: ${{ inputs.github-token }}
+  - name: Move base OpenAPI specs
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    run: |
+      mv docs/openapi.yaml openapi.base.yaml
+    shell: bash
 
-    - name: Restore checked out ref and state
-      if: success() && steps.checkout-base.outcome == 'success'
-      run: |
-        : Restore the checked out ref and state
-        git restore .
-        git checkout ${{ steps.checkout-base.outputs.backup-ref }}
-        mv openapi.head.yaml docs/openapi.yaml
-      shell: bash
+  - name: Generate the OpenAPI diff
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true' && !hashFiles('docs/openapi.yaml')
+    continue-on-error: true
+    uses: LedgerHQ/actions/openapi/diff@main
+    with:
+      base: openapi.base.yaml
+      head: openapi.head.yaml
+      github-token: ${{ inputs.github-token }}
