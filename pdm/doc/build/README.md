@@ -39,9 +39,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 
 ## Environment variables
 
-| Variable | Description |
-|--------|-------------|
-| `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
+N/A
 
 ## Outputs
 

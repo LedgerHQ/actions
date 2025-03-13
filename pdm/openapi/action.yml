@@ -70,6 +70,11 @@ runs:
     if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
+      # NOTE:
+      # We are about to rename `docs/openapi.yaml` to `openapi.head.yaml` and
+      # then switch to the base ref for the diff. If you have any steps/tests
+      # that need the HEAD specs in `docs/openapi.yaml`, make sure to run
+      # them BEFORE this step.
       mv docs/openapi.yaml openapi.head.yaml
     shell: bash
 
