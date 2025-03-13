@@ -15,9 +15,10 @@ inputs:
     required: false
     deprecationMessage: use JFrog instead
   openapi:
-    description: Whether or not to build OpenAPI specs
+    description: >
+      Whether or not to build OpenAPI specs. Valid values are: "true" (to generate new specs and run diff steps on PRs), "false" (to skip OpenAPI processing), or an artifact name (to download an existing OpenAPI spec).
     required: false
-    default: ""
+    default: "false"
   site:
     description: Whether or not to build a documentation site
     default: 'false'
@@ -60,7 +61,7 @@ runs:
       path: CHANGELOG.md
 
   - name: Download provided OpenAPI artifact
-    if: inputs.openapi != ''
+    if: inputs.openapi != 'true' && inputs.openapi != 'false'
     continue-on-error: true
     uses: actions/download-artifact@v4
     with:
@@ -68,7 +69,7 @@ runs:
       path: docs
 
   - name: Generate OpenAPI specs (fallback)
-    if: inputs.openapi == ''
+    if: inputs.openapi == 'true'
     run: |
       pdm doc:openapi
     env:
@@ -76,7 +77,7 @@ runs:
     shell: bash
 
   - name: Upload OpenAPI specs (fallback)
-    if: inputs.openapi == ''
+    if: inputs.openapi == 'true'
     uses: actions/upload-artifact@v4
     with:
       name: openapi
@@ -100,7 +101,7 @@ runs:
       if-no-files-found: error
 
   - name: Move current OpenAPI specs
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     run: |
       mv docs/openapi.yaml openapi.head.yaml
@@ -108,7 +109,7 @@ runs:
 
   - name: Checkout base ref
     id: checkout-base
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     run: |
       CURRENT_REF=$(git rev-parse HEAD)
@@ -119,14 +120,14 @@ runs:
     shell: bash
 
   - name: Synchronize dependencies (base ref)
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     run: |
       pdm sync
     shell: bash
 
   - name: Generate base OpenAPI specs
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     run: |
       pdm doc:openapi
@@ -135,14 +136,14 @@ runs:
     shell: bash
 
   - name: Move base OpenAPI specs
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     run: |
       mv docs/openapi.yaml openapi.base.yaml
     shell: bash
 
   - name: Generate the OpenAPI diff
-    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == ''
+    if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
     continue-on-error: true
     uses: LedgerHQ/actions/openapi/diff@main
     with:
