@@ -1,6 +1,11 @@
 name: Generate OpenAPI
 description: Generate and compare OpenAPI specifications
 
+outputs:
+  openapi:
+    description: "The name of the uploaded OpenAPI artifact"
+    value: ${{ steps.set-output.outputs.openapi }}
+
 inputs:
   python-version:
     description: Python version used to build
@@ -61,20 +66,25 @@ runs:
       args: ${{ inputs.fail-on-lint == 'true' && '--fail' }}
 
   - name: Upload the OpenAPI specifications
+    id: upload-specs
     uses: actions/upload-artifact@v4
     with:
       name: openapi
       path: docs/openapi.yaml
+
+  - name: Set output 'openapi'
+    id: set-output
+    run: echo "openapi=openapi" >> $GITHUB_OUTPUT
+    shell: bash
 
   - name: Move current OpenAPI specs to 'head'
     if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       # NOTE:
-      # We are about to rename `docs/openapi.yaml` to `openapi.head.yaml` and
-      # then switch to the base ref for the diff. If you have any steps/tests
-      # that need the HEAD specs in `docs/openapi.yaml`, make sure to run
-      # them BEFORE this step.
+      # We rename `docs/openapi.yaml` to `openapi.head.yaml`, then
+      # checkout base ref for the diff. If you need HEAD specs in docs/openapi.yaml,
+      # do that before this step.
       mv docs/openapi.yaml openapi.head.yaml
     shell: bash
 
