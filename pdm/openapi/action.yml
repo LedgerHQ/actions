@@ -58,7 +58,7 @@ runs:
     with:
       file_glob: ${{ inputs.spectral-file-glob }}
       spectral_ruleset: ${{ inputs.spectral-ruleset }}
-      args: "${{ inputs.fail-on-lint == 'true' && '--fail' || '' }}"
+      args: ${{ inputs.fail-on-lint == 'true' && '--fail' }}
 
   - name: Upload the OpenAPI specifications
     uses: actions/upload-artifact@v4
@@ -67,7 +67,7 @@ runs:
       path: docs/openapi.yaml
 
   - name: Move current OpenAPI specs to 'head'
-    if: steps.init.outputs.is_pr == 'true'
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       mv docs/openapi.yaml openapi.head.yaml
@@ -75,7 +75,7 @@ runs:
 
   - name: Checkout base ref
     id: checkout-base
-    if: success()
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       CURRENT_REF=$(git rev-parse HEAD)
@@ -86,14 +86,14 @@ runs:
     shell: bash
 
   - name: Synchronize dependencies (base ref)
-    if: success()
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       pdm sync
     shell: bash
 
   - name: Generate base OpenAPI specs
-    if: success()
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       pdm doc:openapi
@@ -102,14 +102,14 @@ runs:
     shell: bash
 
   - name: Move base OpenAPI specs
-    if: success()
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     run: |
       mv docs/openapi.yaml openapi.base.yaml
     shell: bash
 
   - name: Generate the OpenAPI diff
-    if: success()
+    if: success() && steps.init.outputs.is_pr == 'true'
     continue-on-error: true
     uses: LedgerHQ/actions/openapi/diff@main
     with:
