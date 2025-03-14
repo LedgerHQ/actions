@@ -28,6 +28,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 
 | Input | Description | Default | Required |
 |-------|-------------|---------|----------|
+| `kind` | Kind of project to release (`lib`/`app`) | `app` | `true` |
 | `python-version` | Python version to run the tests with | `3.11` | `true` |
 | `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
