@@ -33,9 +33,6 @@ inputs:
   spectral-ruleset:
     description: Ruleset to enforce
     default: '.github/openapi.spectral.yaml'
-  fail-on-lint:
-    description: Whether Spectral should fail on errors (`true`) or only warn (`false`)
-    default: 'true'
 
 runs:
   using: composite
@@ -71,8 +68,7 @@ runs:
       run: |
         spectral lint \
           "${{ inputs.spectral-file-glob }}" \
-          --ruleset "${{ inputs.spectral-ruleset }}" \
-          $([[ "${{ inputs.fail-on-lint }}" == "true" ]] && echo "--fail")
+          --ruleset "${{ inputs.spectral-ruleset }}"
       shell: bash
 
     - name: Upload the OpenAPI specifications

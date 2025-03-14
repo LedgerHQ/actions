@@ -38,7 +38,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `spectral-file-glob`| Glob for Spectral to run on (e.g. docs/*.yaml) | `docs/openapi.yaml` | `false` |
 | `spectral-ruleset` | Spectral ruleset to enforce  | `.github/openapi.spectral.yaml` | `false` |
-| `fail-on-lint` | Whether or not Spectral should fail the workflow on lint errors | `true` | `false` |
 
 ## Environment variables
 
