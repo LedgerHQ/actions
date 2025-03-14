@@ -1,0 +1,133 @@
+name: Generate OpenAPI
+description: Generate and compare OpenAPI specifications
+
+outputs:
+  openapi:
+    description: "The name of the uploaded OpenAPI artifact"
+    value: ${{ steps.set-output.outputs.openapi }}
+
+inputs:
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
+  github-token:
+    description: A Github token with proper permissions
+    required: false
+    default: ${{ github.token }}
+  pypi-token:
+    description: Private PyPI token (JFrog read)
+    required: false
+  init:
+    description: Clone & sync
+    default: 'true'
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
+  spectral-file-glob:
+    description: Glob for Spectral to run on
+    default: 'docs/openapi.yaml'
+  spectral-ruleset:
+    description: Ruleset to enforce
+    default: '.github/openapi.spectral.yaml'
+  fail-on-lint:
+    description: Whether Spectral should fail on errors (`true`) or only warn (`false`)
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Clone and install dependencies
+      uses: LedgerHQ/actions/pdm/init@main
+      id: init
+      if: inputs.init == 'true'
+      with:
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
+        pypi-token: ${{ inputs.pypi-token }}
+        python-version: ${{ inputs.python-version }}
+
+    - name: Generate the OpenAPI specifications
+      run: |
+        : Generate the OpenAPI specifications
+        pdm doc:openapi
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    - name: Run Spectral lint
+      uses: stoplightio/spectral-action@latest
+      with:
+        file_glob: ${{ inputs.spectral-file-glob }}
+        spectral_ruleset: ${{ inputs.spectral-ruleset }}
+        args: ${{ inputs.fail-on-lint == 'true' && '--fail' }}
+
+    - name: Upload the OpenAPI specifications
+      id: upload-specs
+      uses: actions/upload-artifact@v4
+      with:
+        name: openapi
+        path: docs/openapi.yaml
+
+    - name: Set output 'openapi'
+      id: set-output
+      run: echo "openapi=openapi" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Move current OpenAPI specs to 'head'
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      run: |
+        # NOTE:
+        # We rename `docs/openapi.yaml` to `openapi.head.yaml`, then
+        # checkout base ref for the diff. If you need HEAD specs in docs/openapi.yaml,
+        # do that before this step.
+        mv docs/openapi.yaml openapi.head.yaml
+      shell: bash
+
+    - name: Checkout base ref
+      id: checkout-base
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      run: |
+        CURRENT_REF=$(git rev-parse HEAD)
+        echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
+
+        git restore .
+        git checkout ${{ github.base_ref }}
+      shell: bash
+
+    - name: Synchronize dependencies (base ref)
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      run: |
+        pdm sync
+      shell: bash
+
+    - name: Generate base OpenAPI specs
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      run: |
+        pdm doc:openapi
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    - name: Move base OpenAPI specs
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      run: |
+        mv docs/openapi.yaml openapi.base.yaml
+      shell: bash
+
+    - name: Generate the OpenAPI diff
+      if: success() && steps.init.outputs.is_pr == 'true'
+      continue-on-error: true
+      uses: LedgerHQ/actions/openapi/diff@main
+      with:
+        base: openapi.base.yaml
+        head: openapi.head.yaml
+        github-token: ${{ inputs.github-token }}
