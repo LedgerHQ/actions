@@ -58,12 +58,22 @@ runs:
         FORCE_COLOR: 'true'
       shell: bash
 
-    - name: Run Spectral lint
-      uses: stoplightio/spectral-action@latest
+    - name: Set up Node
+      uses: actions/setup-node@v3
       with:
-        file_glob: ${{ inputs.spectral-file-glob }}
-        spectral_ruleset: ${{ inputs.spectral-ruleset }}
-        args: ${{ inputs.fail-on-lint == 'true' && '--fail' }}
+        node-version: "16"
+
+    - name: Install Spectral
+      run: npm install -g @stoplight/spectral-cli
+      shell: bash
+
+    - name: Run Spectral lint
+      run: |
+        spectral lint \
+          "${{ inputs.spectral-file-glob }}" \
+          --ruleset "${{ inputs.spectral-ruleset }}" \
+          $([[ "${{ inputs.fail-on-lint }}" == "true" ]] && echo "--fail")
+      shell: bash
 
     - name: Upload the OpenAPI specifications
       id: upload-specs
