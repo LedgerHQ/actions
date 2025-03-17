@@ -43,6 +43,7 @@ runs:
       if: inputs.init == 'true'
       with:
         group: ${{ inputs.group }}
+        history: true
         exclude-group: ${{ inputs.exclude-group }}
         pypi-token: ${{ inputs.pypi-token }}
         python-version: ${{ inputs.python-version }}
