@@ -1,0 +1,57 @@
+name: Setup Speculos
+description: 'Launches speculus for the given coin application and device'
+inputs:
+  coin_app:
+    description: 'Coin application to run'
+    required: true
+    type: string
+  coin_app_version:
+    description: 'The version of the coin application'
+    required: true
+    type: string
+  device:
+    description: 'The device to emulate (nanox, nanos, nanos+, flex, stax)'
+    required: true
+    type: string
+  device_os_version:
+    description: 'The OS version of the device'
+    required: true
+    type: string
+  github_token:
+    description: 'GitHub token for authentication'
+    required: true
+    type: string
+  aws_role:
+    description: 'The role to assume'
+    required: true
+    type: string
+  aws_region:
+    description: 'The AWS region'
+    required: true
+    type: string
+outputs:
+  speculos_ip:
+    description: "Run ID"
+    value: ${{ steps.set-outputs.outputs.id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Assume the role
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role }}
+        aws-region: ${{ inputs.aws_region }}
+    - name: Set output
+      id: set-outputs
+      shell: bash
+      run: |
+        id=${{ github.ref }}
+        echo "id=$id" >> $GITHUB_OUTPUT
+        echo "RUN ID: $id"
+    - name: Launch speculos
+      shell: bash
+      run: |
+        kubectl create speculos-${{ github.ref }} --image ghcr.io/ledgerhq/speculos:master --restart Never --name speculos --overrides '{"apiVersion": "v1", "spec": {"containers": [{"name": "speculos", "image": "ghcr.io/ledgerhq/speculos:master", "args": ["/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf", "--model", "${{ inputs.device }}", "--display", "headless"], "volumeMounts": [{"mountPath": "/apps", "name": "apps"}]}], "volumes": [{"name": "apps", "hostPath": {"path": "${{ github.workspace }}"}}]}}'
+        kubectl wait --for=condition=Ready pod/speculos
+        kubectl port-forward speculos 5001:5001
