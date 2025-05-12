@@ -1,0 +1,187 @@
+name: Start speculos instance
+on:
+  workflow_call:
+    inputs:
+      coin_app:
+        description: Coin application to run
+        required: true
+        type: string
+      coin_app_version:
+        description: The version of the coin application
+        required: true
+        type: string
+      device:
+        description: The device to emulate (nanox, nanos, nanos+, flex, stax)
+        required: true
+        type: string
+      device_os_version:
+        description: The version of the device OS
+        required: true
+        type: string
+      speculos_appname:
+        description: Speculos app name
+        required: false
+        type: string
+      additional_args:
+        description: Additional arguments for speculos
+        required: false
+        type: string
+      github_token:
+        description: GitHub token for authentication
+        required: true
+        type: string
+      cluster:
+        description: Cluster where to launch the speculos instance
+        required: true
+        type: string
+      aws_role:
+        description: AWS role to assume
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: false
+        type: string
+        default: eu-west-1
+    outputs:
+      run_id:
+        description: Unique ID for the workflow run
+        value: ${{ github.run_id }}
+      speculos_url:
+        description: URL of the speculos instance
+        value: ${{ jobs.start-speculos.outputs.speculos_url }}
+
+jobs:
+  start-speculos:
+    runs-on: ledgerhq-shared-small
+    outputs:
+      speculos_url: ${{ steps.set-outputs.outputs.speculos_url }}
+    steps:
+      - name: Prepare additional args
+        if: ${{ inputs.additional_args != '' }}
+        shell: bash
+        run: |
+          {
+            echo 'ADDITIONAL_ARGS<<EOF'
+            echo ${{ inputs.additional_args }} | sed 's/^\(.*\)/"\1"/' | sed 's/ /",\n"/g'
+            echo EOF
+          } >> $GITHUB_ENV
+          if [[ ${{ inputs.device}} == 'nanos+' ]]; then
+            echo "DEVICE=nanosp" >> $GITHUB_ENV
+          else
+            echo "DEVICE=${{ inputs.device }}" >> $GITHUB_ENV
+          fi
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.aws_role }}
+          aws-region: ${{ inputs.aws_region }}
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ inputs.aws_region }}
+      - name: Create secret
+        shell: bash
+        run: |
+          kubectl -n speculos create secret generic speculos-${{ github.run_id }} --from-literal=GITHUB_TOKEN=${{ inputs.github_token }} --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ github.run_id }} -o yaml | kubectl apply -f -
+      - name: Run Speculos
+        shell: bash
+        run: |
+          kubectl -n speculos run speculos-${{ github.run_id }} --image=ghcr.io/ledgerhq/speculos:master --restart=Never --overrides='
+          {
+            "apiVersion": "v1",
+            "metadata": {
+              "labels": {
+                "run-id": "${{ github.run_id }}"
+              }
+            },
+            "spec": {
+              "volumes": [
+                {
+                  "name": "coin-apps",
+                  "emptyDir": {}
+                }
+              ],
+              "initContainers": [
+                {
+                  "name": "init-coin-apps",
+                  "image": "alpine/git",
+                  "command": [
+                    "/bin/sh",
+                    "-c"
+                  ],
+                  "args": [
+                    "git clone https://${{ inputs.github_token }}@github.com/LedgerHQ/coin-apps.git /apps"
+                  ],
+                  "env": [
+                    {
+                      "name": "GITHUB_TOKEN",
+                      "valueFrom": {
+                        "secretKeyRef": {
+                          "name": "speculos-${{ github.run_id }}",
+                          "key": "GITHUB_TOKEN"
+                        }
+                      }
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "name": "coin-apps",
+                      "mountPath": "/apps"
+                    }
+                  ]
+                }
+              ],
+              "containers": [
+                {
+                  "name": "speculos",
+                  "image": "ghcr.io/ledgerhq/speculos:master",
+                  "args": [
+                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf",
+                    ${{ env.ADDITIONAL_ARGS }},
+                    "--model",
+                    "${{ env.DEVICE }}",
+                    "--display",
+                    "headless"
+                  ],
+                  "env": [
+                    {
+                      "name": "SPECULOS_APPNAME",
+                      "value": "${{ inputs.speculos_appname }}"
+                    }
+                  ],
+                  "ports": [
+                    {
+                      "containerPort": 5000,
+                      "name": "http"
+                    }
+                  ],
+                  "volumeMounts": [
+                    {
+                      "name": "coin-apps",
+                      "mountPath": "/apps"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+          '
+      - name: Create service
+        shell: bash
+        run: |
+          kubectl -n speculos expose pod/speculos-${{ github.run_id }} --type=ClusterIP --port=5000 --target-port=http --name=speculos-${{ github.run_id }} --selector="run-id=${{ github.run_id }}"
+      - name: Create ingress
+        shell: bash
+        run: |
+            kubectl -n speculos create ingress speculos-${{ github.run_id }} --class="trusted" --rule="speculos-${{ github.run_id }}.aws.stg.ldg-tech.com/=speculos-${{ github.run_id }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ github.run_id }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
+      - name: Wait for speculos to become available
+        shell: bash
+        run: |
+          while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ github.run_id }}; do sleep 5; done
+          while ! curl -sI https://speculos-${{ github.run_id }}.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
+      - name: Set outputs
+        id: set-outputs
+        shell: bash
+        run: |
+          kubectl -n speculos logs -l run-id=${{ github.run_id }} -c speculos
+          echo "speculos_url=https://speculos-${{ github.run_id }}.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
