@@ -23,7 +23,7 @@ on:
 
 jobs:
   stop-speculos:
-    runs-on: ledgerhq-shared-small
+    runs-on: public-ledgerhq-shared-small
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
