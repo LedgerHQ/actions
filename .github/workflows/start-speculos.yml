@@ -53,7 +53,7 @@ on:
 
 jobs:
   start-speculos:
-    runs-on: public-ledgerhq-shared-small
+    runs-on: speculos
     outputs:
       speculos_url: ${{ steps.set-outputs.outputs.speculos_url }}
     steps:
