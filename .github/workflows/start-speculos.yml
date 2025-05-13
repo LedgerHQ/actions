@@ -137,7 +137,7 @@ jobs:
                   "image": "ghcr.io/ledgerhq/speculos:master",
                   "args": [
                     "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf",
-                    ${{ env.ADDITIONAL_ARGS }},
+                    ${{ env.ADDITIONAL_ARGS }}
                     "--model",
                     "${{ env.DEVICE }}",
                     "--display",
