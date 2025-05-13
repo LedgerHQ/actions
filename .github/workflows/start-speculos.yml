@@ -63,7 +63,7 @@ jobs:
         run: |
           {
             echo 'ADDITIONAL_ARGS<<EOF'
-            echo ${{ inputs.additional_args }} | sed 's/^\(.*\)/"\1"/' | sed 's/ /",\n"/g'
+            echo ${{ inputs.additional_args }} | sed 's/^\(.*\)/"\1",/' | sed 's/ /",\n"/g'
             echo EOF
           } >> $GITHUB_ENV
           if [[ ${{ inputs.device}} == 'nanos+' ]]; then
