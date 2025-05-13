@@ -20,6 +20,29 @@ on:
         description: RUN ID for the workflow run
         required: true
         type: string
+  workflow_dispatch:
+    inputs:
+      cluster:
+        description: Cluster where to launch the speculos instance
+        required: true
+        type: string
+      aws_role:
+        description: AWS role to assume
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: false
+        type: string
+        default: eu-west-1
+      run_id:
+        description: RUN ID for the workflow run
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   stop-speculos:

@@ -18,17 +18,9 @@ on:
         description: The version of the device OS
         required: true
         type: string
-      speculos_appname:
-        description: Speculos app name
-        required: false
-        type: string
       additional_args:
         description: Additional arguments for speculos
         required: false
-        type: string
-      github_token:
-        description: GitHub token for authentication
-        required: true
         type: string
       cluster:
         description: Cluster where to launch the speculos instance
@@ -50,6 +42,45 @@ on:
       speculos_url:
         description: URL of the speculos instance
         value: ${{ jobs.start-speculos.outputs.speculos_url }}
+  workflow_dispatch:
+    inputs:
+      coin_app:
+        description: Coin application to run
+        required: true
+        type: string
+      coin_app_version:
+        description: The version of the coin application
+        required: true
+        type: string
+      device:
+        description: The device to emulate (nanox, nanos, nanos+, flex, stax)
+        required: true
+        type: string
+      device_os_version:
+        description: The version of the device OS
+        required: true
+        type: string
+      additional_args:
+        description: Additional arguments for speculos
+        required: false
+        type: string
+      cluster:
+        description: Cluster where to launch the speculos instance
+        required: true
+        type: string
+      aws_role:
+        description: AWS role to assume
+        required: true
+        type: string
+      aws_region:
+        description: AWS region
+        required: false
+        type: string
+        default: eu-west-1
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   start-speculos:
@@ -66,11 +97,18 @@ jobs:
             echo ${{ inputs.additional_args }} | sed 's/^\(.*\)/"\1",/' | sed 's/ /",\n"/g'
             echo EOF
           } >> $GITHUB_ENV
+      - name: Set valid device name
+        shell: bash
+        run: |
           if [[ ${{ inputs.device}} == 'nanos+' ]]; then
             echo "DEVICE=nanosp" >> $GITHUB_ENV
           else
             echo "DEVICE=${{ inputs.device }}" >> $GITHUB_ENV
           fi
+      - name: Correct coin app name
+        shell: bash
+        run: |
+          echo "COIN_APP=$( echo ${{ inputs.coin_app }} | sed 's/ //g')" >> $GITHUB_ENV
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -79,10 +117,6 @@ jobs:
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ inputs.aws_region }}
-      - name: Create secret
-        shell: bash
-        run: |
-          kubectl -n speculos create secret generic speculos-${{ github.run_id }} --from-literal=GITHUB_TOKEN=${{ inputs.github_token }} --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ github.run_id }} -o yaml | kubectl apply -f -
       - name: Run Speculos
         shell: bash
         run: |
@@ -110,14 +144,14 @@ jobs:
                     "-c"
                   ],
                   "args": [
-                    "git clone https://${{ inputs.github_token }}@github.com/LedgerHQ/coin-apps.git /apps"
+                    "git clone https://${GITHUB_TOKEN}@github.com/LedgerHQ/coin-apps.git /apps"
                   ],
                   "env": [
                     {
                       "name": "GITHUB_TOKEN",
                       "valueFrom": {
                         "secretKeyRef": {
-                          "name": "speculos-${{ github.run_id }}",
+                          "name": "github-auth",
                           "key": "GITHUB_TOKEN"
                         }
                       }
@@ -136,7 +170,7 @@ jobs:
                   "name": "speculos",
                   "image": "ghcr.io/ledgerhq/speculos:master",
                   "args": [
-                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf",
+                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ env.COIN_APP }}/app_${{ inputs.coin_app_version }}.elf",
                     ${{ env.ADDITIONAL_ARGS }}
                     "--model",
                     "${{ env.DEVICE }}",
@@ -146,7 +180,7 @@ jobs:
                   "env": [
                     {
                       "name": "SPECULOS_APPNAME",
-                      "value": "${{ inputs.speculos_appname }}"
+                      "value": "${{ inputs.coin_app }}"
                     }
                   ],
                   "ports": [
