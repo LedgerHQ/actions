@@ -168,7 +168,7 @@ jobs:
                     "-c"
                   ],
                   "args": [
-                    "curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v3.raw' -o /apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf https://api.github.com/repos/ledgerHQ/coin-apps/contents/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf?ref=master"
+                    "curl -H \"Authorization: token ${GITHUB_TOKEN}\" -H \"Accept: application/vnd.github.v3.raw\" -o /apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf https://api.github.com/repos/ledgerHQ/coin-apps/contents/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf?ref=master"
                   ],
                   "env": [
                     {
