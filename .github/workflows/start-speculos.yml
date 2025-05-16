@@ -112,15 +112,6 @@ jobs:
           echo ::add-mask::${{ inputs.seed }}
           echo ::add-mask::${{ inputs.cluster }}
           echo ::add-mask::${{ inputs.aws_role }}
-      #- name: Set run-id
-      #  id: run-id
-      #  shell: bash
-      #  run: |
-      #    if [[ ${{ inputs.run_id }} == '' ]]; then
-      #      echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
-      #    else
-      #      echo "run_id=${{ inputs.run_id }}" >> $GITHUB_OUTPUT
-      #    fi
       - name: Prepare additional args
         if: ${{ inputs.additional_args != '' }}
         shell: bash
@@ -171,13 +162,13 @@ jobs:
               "initContainers": [
                 {
                   "name": "init-coin-apps",
-                  "image": "alpine/git",
+                  "image": "curlimages/curl:8.13.0",
                   "command": [
                     "/bin/sh",
                     "-c"
                   ],
                   "args": [
-                    "git clone https://${GITHUB_TOKEN}@github.com/LedgerHQ/coin-apps.git /apps"
+                    "curl -H 'Authorization: token ${GITHUB_TOKEN}' -H 'Accept: application/vnd.github.v3.raw' -o /apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf https://api.github.com/repos/ledgerHQ/coin-apps/contents/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf?ref=master"
                   ],
                   "env": [
                     {
@@ -188,6 +179,10 @@ jobs:
                           "key": "GITHUB_TOKEN"
                         }
                       }
+                    },
+                    {
+                      "name": "ADDITIONAL_ARGS",
+                      "value": "${{ inputs.additional_args }}"
                     }
                   ],
                   "volumeMounts": [
@@ -203,7 +198,7 @@ jobs:
                   "name": "speculos",
                   "image": "ghcr.io/ledgerhq/speculos:master",
                   "args": [
-                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ env.COIN_APP }}/app_${{ inputs.coin_app_version }}.elf",
+                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf",
                     ${{ env.ADDITIONAL_ARGS }}
                     "--model",
                     "${{ env.DEVICE }}",
@@ -242,18 +237,18 @@ jobs:
       - name: Create ingress
         shell: bash
         run: |
-            kubectl -n speculos create ingress speculos-${{ inputs.run_id }} --class="trusted" --rule="speculos-${{ inputs.run_id }}.aws.stg.ldg-tech.com/=speculos-${{ inputs.run_id }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ inputs.run_id }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
+          kubectl -n speculos create ingress speculos-${{ inputs.run_id }} --class="trusted" --rule="${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ inputs.run_id }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ inputs.run_id }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
       - name: Wait for speculos to become available
         shell: bash
         run: |
           while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ inputs.run_id }}; do sleep 5; done
-          while ! curl -sI https://speculos-${{ inputs.run_id }}.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
+          while ! curl -sI https://${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
       - name: Set outputs
         id: set-outputs
         shell: bash
         run: |
           kubectl -n speculos logs -l run-id=${{ inputs.run_id }} -c speculos
-          echo "speculos_url=https://speculos-${{ inputs.run_id }}.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
+          echo "speculos_url=https://${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
           if [[ ${{ inputs.run_id }} == '' ]]; then
             echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
           else
