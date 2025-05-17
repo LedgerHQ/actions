@@ -256,6 +256,14 @@ jobs:
           echo "speculos_url=https://speculos-${{ inputs.run_id }}.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
           if [[ ${{ inputs.run_id }} == '' ]]; then
             echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+            echo "${{ github.run_id }}" > run_id.txt
           else
             echo "run_id=${{ inputs.run_id }}" >> $GITHUB_OUTPUT
+            echo "${{ inputs.run_id }}" > run_id.txt
           fi
+      - name: Upload artifact named with run_id
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.run_id }}
+          path: run_id.txt
+          retention-days: 1
