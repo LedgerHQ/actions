@@ -112,6 +112,16 @@ jobs:
           echo ::add-mask::${{ inputs.seed }}
           echo ::add-mask::${{ inputs.cluster }}
           echo ::add-mask::${{ inputs.aws_role }}
+      - name: Set run ID
+        shell: bash
+        run: |
+          if [[ ${{ inputs.run_id }} == '' ]]; then
+            echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_ENV
+            echo "RUN_ID=${{ github.run_id }}" >> $GITHUB_OUTPUT
+          else
+            echo "RUN_ID=${{ inputs.run_id }}" >> $GITHUB_ENV
+            echo "RUN_ID=${{ inputs.run_id }}" >> $GITHUB_OUTPUT
+          fi
       - name: Prepare additional args
         if: ${{ inputs.additional_args != '' }}
         shell: bash
@@ -144,12 +154,12 @@ jobs:
       - name: Run Speculos
         shell: bash
         run: |
-          kubectl -n speculos run speculos-${{ inputs.run_id }} --image=ghcr.io/ledgerhq/speculos:master --restart=Never --overrides="$(cat <<EOF
+          kubectl -n speculos run speculos-${{ env.RUN_ID }} --image=ghcr.io/ledgerhq/speculos:master --restart=Never --overrides="$(cat <<EOF
           {
             "apiVersion": "v1",
             "metadata": {
               "labels": {
-                "run-id": "${{ inputs.run_id }}"
+                "run-id": "${{ env.RUN_ID }}"
               }
             },
             "spec": {
@@ -194,7 +204,7 @@ jobs:
                     },
                     {
                       "name": "COIN_APP",
-                      "value": "${{ inputs.coin_app }}"
+                      "value": "${{ env.COIN_APP }}"
                     },
                     {
                       "name": "COIN_APP_VERSION",
@@ -214,7 +224,7 @@ jobs:
                   "name": "speculos",
                   "image": "ghcr.io/ledgerhq/speculos:master",
                   "args": [
-                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ inputs.coin_app }}/app_${{ inputs.coin_app_version }}.elf",
+                    "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ env.COIN_APP }}/app_${{ inputs.coin_app_version }}.elf",
                     ${{ env.ADDITIONAL_ARGS }}
                     "--model",
                     "${{ env.DEVICE }}",
@@ -242,7 +252,8 @@ jobs:
                     }
                   ]
                 }
-              ]
+              ],
+              "terminationGracePeriodSeconds": 0
             }
           }
           EOF
@@ -250,29 +261,24 @@ jobs:
       - name: Create service
         shell: bash
         run: |
-          kubectl -n speculos expose pod/speculos-${{ inputs.run_id }} --type=ClusterIP --port=5000 --target-port=http --name=speculos-${{ inputs.run_id }} --selector="run-id=${{ inputs.run_id }}"
+          kubectl -n speculos expose pod/speculos-${{ env.RUN_ID }} --type=ClusterIP --port=5000 --target-port=http --name=speculos-${{ env.RUN_ID }} --selector="run-id=${{ env.RUN_ID }}"
       - name: Create ingress
         shell: bash
         run: |
-          kubectl -n speculos create ingress speculos-${{ inputs.run_id }} --class="trusted" --rule="${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ inputs.run_id }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ inputs.run_id }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
+          kubectl -n speculos create ingress speculos-${{ env.RUN_ID }} --class="trusted" --rule="${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ env.RUN_ID }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ env.RUN_ID }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
       - name: Wait for speculos to become available
         shell: bash
         run: |
-          while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ inputs.run_id }}; do sleep 1; done
-          while ! curl -skI https://${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
+          while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ env.RUN_ID }}; do sleep 1; done
+          while ! curl -skI https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
       - name: Set outputs
         id: set-outputs
         shell: bash
         run: |
-          kubectl -n speculos logs -l run-id=${{ inputs.run_id }} -c speculos
-          echo "speculos_url=https://${{ inputs.run_id }}.speculos.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
-          if [[ ${{ inputs.run_id }} == '' ]]; then
-            echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
-          else
-            echo "run_id=${{ inputs.run_id }}" >> $GITHUB_OUTPUT
-          fi
+          kubectl -n speculos logs -l run-id=${{ env.RUN_ID }} -c speculos
+          echo "speculos_url=https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com" >> $GITHUB_OUTPUT
       - name: Clean up
         if: ${{ failure() || cancelled()}}
         shell: bash
         run: |
-          kubectl -n speculos delete pod,ingress,service -l run-id="${{ inputs.run_id }}" --ignore-not-found=true
+          kubectl -n speculos delete pod,ingress,service -l run-id="${{ env.RUN_ID }}" --ignore-not-found=true
