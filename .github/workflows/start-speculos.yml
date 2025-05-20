@@ -178,7 +178,7 @@ jobs:
                   ],
                   "args": [
                     "-c",
-                    "wget -q --header \"Authorization: token \$GITHUB_TOKEN\" --header 'Accept: application/vnd.github.v3.raw' https://api.github.com/repos/ledgerHQ/pe-sandbox/contents/init-coin-apps.sh?ref=main -O /dev/stdout | bash"
+                    "wget -q --header \"Authorization: token \$GITHUB_TOKEN\" --header 'Accept: application/vnd.github.v3.raw' https://api.github.com/repos/ledgerHQ/infra-tools/contents/scripts/speculos/init-coin-apps.sh?ref=main -O /dev/stdout | bash"
                   ],
                   "env": [
                     {
