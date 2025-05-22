@@ -148,6 +148,7 @@ jobs:
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ inputs.aws_region }}
+          role-duration-seconds: 21600
       - name: Update kubeconfig
         run: |
           aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ inputs.aws_region }}
