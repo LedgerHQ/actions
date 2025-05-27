@@ -44,6 +44,10 @@ inputs:
   extra-docker:
     description: An optional extra docker image to build
     default: ""
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
 
 
 outputs:
@@ -87,7 +91,7 @@ runs:
         history: true
         github-token: ${{ inputs.github-token }}
         pypi-token: ${{ inputs.pypi-token }}
-        python-version: "3.11"
+        python-version: ${{ inputs.python-version }}
 
     - name: Bump using commitizen
       id: bump
