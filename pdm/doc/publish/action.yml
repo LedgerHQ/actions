@@ -25,6 +25,10 @@ inputs:
   exclude-group:
     description: Dependency group(s) to exclude from install
     default: ''
+  python-version:
+    description: Python version used to build
+    required: false
+    default: "3.11"
 
 outputs:
   url:
@@ -42,6 +46,7 @@ runs:
         exclude-group: ${{ inputs.exclude-group }}
         history: true
         pypi-token: ${{ inputs.pypi-token }}
+        python-version: ${{ inputs.python-version }}
 
     - uses: actions/download-artifact@v4
       with:
