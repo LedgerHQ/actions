@@ -31,7 +31,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 |-------|-------------|---------|----------|
 | `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
-| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
 | `build-args` | Docker build command extra `build-args` (multiline supported) | `""` | `false` |
 | `secrets` | Docker build command extra `secrets` (multiline supported) | `""` | `false` |

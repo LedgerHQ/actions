@@ -31,7 +31,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 |-------|-------------|---------|----------|
 | `python-version` | Python version used to build | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
-| `pypi-token` | Private PyPI token | `""` | `false` |
 | `init` | Clone & sync | `true` | `false` |
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |

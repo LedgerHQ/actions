@@ -7,10 +7,6 @@ inputs:
     default: 'true'
   version:
     description: Force the built version
-  pypi-token:
-    description: Private PyPI token (GemFury read)
-    required: false
-    deprecationMessage: use JFrog instead
   github-token:
     description: A GitHub token with proper permissions
     default: ${{ github.token }}
@@ -148,7 +144,6 @@ runs:
           JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           ${{ inputs.build-args }}
         secrets: |
-          PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token || '' }}
           JFROG_USER=${{ env.JFROG_USER }}
           JFROG_TOKEN=${{ env.JFROG_TOKEN }}
           ${{ inputs.secrets }}
@@ -199,7 +194,6 @@ runs:
           JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           ${{ inputs.build-args }}
         secrets: |
-          PYPI_DEPLOY_TOKEN=${{ inputs.pypi-token || '' }}
           JFROG_USER=${{ env.JFROG_USER }}
           JFROG_TOKEN=${{ env.JFROG_TOKEN }}
           ${{ inputs.secrets }}
