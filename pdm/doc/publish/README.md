@@ -30,7 +30,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `version` | Force a version to be built | `""` | `false` |
 | `openapi` | Has OpenAPI specs | `false` | `false` |
 | `site` | Publish a documentation site | `false` | `false` |
-| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `init` | Clone & sync | `true` | `false` |
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |

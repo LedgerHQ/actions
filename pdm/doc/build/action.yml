@@ -8,10 +8,6 @@ inputs:
     description: A Github token with proper permissions
     required: false
     default: ${{ github.token }}
-  pypi-token:
-    description: Private PyPI token (GemFury read)
-    required: false
-    deprecationMessage: use JFrog instead
   openapi:
     description: >
       Whether or not to build OpenAPI specs. Valid values are: "true" (to generate new specs and run diff steps on PRs), "false" (to skip OpenAPI processing), or an artifact name (to download an existing OpenAPI spec).
@@ -41,7 +37,6 @@ runs:
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
-        pypi-token: ${{ inputs.pypi-token }}
         python-version: ${{ inputs.python-version }}
 
     - name: Update the CHANGELOG

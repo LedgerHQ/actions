@@ -54,7 +54,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `history` | Fetch the full history | `false` | `false` |
-| `pypi-token` | ~~Private PyPI token (GemFury read)~~ **deprecated:** _use JFrog instead_ | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `skip-dependencies` | Skip dependencies installation | `""` | `false` |
 

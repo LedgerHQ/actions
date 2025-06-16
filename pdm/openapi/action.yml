@@ -15,9 +15,6 @@ inputs:
     description: A Github token with proper permissions
     required: false
     default: ${{ github.token }}
-  pypi-token:
-    description: Private PyPI token
-    required: false
   init:
     description: Clone & sync
     default: 'true'
@@ -45,7 +42,6 @@ runs:
         group: ${{ inputs.group }}
         history: true
         exclude-group: ${{ inputs.exclude-group }}
-        pypi-token: ${{ inputs.pypi-token }}
         python-version: ${{ inputs.python-version }}
 
     - name: Generate the OpenAPI specifications

@@ -4,10 +4,6 @@ description: Execute test using `pdm` scripts
 inputs:
   python-version:
     description: Python version to run the tests with
-  pypi-token:
-    description: Private PyPI token (GemFury read)
-    required: false
-    deprecationMessage: use JFrog instead
   github-token:
     description: A Github token with proper permissions
     default: ${{ github.token }}
@@ -41,7 +37,6 @@ runs:
         python-version: ${{ inputs.python-version }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
-        pypi-token: ${{ inputs.pypi-token }}
         skip-dependencies: ${{ inputs.report-only }}
 
     - name: Compute unique matrix hashable ID
