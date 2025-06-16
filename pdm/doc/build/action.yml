@@ -4,8 +4,6 @@ description: Build the documentation using `pdm` commands
 inputs:
   python-version:
     description: Python version used to build
-    required: false
-    default: "3.11"
   github-token:
     description: A Github token with proper permissions
     required: false

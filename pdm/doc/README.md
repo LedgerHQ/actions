@@ -21,7 +21,7 @@ jobs:
 | `site` | Publish a documentation site | `false` | `false` |
 | `pypi-token` | A read token for private PyPI access | `""` | `false` |
 | `init` | Clone & sync | `true` | `false` |
-| `python-version` | Python version used to build | `3.11` | `false` |
+| `python-version` | Python version used to build | `""` | `false` |
 
 ## Outputs
 

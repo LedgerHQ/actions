@@ -4,8 +4,6 @@ description: Execute test using `pdm` scripts
 inputs:
   python-version:
     description: Python version to run the tests with
-    required: true
-    default: "3.11"
   pypi-token:
     description: Private PyPI token (GemFury read)
     required: false

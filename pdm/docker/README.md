@@ -14,7 +14,7 @@ jobs:
 
 ## Permissions
 
-This action interact with the GitHub API using the GitHub token and requires the following permissions:
+This action interacts with the GitHub API using the GitHub token and requires the following permissions:
 
 ```yaml
 contents: read       # Checkout

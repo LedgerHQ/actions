@@ -27,8 +27,6 @@ inputs:
     default: ''
   python-version:
     description: Python version used to build
-    required: false
-    default: "3.11"
 
 outputs:
   url:
