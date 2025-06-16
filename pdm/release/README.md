@@ -22,7 +22,7 @@ jobs:
 
 ## Permissions
 
-This action interact with the GitHub API using the GitHub token and requires the following permissions:
+This action interacts with the GitHub API using the GitHub token and requires the following permissions:
 
 ```yaml
 contents: read       # Checkout
@@ -48,6 +48,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `artifactory-repository` | DEPRECATED (Use `JFROG_REPOSITORY` environment variable) | `""` | `false` |
 | `docker-name` | Optionally override the docker image name (default to the repository name) | `""` | `false` |
 | `extra-docker` | An optional extra docker image to build | `""` | `false` |
+| `python-version` | Python version used to build | `""` | `false` |
 
 ## Environment variables
 

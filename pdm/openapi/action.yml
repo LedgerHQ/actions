@@ -1,5 +1,7 @@
-name: Generate OpenAPI
-description: Generate and compare OpenAPI specifications
+name: Generate and compare OpenAPI specifications
+description: >
+  Build, compare (diff), and lint OpenAPI specifications using **pdm** commands,
+  OpenAPI diff, and [Spectral](https://github.com/stoplightio/spectral).
 
 outputs:
   openapi:
@@ -9,14 +11,12 @@ outputs:
 inputs:
   python-version:
     description: Python version used to build
-    required: false
-    default: "3.11"
   github-token:
     description: A Github token with proper permissions
     required: false
     default: ${{ github.token }}
   pypi-token:
-    description: Private PyPI token (JFrog read)
+    description: Private PyPI token
     required: false
   init:
     description: Clone & sync
@@ -28,10 +28,10 @@ inputs:
     description: Dependency group(s) to exclude from install
     default: ''
   spectral-file-glob:
-    description: Glob for Spectral to run on
+    description: Glob for Spectral to run on (e.g. `docs/*.yaml`)
     default: 'docs/openapi.yaml'
   spectral-ruleset:
-    description: Ruleset to enforce
+    description: Spectral ruleset to enforce
     default: '.github/openapi.spectral.yaml'
 
 runs:
