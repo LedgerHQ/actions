@@ -1,18 +1,12 @@
 name: Lint
 description: Lint running pre-commit hooks
 
-inputs:
-  python-version:
-    description: Python version used to build
-    required: false
-    default: "3.11"
-
 runs:
   using: composite
   steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
       with:
-        python-version: ${{ inputs.python-version }}
+        python-version-file: pyproject.toml
     - name: Lint with pre-commit
       uses: pre-commit/action@v3.0.1

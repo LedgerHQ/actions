@@ -14,9 +14,7 @@ jobs:
 
 ## Inputs
 
-| Input | Description | Default | Required |
-|-------|-------------|---------|----------|
-| `python-version` | Python version used to build | `3.11` | `false` |
+N/A
 
 ## Outputs
 

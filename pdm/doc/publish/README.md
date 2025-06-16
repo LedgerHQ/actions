@@ -14,7 +14,7 @@ jobs:
 
 ## Permissions
 
-This action interact with the GitHub API using the GitHub token and requires the following permissions:
+This action interacts with the GitHub API using the GitHub token and requires the following permissions:
 
 ```yaml
 contents: read  # Checkout
@@ -34,6 +34,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `init` | Clone & sync | `true` | `false` |
 | `group` | Dependency group(s) to install | `docs` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
+| `python-version` | Python version used to build | `""` | `false` |
 
 ## Environment variables
 
