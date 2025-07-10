@@ -16,19 +16,19 @@ inputs:
   helm-version:
     description: Helm version
     required: true
-    default: "v3.13.3"
+    default: "v3.18.4"
   kubernetes-tested-version:
     description: Specify the kubernetes version used to test helm templates
     required: true
-    default: "v1.27.9"
+    default: "v1.31.0"
   kuberconform-version:
     description: Specify the kuberconform version.
     required: true
-    default: "v0.6.3"
+    default: "v0.7.0"
   datatree-crd-catalog-version:
     description: Specify the CRD catalog version .
     required: true
-    default: "v0.0.12"
+    default: "327084a157ed3c93bc46f8d229e9d9200cb8e7ae"
 
 runs:
   using: composite
