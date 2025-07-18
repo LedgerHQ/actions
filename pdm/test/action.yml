@@ -166,21 +166,6 @@ runs:
         coverage xml --data-file reports/coverage.all -o reports/coverage.xml
       shell: bash
 
-    - name: Cache coverage report
-      if: inputs.report-only == null
-      run: |
-        : Cache coverage report
-        mkdir -p coverage
-        cp reports/coverage.xml coverage/
-      shell: bash
-
-    - name: Upload coverage reports
-      if: inputs.report-only == null
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage_reports
-        path: ./coverage/
-
     - name: Generate Pytest coverage report
       id: coverage
       if: inputs.matrix-id == null
