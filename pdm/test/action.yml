@@ -166,6 +166,29 @@ runs:
         coverage xml --data-file reports/coverage.all -o reports/coverage.xml
       shell: bash
 
+    - name: Cache coverage report
+      if: inputs.matrix-id == null
+      run: |
+        : Cache coverage report
+        mkdir -p coverage
+
+        # Copy any coverage.xml file that exists (with or without suffix)
+        for coverage_file in reports/coverage*.xml; do
+          if [ -f "$coverage_file" ]; then
+            cp "$coverage_file" coverage/
+            echo "Copied $coverage_file to coverage/"
+          fi
+        done
+      shell: bash
+
+    - name: Upload coverage reports
+      if: inputs.matrix-id == null
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage_reports
+        path: ./coverage/
+        if-no-files-found: ignore
+
     - name: Generate Pytest coverage report
       id: coverage
       if: inputs.matrix-id == null
