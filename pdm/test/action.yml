@@ -171,7 +171,14 @@ runs:
       run: |
         : Cache coverage report
         mkdir -p coverage
-        cp reports/coverage.xml coverage/
+
+        # Copy any coverage.xml file that exists (with or without suffix)
+        for coverage_file in reports/coverage*.xml; do
+          if [ -f "$coverage_file" ]; then
+            cp "$coverage_file" coverage/
+            echo "Copied $coverage_file to coverage/"
+          fi
+        done
       shell: bash
 
     - name: Upload coverage reports
@@ -180,6 +187,7 @@ runs:
       with:
         name: coverage_reports
         path: ./coverage/
+        if-no-files-found: ignore
 
     - name: Generate Pytest coverage report
       id: coverage
