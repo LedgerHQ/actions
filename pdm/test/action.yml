@@ -167,7 +167,7 @@ runs:
       shell: bash
 
     - name: Cache coverage report
-      if: inputs.report-only == null
+      if: inputs.matrix-id == null
       run: |
         : Cache coverage report
         mkdir -p coverage
@@ -182,7 +182,7 @@ runs:
       shell: bash
 
     - name: Upload coverage reports
-      if: inputs.report-only == null
+      if: inputs.matrix-id == null
       uses: actions/upload-artifact@v4
       with:
         name: coverage_reports
