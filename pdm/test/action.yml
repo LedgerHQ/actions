@@ -244,9 +244,9 @@ runs:
       shell: bash
 
     - name: Run SonarCloud analysis
-      if: hashFiles('sonar-project.properties') != ''
+      if: hashFiles('sonar-project.properties')
       continue-on-error: true  # Not critical
-      uses: sonarsource/sonarqube-scan-action@master
+      uses: sonarsource/sonarqube-scan-action@v5
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
