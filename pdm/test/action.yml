@@ -242,3 +242,11 @@ runs:
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
         echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
+
+    - name: Run SonarCloud analysis
+      if: hashFiles('sonar-project.properties') != ''
+      continue-on-error: true  # Not critical
+      uses: sonarsource/sonarqube-scan-action@master
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
