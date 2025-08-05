@@ -25,6 +25,9 @@ inputs:
     description: Only perform aggregation and reporting (parallelism closure)
   docker-compose:
     description: Start and wait Docker Compose
+  sonar-token:
+    description: SonarCloud token
+    required: false
 
 runs:
   using: composite
@@ -265,3 +268,11 @@ runs:
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
         echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
+
+    - name: Run SonarCloud analysis
+      if: hashFiles('sonar-project.properties') && inputs.sonar-token
+      continue-on-error: true  # Not critical
+      uses: sonarsource/sonarqube-scan-action@v5
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
