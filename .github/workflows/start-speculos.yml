@@ -270,8 +270,8 @@ jobs:
       - name: Wait for speculos to become available
         shell: bash
         run: |
-          while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ env.RUN_ID }}; do sleep 1; done
-          while ! curl -skI https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
+          kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ env.RUN_ID }}
+          r=0; while ! curl -skI https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200' && [ $r -lt 20 ]; echo "Attempt $((r+1)) failed." ; do sleep 3; ((r++)); done
       - name: Set outputs
         id: set-outputs
         shell: bash
