@@ -47,6 +47,10 @@ inputs:
     description: 'Name for the uploaded SDK artifact'
     required: false
     default: 'python-sdk'
+  github-token:
+    description: A Github token with proper permissions
+    required: false
+    default: ${{ github.token }}
 
 outputs:
   sdk-path:
@@ -82,13 +86,12 @@ runs:
         fi
         echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
 
-    - name: Checkout templates repository
+    - name: clone templates repository
       uses: actions/checkout@v4
       with:
         repository: ${{ inputs.templates-repo }}
         ref: ${{ inputs.templates-ref }}
-        path: ./sdk-templates
-        token: ${{ github.token }}
+        token: ${{ inputs.github-token }}
 
     - name: Install dependencies
       shell: bash
@@ -111,7 +114,7 @@ runs:
         mkdir -p "${{ inputs.output-path }}"
 
         # Set template path
-        template_path="./sdk-templates/${{ inputs.templates-path }}"
+        template_path="./${{ inputs.templates-path }}"
 
         # Check if templates exist
         if [ ! -d "$template_path" ]; then
@@ -156,54 +159,6 @@ runs:
           --output "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}/models.py"
 
         echo "sdk-path=${{ inputs.output-path }}/gen" >> $GITHUB_OUTPUT
-
-    - name: Generate tests
-      if: inputs.generate-tests == 'true'
-      shell: bash
-      run: |
-        # Check if generate_sdk_tests.py exists in templates
-        test_generator="./sdk-templates/scripts/generate_sdk_tests.py"
-        if [ -f "$test_generator" ]; then
-          echo "Generating tests using template script..."
-          python "$test_generator" \
-            --openapi "${{ steps.locate-spec.outputs.spec-file }}" \
-            --templates "./sdk-templates/${{ inputs.templates-path }}/tests" \
-            --output "${{ inputs.output-path }}/gen/tests" \
-            --package-name "${{ inputs.package-name }}"
-        else
-          echo "No test generator found in templates, skipping test generation"
-        fi
-
-    - name: Format generated code
-      shell: bash
-      run: |
-        # Install ruff for formatting
-        pip install ruff
-
-        # Format the generated code
-        ruff check --select C,I,UP --fix-only --show-fixes "${{ inputs.output-path }}/gen" || true
-        ruff format "${{ inputs.output-path }}/gen/ledger" || true
-
-    - name: Run tests
-      if: inputs.run-tests == 'true' && inputs.generate-tests == 'true'
-      shell: bash
-      working-directory: ${{ inputs.output-path }}/gen
-      run: |
-        if [ -f "tox.ini" ]; then
-          echo "Running tests with tox..."
-          tox
-        else
-          echo "No tox.ini found, skipping tests"
-        fi
-
-    - name: Upload SDK artifact
-      if: inputs.upload-artifact == 'true'
-      uses: actions/upload-artifact@v4
-      id: upload
-      with:
-        name: ${{ inputs.artifact-name }}
-        path: ${{ inputs.output-path }}/gen
-        retention-days: 30
 
 branding:
   icon: 'package'
