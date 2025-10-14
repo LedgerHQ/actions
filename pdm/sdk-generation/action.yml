@@ -90,6 +90,7 @@ runs:
       with:
         repository: ${{ inputs.templates-repo }}
         ref: ${{ inputs.templates-ref }}
+        path: ./sdk-templates
         token: ${{ inputs.github-token }}
 
     - name: Install dependencies
@@ -113,7 +114,7 @@ runs:
         mkdir -p "${{ inputs.output-path }}"
 
         # Set template path
-        template_path="./${{ inputs.templates-path }}"
+        template_path="./sdk-templates/${{ inputs.templates-path }}"
 
         # Check if templates exist
         if [ ! -d "$template_path" ]; then
@@ -124,7 +125,7 @@ runs:
         # Generate SDK client using openapi-python-client
         echo "Generating SDK client..."
         openapi-python-client generate \
-          --path "${{ steps.locate-spec.outputs.spec-file }}" \
+          --path "./${{ steps.locate-spec.outputs.spec-file }}" \
           --custom-template-path="$template_path" \
           --output-path "${{ inputs.output-path }}/gen" \
           --config "$template_path/config.yaml" \
