@@ -1,0 +1,219 @@
+name: 'Generate SDK from OpenAPI spec'
+description: 'Generate Python SDK from OpenAPI specification with customizable templates'
+
+inputs:
+  openapi-spec-path:
+    description: 'Path to the OpenAPI specification file (YAML or JSON)'
+    required: true
+  openapi-artifact-name:
+    description: 'Name of the artifact containing the OpenAPI spec (optional, will download if provided)'
+    required: false
+  templates-repo:
+    description: 'Repository containing SDK generation templates'
+    required: false
+    default: 'LedgerHQ/ledger-sdk-template'
+  templates-ref:
+    description: 'Branch/tag/commit of the templates repository'
+    required: false
+    default: 'main'
+  templates-path:
+    description: 'Path within templates repository to the templates directory'
+    required: false
+    default: 'python/templates'
+  project-name:
+    description: 'Name of the generated SDK project'
+    required: true
+  package-name:
+    description: 'Python package name for the SDK'
+    required: true
+  output-path:
+    description: 'Output directory for the generated SDK'
+    required: false
+    default: 'sdk'
+  python-version:
+    description: 'Python version to use for SDK generation'
+    required: false
+    default: '3.12'
+  generate-tests:
+    description: 'Whether to generate test suite'
+    required: false
+    default: 'true'
+  run-tests:
+    description: 'Whether to run the generated tests'
+    required: false
+    default: 'true'
+  upload-artifact:
+    description: 'Whether to upload the generated SDK as an artifact'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Name for the uploaded SDK artifact'
+    required: false
+    default: 'python-sdk'
+
+outputs:
+  sdk-path:
+    description: 'Path to the generated SDK'
+    value: ${{ steps.generate.outputs.sdk-path }}
+  artifact-name:
+    description: 'Name of the uploaded artifact'
+    value: ${{ steps.upload.outputs.artifact-name }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Download OpenAPI artifact
+      if: inputs.openapi-artifact-name != ''
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.openapi-artifact-name }}
+        path: ./openapi-spec
+
+    - name: Locate OpenAPI spec file
+      shell: bash
+      id: locate-spec
+      run: |
+        if [ -n "${{ inputs.openapi-artifact-name }}" ]; then
+          # Find the OpenAPI spec file in the downloaded artifact
+          spec_file=$(find ./openapi-spec -name "*.yaml" -o -name "*.yml" -o -name "*.json" | head -1)
+          if [ -z "$spec_file" ]; then
+            echo "Error: No OpenAPI spec file found in artifact"
+            exit 1
+          fi
+          echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
+        else
+          # Use the provided path
+          echo "spec-file=${{ inputs.openapi-spec-path }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Checkout templates repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.templates-repo }}
+        ref: ${{ inputs.templates-ref }}
+        path: ./sdk-templates
+        token: ${{ github.token }}
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install \
+          openapi-python-client \
+          datamodel-code-generator \
+          jinja2 \
+          pyyaml \
+          tox
+
+    - name: Generate SDK
+      shell: bash
+      id: generate
+      run: |
+        set -e
+
+        # Create output directory
+        mkdir -p "${{ inputs.output-path }}"
+
+        # Set template path
+        template_path="./sdk-templates/${{ inputs.templates-path }}"
+
+        # Check if templates exist
+        if [ ! -d "$template_path" ]; then
+          echo "Error: Templates directory not found at $template_path"
+          exit 1
+        fi
+
+        # Generate SDK client using openapi-python-client
+        echo "Generating SDK client..."
+        openapi-python-client generate \
+          --path "${{ steps.locate-spec.outputs.spec-file }}" \
+          --custom-template-path="$template_path" \
+          --output-path "${{ inputs.output-path }}/gen" \
+          --config "$template_path/config.yaml" \
+          --meta pdm \
+          --overwrite
+
+        # Remove default models (will be regenerated)
+        rm -rf "${{ inputs.output-path }}/gen/${{ inputs.package-name }}/models" || true
+
+        # Create package structure
+        mkdir -p "${{ inputs.output-path }}/gen/ledger"
+        if [ -d "${{ inputs.output-path }}/gen/${{ inputs.package-name }}" ]; then
+          mv "${{ inputs.output-path }}/gen/${{ inputs.package-name }}" "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}"
+        fi
+
+        # Generate models using datamodel-code-generator
+        echo "Generating SDK models..."
+        mkdir -p "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}"
+        datamodel-codegen \
+          --input "${{ steps.locate-spec.outputs.spec-file }}" \
+          --input-file-type openapi \
+          --output-model-type pydantic_v2.BaseModel \
+          --strict-nullable \
+          --snake-case-field \
+          --capitalize-enum-members \
+          --use-union-operator \
+          --use-standard-collections \
+          --target-python-version 3.10 \
+          --use-schema-description \
+          --reuse-model \
+          --output "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}/models.py"
+
+        echo "sdk-path=${{ inputs.output-path }}/gen" >> $GITHUB_OUTPUT
+
+    - name: Generate tests
+      if: inputs.generate-tests == 'true'
+      shell: bash
+      run: |
+        # Check if generate_sdk_tests.py exists in templates
+        test_generator="./sdk-templates/scripts/generate_sdk_tests.py"
+        if [ -f "$test_generator" ]; then
+          echo "Generating tests using template script..."
+          python "$test_generator" \
+            --openapi "${{ steps.locate-spec.outputs.spec-file }}" \
+            --templates "./sdk-templates/${{ inputs.templates-path }}/tests" \
+            --output "${{ inputs.output-path }}/gen/tests" \
+            --package-name "${{ inputs.package-name }}"
+        else
+          echo "No test generator found in templates, skipping test generation"
+        fi
+
+    - name: Format generated code
+      shell: bash
+      run: |
+        # Install ruff for formatting
+        pip install ruff
+
+        # Format the generated code
+        ruff check --select C,I,UP --fix-only --show-fixes "${{ inputs.output-path }}/gen" || true
+        ruff format "${{ inputs.output-path }}/gen/ledger" || true
+
+    - name: Run tests
+      if: inputs.run-tests == 'true' && inputs.generate-tests == 'true'
+      shell: bash
+      working-directory: ${{ inputs.output-path }}/gen
+      run: |
+        if [ -f "tox.ini" ]; then
+          echo "Running tests with tox..."
+          tox
+        else
+          echo "No tox.ini found, skipping tests"
+        fi
+
+    - name: Upload SDK artifact
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      id: upload
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ inputs.output-path }}/gen
+        retention-days: 30
+
+branding:
+  icon: 'package'
+  color: 'blue'
