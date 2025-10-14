@@ -2,12 +2,9 @@ name: 'Generate SDK from OpenAPI spec'
 description: 'Generate Python SDK from OpenAPI specification with customizable templates'
 
 inputs:
-  openapi-spec-path:
-    description: 'Path to the OpenAPI specification file (YAML or JSON)'
-    required: true
   openapi-artifact-name:
-    description: 'Name of the artifact containing the OpenAPI spec (optional, will download if provided)'
-    required: false
+    description: 'Name of the artifact containing the OpenAPI spec'
+    required: true
   templates-repo:
     description: 'Repository containing SDK generation templates'
     required: false
@@ -68,7 +65,6 @@ runs:
         python-version: ${{ inputs.python-version }}
 
     - name: Download OpenAPI artifact
-      if: inputs.openapi-artifact-name != ''
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.openapi-artifact-name }}
@@ -78,18 +74,13 @@ runs:
       shell: bash
       id: locate-spec
       run: |
-        if [ -n "${{ inputs.openapi-artifact-name }}" ]; then
-          # Find the OpenAPI spec file in the downloaded artifact
-          spec_file=$(find ./openapi-spec -name "*.yaml" -o -name "*.yml" -o -name "*.json" | head -1)
-          if [ -z "$spec_file" ]; then
-            echo "Error: No OpenAPI spec file found in artifact"
-            exit 1
-          fi
-          echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
-        else
-          # Use the provided path
-          echo "spec-file=${{ inputs.openapi-spec-path }}" >> $GITHUB_OUTPUT
+        # Find the OpenAPI spec file in the downloaded artifact
+        spec_file=$(find ./openapi-spec -name "*.yaml" -o -name "*.yml" -o -name "*.json" | head -1)
+        if [ -z "$spec_file" ]; then
+          echo "Error: No OpenAPI spec file found in artifact"
+          exit 1
         fi
+        echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
 
     - name: Checkout templates repository
       uses: actions/checkout@v4
