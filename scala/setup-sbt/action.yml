@@ -1,0 +1,20 @@
+name: Setup JDK 25, Scala, SBT
+description: Sets up JDK 25, Scala, and SBT
+inputs:
+  distribution:
+    description: JDK vendor (zulu, temurin, etc.)
+    default: zulu
+  java-version:
+    description: Java version to setup (25)
+    default: '25'
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ inputs.distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: 'sbt'
+    - name: Setup SBT
+      uses: sbt/setup-sbt@v1

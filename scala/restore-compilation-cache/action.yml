@@ -1,0 +1,38 @@
+name: Restore compilation cache
+description: Restore compilation cache
+inputs:
+  key:
+    description: Cache key
+    default: target
+
+outputs:
+  cache-hit:
+    description: Cache hit
+    value: ${{ steps.impl_main.outputs.cache-hit }}
+runs:
+  using: "composite"
+  steps:
+    - name: Restore main compilation cache (${{ inputs.key }})
+      id: impl_main
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          target/
+          **/target/
+        key: ${{ inputs.key }}-${{ inputs.scala-version }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
+        restore-keys: |
+          ${{ inputs.key }}-main-${{ hashFiles('build.sbt') }}
+          ${{ inputs.key }}-main
+          ${{ inputs.key }}
+    - name: Restore tests compilation cache (${{ inputs.key }})
+      id: impl_tests
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          target/scala*/*test*
+          **/target/scala*/*test*
+        key: ${{ inputs.key }}-${{ inputs.scala-version }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
+        restore-keys: |
+          ${{ inputs.key }}-tests-${{ hashFiles('build.sbt') }}
+          ${{ inputs.key }}-tests
+          ${{ inputs.key }}
