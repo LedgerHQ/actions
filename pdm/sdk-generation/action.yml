@@ -63,10 +63,12 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Setup Python
-      uses: actions/setup-python@v4
+    - name: Init PDM
+      uses: LedgerHQ/actions/pdm/init@generate-sdk-action
       with:
         python-version: ${{ inputs.python-version }}
+        repository: ${{ inputs.templates-repo }}
+        working-directory: ./python
 
     - name: Download OpenAPI artifact
       uses: actions/download-artifact@v4
@@ -85,81 +87,15 @@ runs:
         fi
         echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
 
-    - name: clone templates repository
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ inputs.templates-repo }}
-        ref: ${{ inputs.templates-ref }}
-        path: ./sdk-templates
-        token: ${{ inputs.github-token }}
-
-    - name: Install dependencies
-      shell: bash
-      run: |
-        python -m pip install --upgrade pip
-        pip install \
-          openapi-python-client \
-          datamodel-code-generator \
-          jinja2 \
-          pyyaml \
-          tox
-
     - name: Generate SDK
-      shell: bash
       id: generate
+      working-directory: ./python
       run: |
-        set -e
-
-        # Create output directory
-        mkdir -p "${{ inputs.output-path }}"
-
-        # Set template path
-        template_path="./sdk-templates/${{ inputs.templates-path }}"
-
-        # Check if templates exist
-        if [ ! -d "$template_path" ]; then
-          echo "Error: Templates directory not found at $template_path"
-          exit 1
-        fi
-
-        # Generate SDK client using openapi-python-client
-        echo "Generating SDK client..."
-        openapi-python-client generate \
-          --path "./${{ steps.locate-spec.outputs.spec-file }}" \
-          --custom-template-path="$template_path" \
-          --output-path "${{ inputs.output-path }}/gen" \
-          --config "$template_path/config.yaml" \
-          --meta pdm \
-          --overwrite
-
-        # Remove default models (will be regenerated)
-        rm -rf "${{ inputs.output-path }}/gen/${{ inputs.package-name }}/models" || true
-
-        # Create package structure
-        mkdir -p "${{ inputs.output-path }}/gen/ledger"
-        if [ -d "${{ inputs.output-path }}/gen/${{ inputs.package-name }}" ]; then
-          mv "${{ inputs.output-path }}/gen/${{ inputs.package-name }}" "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}"
-        fi
-
-        # Generate models using datamodel-code-generator
-        echo "Generating SDK models..."
-        mkdir -p "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}"
-        datamodel-codegen \
-          --input "${{ steps.locate-spec.outputs.spec-file }}" \
-          --input-file-type openapi \
-          --output-model-type pydantic_v2.BaseModel \
-          --strict-nullable \
-          --snake-case-field \
-          --capitalize-enum-members \
-          --use-union-operator \
-          --use-standard-collections \
-          --target-python-version 3.10 \
-          --use-schema-description \
-          --reuse-model \
-          --output "${{ inputs.output-path }}/gen/ledger/${{ inputs.package-name }}/models.py"
-
-        echo "sdk-path=${{ inputs.output-path }}/gen" >> $GITHUB_OUTPUT
-
+        : Generate SDK from OpenAPI spec
+        pdm sdk:client ${{steps.locate-spec.outputs.spec-file }}
+        pdm sdk:model ${{steps.locate-spec.outputs.spec-file }}
+        pdm sdk:build
+      shell: bash
 branding:
   icon: 'package'
   color: 'blue'
