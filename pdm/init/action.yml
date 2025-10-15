@@ -92,6 +92,6 @@ runs:
     - name: Clone
       uses: actions/checkout@v4
       with:
-        repository: LedgerHQ/ledger-sdk-template
+        repository: ${{ inputs.repository }}
         token: ${{ inputs.github-token }}
         fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}

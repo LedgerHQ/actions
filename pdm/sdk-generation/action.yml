@@ -66,6 +66,7 @@ runs:
     - name: Init PDM
       uses: LedgerHQ/actions/pdm/init@generate-sdk-action
       with:
+        github-token: ${{ inputs.github-token }}
         python-version: ${{ inputs.python-version }}
         repository: ${{ inputs.templates-repo }}
         working-directory: ./python
