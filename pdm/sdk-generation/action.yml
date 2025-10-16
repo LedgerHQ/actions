@@ -75,18 +75,7 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.openapi-artifact-name }}
-
-    - name: Locate OpenAPI spec file
-      shell: bash
-      id: locate-spec
-      run: |
-        # Find the OpenAPI spec file in the downloaded artifact
-        spec_file=$(find . -name "*.yaml" -o -name "*.yml" -o -name "*.json" | head -1)
-        if [ -z "$spec_file" ]; then
-          echo "Error: No OpenAPI spec file found in artifact"
-          exit 1
-        fi
-        echo "spec-file=$spec_file" >> $GITHUB_OUTPUT
+        path: ./python
 
     - name: Generate SDK
       id: generate
@@ -94,8 +83,8 @@ runs:
       run: |
         : Generate SDK from OpenAPI spec
         ls -R
-        pdm sdk:client ${{steps.locate-spec.outputs.spec-file }}
-        pdm sdk:model ${{steps.locate-spec.outputs.spec-file }}
+        pdm sdk:client ./openapi.yaml
+        pdm sdk:model ./openapi.yaml
         pdm sdk:build
       shell: bash
 branding:
