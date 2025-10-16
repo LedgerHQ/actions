@@ -2,6 +2,9 @@ name: 'Generate SDK from OpenAPI spec'
 description: 'Generate Python SDK from OpenAPI specification with customizable templates'
 
 inputs:
+  sdk-name:
+    description: 'Name of the SDK to generate'
+    required: true
   openapi-artifact-name:
     description: 'Name of the artifact containing the OpenAPI spec'
     required: true
@@ -82,9 +85,10 @@ runs:
       working-directory: ./python
       run: |
         : Generate SDK from OpenAPI spec
-        ls -R
-        pdm sdk:client ./openapi.yaml
-        pdm sdk:model ./openapi.yaml
+        echo "package_name_override: ${{ inputs.sdk-name }}" >> templates/config.yaml
+        pdm sdk:client 
+        rm -rf ./gen/${{ inputs.sdk-name }}/models
+        pdm sdk:model ${{ inputs.sdk-name }}
         pdm sdk:build
       shell: bash
 branding:
