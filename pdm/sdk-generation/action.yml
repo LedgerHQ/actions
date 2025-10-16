@@ -93,6 +93,7 @@ runs:
       working-directory: ./python
       run: |
         : Generate SDK from OpenAPI spec
+        ls -R
         pdm sdk:client ${{steps.locate-spec.outputs.spec-file }}
         pdm sdk:model ${{steps.locate-spec.outputs.spec-file }}
         pdm sdk:build
