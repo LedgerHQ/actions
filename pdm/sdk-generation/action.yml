@@ -68,6 +68,10 @@ outputs:
 
 runs:
   using: 'composite'
+  permissions:
+    id-token: write
+    attestations: write
+    contents: read
   steps:
     - name: Init PDM
       uses: LedgerHQ/actions/pdm/init@generate-sdk-action
@@ -102,6 +106,9 @@ runs:
         working-directory: ./python/gen
         require-clone: "false"
         kind: "lib"
+      env:
+        JFROG_REPOSITORY: vault-pypi-prod-green
+        JFROG_DOCKER_REPOSITORY: vault-oci-prod-green
 branding:
   icon: 'package'
   color: 'blue'
