@@ -19,7 +19,7 @@ inputs:
     description: Working directory if not the root of the repository
     required: false
     default: ${{ github.workspace }}
-  require_clone:
+  require-clone:
     description: clone the repository
     required: false
     default: "true"
@@ -93,7 +93,7 @@ runs:
         fi
       shell: bash
     - name: Clone and install dependencies
-      if: inputs.require_clone == 'true'
+      if: inputs.require-clone == 'true'
       uses: LedgerHQ/actions/pdm/init@main
       id: meta
       with:
