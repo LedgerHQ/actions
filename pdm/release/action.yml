@@ -160,9 +160,7 @@ runs:
         FORCE_COLOR: 'true'
       run: |
         : Push to our internal JFrog Artifactory
-        echo ${{ env.JFROG_USER }}
-        echo ${{ env.JFROG_TOKEN }}
-        pdm publish --no-build
+        pdm publish --no-build -v
       shell: bash
 
     - name: Attest
