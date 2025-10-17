@@ -99,8 +99,9 @@ runs:
       with:
         version: ${{ inputs.sdk-version }}
         github-token: ${{ inputs.github-token }}
-        working-directory: ./gen
+        working-directory: ./python/gen
         require-clone: "false"
+        kind: "lib"
 branding:
   icon: 'package'
   color: 'blue'
