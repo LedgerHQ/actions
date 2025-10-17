@@ -5,6 +5,9 @@ inputs:
   sdk-name:
     description: 'Name of the SDK to generate'
     required: true
+  sdk-version:
+    description: 'Version of the SDK to generate'
+    required: true
   openapi-artifact-name:
     description: 'Name of the artifact containing the OpenAPI spec'
     required: true
@@ -89,8 +92,15 @@ runs:
         pdm sdk:client
         rm -rf ./gen/${{ inputs.sdk-name }}/models
         pdm sdk:model ${{ inputs.sdk-name }}
-        pdm sdk:build
       shell: bash
+    - name: Build and push SDK to JFrog
+      uses: LedgerHQ/actions/pdm/release@generate-sdk-action
+      id: release
+      with:
+        version: ${{ inputs.sdk-version }}
+        github-token: ${{ inputs.github-token }}
+        working-directory: ./gen
+        require-clone: "false"
 branding:
   icon: 'package'
   color: 'blue'
