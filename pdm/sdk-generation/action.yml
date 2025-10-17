@@ -68,10 +68,6 @@ outputs:
 
 runs:
   using: 'composite'
-  permissions:
-    id-token: write
-    attestations: write
-    contents: read
   steps:
     - name: Init PDM
       uses: LedgerHQ/actions/pdm/init@generate-sdk-action
