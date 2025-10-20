@@ -90,7 +90,9 @@ runs:
         : Generate SDK from OpenAPI spec
         echo "project_name_override: ledger-${{ inputs.sdk-name }}" | sed 's/_/-/g' >> templates/config.yaml
         echo "package_name_override: ${{ inputs.sdk-name }}" >> templates/config.yaml
+        cat templates/config.yaml
         pdm sdk:client
+        cat gen/pyproject.toml
         rm -rf ./gen/${{ inputs.sdk-name }}/models
         pdm sdk:model ${{ inputs.sdk-name }}
         mkdir gen/ledger
