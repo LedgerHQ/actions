@@ -88,7 +88,7 @@ runs:
       working-directory: ./python
       run: |
         : Generate SDK from OpenAPI spec
-        echo "project_name_override: ledger-${{ inputs.sdk-name }}" | sed 's/_/-/g' >> templates/config.yaml
+        echo "project_name_override: ledger-${{ inputs.sdk-name }//_/-}" >> templates/config.yaml
         echo "package_name_override: ${{ inputs.sdk-name }}" >> templates/config.yaml
         cat templates/config.yaml
         pdm sdk:client
