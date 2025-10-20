@@ -88,10 +88,13 @@ runs:
       working-directory: ./python
       run: |
         : Generate SDK from OpenAPI spec
+        echo "project_name_override: ledger-${{ inputs.sdk-name }}" | sed 's/_/-/g' >> templates/config.yaml
         echo "package_name_override: ${{ inputs.sdk-name }}" >> templates/config.yaml
         pdm sdk:client
         rm -rf ./gen/${{ inputs.sdk-name }}/models
         pdm sdk:model ${{ inputs.sdk-name }}
+        mkdir gen/ledger
+        mv gen/${{ inputs.sdk-name }}/* gen/ledger/
       shell: bash
     - name: Build and push SDK to JFrog
       uses: LedgerHQ/actions/pdm/release@generate-sdk-action
