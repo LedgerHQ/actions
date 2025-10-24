@@ -131,7 +131,7 @@ runs:
 
     - name: Store reports
       if: inputs.matrix-id
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: reports${{ inputs.matrix-id && format('-{0}', steps.matrix-meta.outputs.id) || '' }}
         path: |
@@ -141,7 +141,7 @@ runs:
 
     - name: Merge reports artifacts
       if: inputs.report-only
-      uses: actions/upload-artifact/merge@v4
+      uses: actions/upload-artifact/merge@v5
       continue-on-error: true
       with:
         name: reports
@@ -186,7 +186,7 @@ runs:
 
     - name: Upload coverage reports
       if: inputs.matrix-id == null
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage_reports
         path: ./coverage/
