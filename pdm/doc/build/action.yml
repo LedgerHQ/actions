@@ -48,7 +48,7 @@ runs:
       shell: bash
 
     - name: Upload the CHANGELOG
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: changelog
         path: CHANGELOG.md
@@ -56,7 +56,7 @@ runs:
     - name: Download provided OpenAPI artifact
       if: inputs.openapi != 'true' && inputs.openapi != 'false'
       continue-on-error: true
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: ${{ inputs.openapi }}
         path: docs
@@ -71,7 +71,7 @@ runs:
 
     - name: Upload OpenAPI specs (fallback)
       if: inputs.openapi == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: openapi
         path: docs/openapi.yaml
@@ -86,7 +86,7 @@ runs:
 
     - name: Upload the generated documentation
       if: inputs.site == 'true'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: documentation
         path: site/

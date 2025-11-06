@@ -34,16 +34,15 @@ on:
         description: AWS role to assume
         required: true
         type: string
-      aws_region:
-        description: AWS region
-        required: false
-        type: string
-        default: eu-west-1
       run_id:
         description: Unique ID for the workflow run
         required: false
         type: string
         default: ${{ github.run_id }}
+      speculos_version:
+        description: Speculos image tag
+        required: true
+        type: string
     outputs:
       run_id:
         description: Unique ID for the workflow run
@@ -85,19 +84,21 @@ on:
         description: AWS role to assume
         required: true
         type: string
-      aws_region:
-        description: AWS region
-        required: false
-        type: string
-        default: eu-west-1
       run_id:
         description: Unique ID for the workflow run
         required: false
+        type: string
+      speculos_version:
+        description: Speculos image tag
+        required: true
         type: string
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  AWS_REGION: eu-west-1
 
 jobs:
   start-speculos:
@@ -147,15 +148,15 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ inputs.aws_role }}
-          aws-region: ${{ inputs.aws_region }}
+          aws-region: ${{ env.AWS_REGION }}
           role-duration-seconds: 21600
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ inputs.aws_region }}
+          aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ env.AWS_REGION }}
       - name: Run Speculos
         shell: bash
         run: |
-          kubectl -n speculos run speculos-${{ env.RUN_ID }} --image=ghcr.io/ledgerhq/speculos:master --restart=Never --overrides="$(cat <<EOF
+          kubectl -n speculos run speculos-${{ env.RUN_ID }} --image=ghcr.io/ledgerhq/speculos:${{ inputs.speculos_version }} --restart=Never --overrides="$(cat <<EOF
           {
             "apiVersion": "v1",
             "metadata": {
@@ -223,7 +224,7 @@ jobs:
               "containers": [
                 {
                   "name": "speculos",
-                  "image": "ghcr.io/ledgerhq/speculos:master",
+                  "image": "ghcr.io/ledgerhq/speculos:${{ inputs.speculos_version }}",
                   "args": [
                     "/apps/${{ inputs.device }}/${{ inputs.device_os_version }}/${{ env.COIN_APP }}/app_${{ inputs.coin_app_version }}.elf",
                     ${{ env.ADDITIONAL_ARGS }}
@@ -269,9 +270,20 @@ jobs:
           kubectl -n speculos create ingress speculos-${{ env.RUN_ID }} --class="trusted" --rule="${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ env.RUN_ID }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ env.RUN_ID }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
       - name: Wait for speculos to become available
         shell: bash
+        env:
+          retry: 0
         run: |
-          while ! kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ env.RUN_ID }}; do sleep 1; done
-          while ! curl -skI https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200'; do sleep 5; done
+          kubectl -n speculos wait --for=condition=Ready --timeout=60s pods/speculos-${{ env.RUN_ID }}
+          for (( i=0; i<20; i++ )); do
+            if [[ $(curl -s -o /dev/null -w "%{http_code}\n" https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com) -eq 200 ]]; then
+              echo "Speculos is available"
+              break
+            fi
+            echo "Attempt $((i+1)) failed"
+            sleep 3
+          done
+        #  while ([[ $(curl -s -o /dev/null -w "%{http_code}\n" https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com) -ne 200 ]] && [[ $retry -lt 20 ]]); do echo "Attempt $((retry+1)) failed"; ((retry++)); sleep 3; done
+        #  while ! (curl -skI https://${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com | grep '^HTTP/2 200') && [ $retry -lt 20 ]; do echo "Attempt $((retry+1)) failed."; sleep 3; ((retry++)); done
       - name: Set outputs
         id: set-outputs
         shell: bash
