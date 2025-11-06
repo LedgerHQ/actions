@@ -131,7 +131,7 @@ runs:
 
     - name: Store reports
       if: inputs.matrix-id
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: reports${{ inputs.matrix-id && format('-{0}', steps.matrix-meta.outputs.id) || '' }}
         path: |
@@ -141,7 +141,7 @@ runs:
 
     - name: Merge reports artifacts
       if: inputs.report-only
-      uses: actions/upload-artifact/merge@v4
+      uses: actions/upload-artifact/merge@v5
       continue-on-error: true
       with:
         name: reports
@@ -150,7 +150,7 @@ runs:
 
     - name: Download reports
       if: inputs.report-only
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v6
       with:
         name: reports
         path: reports
@@ -186,7 +186,7 @@ runs:
 
     - name: Upload coverage reports
       if: inputs.matrix-id == null
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: coverage_reports
         path: ./coverage/
@@ -195,7 +195,7 @@ runs:
     - name: Generate Pytest coverage report
       id: coverage
       if: inputs.matrix-id == null
-      uses: MishaKav/pytest-coverage-comment@v1.1.54
+      uses: MishaKav/pytest-coverage-comment@v1.1.57
       with:
         github-token: ${{ inputs.github-token }}
         coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
@@ -272,7 +272,7 @@ runs:
     - name: Run SonarCloud analysis
       if: hashFiles('sonar-project.properties') && inputs.sonar-token
       continue-on-error: true  # Not critical
-      uses: sonarsource/sonarqube-scan-action@v5
+      uses: sonarsource/sonarqube-scan-action@v6
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}

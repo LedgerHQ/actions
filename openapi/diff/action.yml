@@ -13,7 +13,7 @@ inputs:
     required: true
     default: reports/openapi
   github-token:
-    description: 'A GitHub token with `pull-requests: write` permissions'
+    description: "A GitHub token with `pull-requests: write` permissions"
     default: ${{ github.token }}
 
 outputs:
@@ -23,51 +23,56 @@ outputs:
   text:
     description: Path to the generated text diff file
     value: ${{ steps.generate.outputs.text }}
+  comment:
+    description: Path to the generated PR comment file
+    value: ${{ steps.generate.outputs.comment }}
 
 runs:
   using: "composite"
 
   steps:
-    - name: Use Node.js
-      uses: actions/setup-node@v4
-
-    - name: Install bump CLI
-      run: |
-        npm install bump-cli
-      shell: bash
-
     - name: Create outputs directory
       run: |
-        mkdir -p ${{ inputs.output }}
+        mkdir -p "${{ inputs.output }}"
       shell: bash
 
-    - name: generate diff files (markdown & plain text)
+    - name: Run OpenAPI diff
       id: generate
       run: |
-        # see https://github.com/bump-sh/cli/blob/main/src/flags.ts#L94
-        # the CI env variable is automatically in Github action
-        # we do not want to fails on breaking change
-        # but we want to stop if the diff fail for other reasons
-        unset CI
+        set -e  # Exit on any error
 
-        BUMP=node_modules/.bin/bump
+        echo "Pulling openapitools image"
+        docker pull openapitools/openapi-diff:latest
 
         echo "Generating Markdown diff"
-        md_output=${{ inputs.output }}/diff.md
-        ${BUMP} diff -f markdown ${{ inputs.base }} ${{ inputs.head }} > ${md_output}
+        md_output="${{ inputs.output }}/diff.md"
+
+        docker run --rm -t \
+          -v "${{ github.workspace }}":/specs \
+          openapitools/openapi-diff:latest --off \
+          --markdown "/specs/${md_output}" \
+          "/specs/${{ inputs.base }}" \
+          "/specs/${{ inputs.head }}"
+
         echo "markdown=${md_output}" >> "$GITHUB_OUTPUT"
 
-        # Format diff has PR comment
-        comment=${{ inputs.output }}/pr-comment.md
-        echo "## OpenAPI changes" >> ${comment}
-        cat ${md_output} >> ${comment}
+        # Format diff as PR comment
+        comment="${{ inputs.output }}/pr-comment.md"
+        echo "## OpenAPI changes" > "${comment}"
+        cat "${md_output}" >> "${comment}"
         echo "comment=${comment}" >> "$GITHUB_OUTPUT"
+
         # Display diff in the summary
-        cat ${comment} >> $GITHUB_STEP_SUMMARY
+        cat "${comment}" >> "$GITHUB_STEP_SUMMARY"
 
         echo "Generating text diff"
-        txt_output=${{ inputs.output }}/diff.txt
-        ${BUMP} diff -f text ${{ inputs.base }} ${{ inputs.head }} > ${txt_output}
+        txt_output="${{ inputs.output }}/diff.txt"
+        docker run --rm -t \
+          -v "${{ github.workspace }}":/specs \
+          openapitools/openapi-diff:latest --off \
+          --text "/specs/${txt_output}" \
+          "/specs/${{ inputs.base }}" \
+          "/specs/${{ inputs.head }}"
         echo "text=${txt_output}" >> "$GITHUB_OUTPUT"
       shell: bash
 
