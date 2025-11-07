@@ -1,1 +1,11 @@
-* @ncendrier-ledger @CedricCabessa @katticot-ledger @fbakoura-ledger
+# Default to shared ownership by involved teams
+* @LedgerHQ/BES-B2C @LedgerHQ/vault-backend
+
+# Vault Backend actions
+/openapi @LedgerHQ/vault-backend
+/pdm @LedgerHQ/vault-backend
+/python-app @LedgerHQ/vault-backend
+/python-lib @LedgerHQ/vault-backend
+
+# BES-B2C actions
+/scala @LedgerHQ/BES-B2C
