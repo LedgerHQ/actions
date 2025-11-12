@@ -195,7 +195,7 @@ runs:
     - name: Generate Pytest coverage report
       id: coverage
       if: inputs.matrix-id == null
-      uses: MishaKav/pytest-coverage-comment@v1.1.57
+      uses: MishaKav/pytest-coverage-comment@v1.1.59
       with:
         github-token: ${{ inputs.github-token }}
         coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
