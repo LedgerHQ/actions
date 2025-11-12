@@ -1,0 +1,82 @@
+name: Compile
+description: Compiles the project
+inputs:
+  checkout:
+    description: Whether to checkout the code (true/false)
+    default: "true"
+  checkout-submodules:
+    description: Whether to checkout submodules (true/false)
+    default: "true"
+  scala-version:
+    description: Scala version to use for tests (2, 2.13, 3 ... etc...)
+    default: ""
+  java-distribution:
+    description: JDK vendor (zulu, temurin, etc.)
+    default: zulu
+  java-version:
+    description: Java version to setup (25)
+    default: "25"
+  memory-limit:
+    description: Memory limit for sbt (2048 MB)
+    default: "2048"
+  cache-key:
+    description: Cache key
+    default: target
+  script:
+    description: Script to run
+  command:
+    description: Compile command to run
+    default: compile; Test / compile
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      if: ${{ inputs.checkout == 'true' }}
+      uses: actions/checkout@v3
+      with:
+        submodules: ${{ inputs.checkout-submodules }}
+    - name: Set up Scala
+      uses: /LedgerHQ/actions/scala/setup-sbt@master
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+
+    - name: Cache lookup
+      id: compilation-cache
+      if: ${{ !contains(github.event.pull_request.body, 'ci:skip-cache') }}
+      uses: /LedgerHQ/actions/scala/restore-compilation-cache@master
+      with:
+        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}
+
+    - name: Compile (custom script)
+      if: ${{ inputs.script != '' }}
+      shell: bash
+      run: ${{ inputs.script }}
+
+    - name: Compile (main & tests)
+      if: ${{ inputs.script == '' }}
+      shell: bash
+      run: |
+        if [ "${{ inputs.scala-version }}" != "" ]; then
+          sbt -mem ${{ inputs.memory-limit }} '++ ${{ inputs.scala-version }}; ${{ inputs.command }}'
+        else
+          sbt -mem ${{ inputs.memory-limit }} '${{ inputs.command }}'
+        fi
+
+    - name: Upload tests compilation cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          target/scala*/*test*
+          **/target/scala*/*test*
+        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
+
+    - name: Upload main compilation cache
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          target/
+          modules/**/target/
+          target
+        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}

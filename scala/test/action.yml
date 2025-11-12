@@ -1,0 +1,43 @@
+name: Test
+description: Test the project
+inputs:
+  scala-version:
+    description: Scala version to use for tests ("2.13" "3", etc...)
+    default: ""
+  java-distribution:
+    description: JDK vendor (zulu, temurin, etc.)
+    default: zulu
+  java-version:
+    description: Java version to setup (25)
+    default: "25"
+  memory-limit:
+    description: Memory limit for sbt (2048 MB)
+    default: "2048"
+  cache-key:
+    description: Cache key
+    default: target
+  command:
+    description: Test command to run
+    default: test
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+    - name: Set up SBT
+      uses: /LedgerHQ/actions/scala/setup-sbt@master
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+    - name: Restore compilation cache
+      uses: /LedgerHQ/actions/scala/restore-compilation-cache@master
+      with:
+        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}
+    - name: Compile (main & tests)
+      shell: bash
+      run: |
+        if [ '${{ inputs.scala-version }}' != "" ]; then
+          sbt -mem ${{ inputs.memory-limit }} '++ ${{ inputs.scala-version }}; ${{ inputs.command }}'
+        else
+          sbt -mem ${{ inputs.memory-limit }} '${{ inputs.command }}'
+        fi
