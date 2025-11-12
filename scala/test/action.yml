@@ -25,12 +25,12 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v5
     - name: Set up SBT
-      uses: /LedgerHQ/actions/scala/setup-sbt@master
+      uses: /LedgerHQ/actions/scala/setup-sbt@main
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
     - name: Restore compilation cache
-      uses: /LedgerHQ/actions/scala/restore-compilation-cache@master
+      uses: /LedgerHQ/actions/scala/restore-compilation-cache@main
       with:
         key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}
     - name: Compile (main & tests)
