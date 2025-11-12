@@ -6,15 +6,15 @@ inputs:
     default: zulu
   java-version:
     description: Java version to setup (25)
-    default: '25'
+    default: "25"
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Setup JDK
       uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.distribution }}
         java-version: ${{ inputs.java-version }}
-        cache: 'sbt'
+        cache: "sbt"
     - name: Setup SBT
       uses: sbt/setup-sbt@v1
