@@ -19,7 +19,7 @@ runs:
         path: |
           target/
           **/target/
-        key: ${{ inputs.key }}-${{ inputs.scala-version }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
+        key: ${{ inputs.key }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
         restore-keys: |
           ${{ inputs.key }}-main-${{ hashFiles('build.sbt') }}
           ${{ inputs.key }}-main
@@ -31,7 +31,7 @@ runs:
         path: |
           target/scala*/*test*
           **/target/scala*/*test*
-        key: ${{ inputs.key }}-${{ inputs.scala-version }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
+        key: ${{ inputs.key }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
         restore-keys: |
           ${{ inputs.key }}-tests-${{ hashFiles('build.sbt') }}
           ${{ inputs.key }}-tests
