@@ -520,6 +520,18 @@ updates:
       prefix: "ci"
       include: "scope"
   -
+    # Maintain dependencies for scala
+    package-ecosystem: github-actions
+    directory: /scala
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+  -
     # Maintain dependencies for site/cascade-merge
     package-ecosystem: github-actions
     directory: /site/cascade-merge
