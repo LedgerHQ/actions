@@ -37,7 +37,7 @@ runs:
       with:
         submodules: ${{ inputs.checkout-submodules }}
     - name: Set up Scala
-      uses: /LedgerHQ/actions/scala/setup-sbt@master
+      uses: /LedgerHQ/actions/scala/setup-sbt@main
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
@@ -45,7 +45,7 @@ runs:
     - name: Cache lookup
       id: compilation-cache
       if: ${{ !contains(github.event.pull_request.body, 'ci:skip-cache') }}
-      uses: /LedgerHQ/actions/scala/restore-compilation-cache@master
+      uses: /LedgerHQ/actions/scala/restore-compilation-cache@main
       with:
         key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}
 
