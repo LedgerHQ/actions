@@ -78,5 +78,5 @@ runs:
         path: |
           target/
           modules/**/target/
-          target
+          project/target
         key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
