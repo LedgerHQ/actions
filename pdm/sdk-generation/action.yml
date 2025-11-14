@@ -1,0 +1,116 @@
+name: 'Generate SDK from OpenAPI spec'
+description: 'Generate Python SDK from OpenAPI specification with customizable templates'
+
+inputs:
+  sdk-name:
+    description: 'Name of the SDK to generate'
+    required: true
+  sdk-version:
+    description: 'Version of the SDK to generate'
+    required: true
+  openapi-artifact-name:
+    description: 'Name of the artifact containing the OpenAPI spec'
+    required: true
+  templates-repo:
+    description: 'Repository containing SDK generation templates'
+    required: false
+    default: 'LedgerHQ/ledger-sdk-template'
+  templates-ref:
+    description: 'Branch/tag/commit of the templates repository'
+    required: false
+    default: 'main'
+  templates-path:
+    description: 'Path within templates repository to the templates directory'
+    required: false
+    default: 'python/templates'
+  project-name:
+    description: 'Name of the generated SDK project'
+    required: true
+  package-name:
+    description: 'Python package name for the SDK'
+    required: true
+  output-path:
+    description: 'Output directory for the generated SDK'
+    required: false
+    default: 'sdk'
+  python-version:
+    description: 'Python version to use for SDK generation'
+    required: false
+    default: '3.12'
+  generate-tests:
+    description: 'Whether to generate test suite'
+    required: false
+    default: 'true'
+  run-tests:
+    description: 'Whether to run the generated tests'
+    required: false
+    default: 'true'
+  upload-artifact:
+    description: 'Whether to upload the generated SDK as an artifact'
+    required: false
+    default: 'true'
+  artifact-name:
+    description: 'Name for the uploaded SDK artifact'
+    required: false
+    default: 'python-sdk'
+  github-token:
+    description: A Github token with proper permissions
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  sdk-path:
+    description: 'Path to the generated SDK'
+    value: ${{ steps.generate.outputs.sdk-path }}
+  artifact-name:
+    description: 'Name of the uploaded artifact'
+    value: ${{ steps.upload.outputs.artifact-name }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Init PDM
+      uses: LedgerHQ/actions/pdm/init@generate-sdk-action
+      with:
+        github-token: ${{ inputs.github-token }}
+        python-version: ${{ inputs.python-version }}
+        repository: ${{ inputs.templates-repo }}
+        working-directory: ./python
+
+    - name: Download OpenAPI artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.openapi-artifact-name }}
+        path: ./python
+
+    - name: Generate SDK
+      id: generate
+      working-directory: ./python
+      run: |
+        : Generate SDK from OpenAPI spec
+        SDK_NAME="${{ inputs.sdk-name }}"
+        echo "project_name_override: ledger-${SDK_NAME//_/-}" >> templates/config.yaml
+        echo "package_name_override: ${{ inputs.sdk-name }}" >> templates/config.yaml
+        cat templates/config.yaml
+        pdm sdk:client
+        cat gen/pyproject.toml
+        rm -rf ./gen/${{ inputs.sdk-name }}/models
+        pdm sdk:model ${{ inputs.sdk-name }}
+        mkdir gen/ledger
+        mv gen/${{ inputs.sdk-name }}/* gen/ledger/
+      shell: bash
+    - name: Build and push SDK to JFrog
+      uses: LedgerHQ/actions/pdm/release@generate-sdk-action
+      id: release
+      with:
+        version: ${{ inputs.sdk-version }}
+        github-token: ${{ inputs.github-token }}
+        working-directory: ./python/gen
+        require-clone: "false"
+        kind: "lib"
+      env:
+        JFROG_REPOSITORY: vault-pypi-prod-green
+        JFROG_DOCKER_REPOSITORY: vault-oci-prod-green
+branding:
+  icon: 'package'
+  color: 'blue'
