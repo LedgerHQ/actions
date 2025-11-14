@@ -40,7 +40,7 @@ runs:
   steps:
     - name: Clone
       if: inputs.clone == 'true'
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     # Authenticate early to avoid rate limiting while pulling images in nested actions
 
