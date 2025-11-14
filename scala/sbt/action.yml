@@ -23,9 +23,9 @@ runs:
   using: "composite"
   steps:
     - name: Cache lookup
-      id: compilation-cache
+      id: cache
       if: ${{ !contains(github.event.pull_request.body, 'ci:skip-cache') }}
-      uses: /LedgerHQ/actions/scala/restore-compilation-cache@main
+      uses: /LedgerHQ/actions/scala/restore-compilation-cache@scala-cache-optim
       with:
         key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}
 
@@ -44,21 +44,12 @@ runs:
           sbt -mem ${{ inputs.memory-limit }} '${{ inputs.command }}'
         fi
 
-    - name: Upload tests compilation cache
-      if: ${{ inputs.upload-cache == 'true' }}
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          target/scala*/*test*
-          **/target/scala*/*test*
-        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
-
-    - name: Upload main compilation cache
-      if: ${{ inputs.upload-cache == 'true' }}
+    - name: Upload target cache
+      if: ${{ inputs.upload-cache == 'true' && steps.cache.outputs.cache-hit != 'true' && !contains(github.event.pull_request.body, 'ci:skip-cache') }}
       uses: actions/cache/save@v4
       with:
         path: |
           target/
           **/target/
           project/target
-        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
+        key: ${{ inputs.cache-key }}-${{ inputs.scala-version }}-${{ hashFiles('**/*.sbt', 'project/*.scala') }}-${{ hashFiles('**/src/**') }}

@@ -12,7 +12,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Restore main compilation cache (${{ inputs.key }})
+    - name: Restore target cache (${{ inputs.key }})
       id: impl_main
       uses: actions/cache/restore@v4
       with:
@@ -20,20 +20,7 @@ runs:
           target/
           **/target/
           project/target
-        key: ${{ inputs.key }}-main-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/main/scala/**') }}
+        key: ${{ inputs.key }}-${{ hashFiles('**/*.sbt', 'project/*.scala') }}-${{ hashFiles('**/src/**') }}
         restore-keys: |
-          ${{ inputs.key }}-main-${{ hashFiles('build.sbt') }}
-          ${{ inputs.key }}-main
-          ${{ inputs.key }}
-    - name: Restore tests compilation cache (${{ inputs.key }})
-      id: impl_tests
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          target/scala*/*test*
-          **/target/scala*/*test*
-        key: ${{ inputs.key }}-tests-${{ hashFiles('build.sbt') }}-${{ hashFiles('**/src/test/scala/**') }}
-        restore-keys: |
-          ${{ inputs.key }}-tests-${{ hashFiles('build.sbt') }}
-          ${{ inputs.key }}-tests
+          ${{ inputs.key }}-${{ hashFiles('**/*.sbt', 'project/*.scala') }}
           ${{ inputs.key }}
