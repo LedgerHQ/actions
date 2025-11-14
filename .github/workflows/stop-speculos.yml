@@ -49,7 +49,7 @@ jobs:
     runs-on: speculos
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: ${{ inputs.aws_role }}
           aws-region: ${{ inputs.aws_region }}
