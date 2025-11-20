@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: generate png diagrams
         uses: Timmy/plantuml-action@v1
