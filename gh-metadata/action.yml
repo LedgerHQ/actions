@@ -20,7 +20,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Compute base ref (branch/tag) name
       id: refs
       run: |
