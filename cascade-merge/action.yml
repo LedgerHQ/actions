@@ -35,7 +35,7 @@ runs:
 
   steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
@@ -134,7 +134,7 @@ runs:
 
     # checkout again to clean all local merges done in previous step
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       with:
         fetch-depth: 0  # fetch all history so we can push to other branches
 
