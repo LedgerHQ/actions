@@ -60,16 +60,15 @@ runs:
     - name: Install Spectral
 #      run: npm install -g @stoplight/spectral-cli
       run: |
-    echo "SecOps: Spectral CLI install disabled due to current GHA supply chain incident (TSDINT-994)."
-    exit 1
+        echo "::warning title=SecOps::Spectral CLI install disabled due to current GHA supply chain incident (TSDINT-994)."
       shell: bash
 
-    - name: Run Spectral lint
-      run: |
-        spectral lint \
-          "${{ inputs.spectral-file-glob }}" \
-          --ruleset "${{ inputs.spectral-ruleset }}"
-      shell: bash
+    # - name: Run Spectral lint
+    #   run: |
+    #     spectral lint \
+    #       "${{ inputs.spectral-file-glob }}" \
+    #       --ruleset "${{ inputs.spectral-ruleset }}"
+    #   shell: bash
 
     - name: Upload the OpenAPI specifications
       id: upload-specs
