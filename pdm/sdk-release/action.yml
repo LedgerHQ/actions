@@ -1,0 +1,290 @@
+name: SDK Release
+description: |
+  Generate and release SDK packages
+
+  For JFrog Artifactory, repository needs to be authorized on Artifactory.
+  Calling workflow need to have OIDC permissions:
+
+  ```yaml
+    permissions:
+      id-token: write
+  ```
+
+inputs:
+  sdk-path:
+    description: Path to the generated SDK directory (relative to repo root)
+    default: "sdk/gen"
+  kind:
+    description: DEPRECATED (Set `tool.pdm.distribution=true` on libraries)
+    default: ""
+  pypi-token:
+    description: A Token to publish on PyPI (private or public)
+    required: false
+  github-token:
+    description: A Github token with proper permissions
+    required: true
+  increment:
+    description: "Kind of increment (optional: `MAJOR|MINOR|PATCH`)"
+    required: false
+  group:
+    description: Dependency group(s) to install
+    default: docs
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
+  public:
+    description: Is it a public library ?
+    default: 'false'
+  python-version:
+    description: Python version used to build
+
+
+outputs:
+  url:
+    description: The generated Github Release URL
+    value: ${{ steps.release.outputs.url }}
+  version:
+    description: The released version
+    value: ${{ steps.bump.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate OpenAPI specification
+      run: |
+        echo "Generating OpenAPI specification..."
+        pdm doc:openapi
+        echo "✅ OpenAPI specification generated"
+      shell: bash
+
+    - name: Generate SDK client
+      run: |
+        echo "Generating SDK client..."
+        pdm sdk:client
+        echo "✅ SDK client generated"
+      shell: bash
+
+    - name: Generate SDK models
+      run: |
+        echo "Generating SDK models..."
+        pdm sdk:model
+        echo "✅ SDK models generated"
+      shell: bash
+
+    - name: Format SDK
+      run: |
+        echo "Formatting SDK..."
+        if ! pdm sdk:format; then
+          echo "❌ SDK formatting failed"
+          exit 1
+        fi
+        echo "✅ SDK formatted"
+      shell: bash
+
+    - name: Test SDK
+      run: |
+        echo "Testing SDK..."
+        if ! pdm sdk:test; then
+          echo "❌ SDK tests failed"
+          exit 1
+        fi
+        echo "✅ SDK tests passed"
+      shell: bash
+
+    - name: Handle deprecations
+      run: |
+        : Handle deprecations
+        if [ "${{ inputs.kind }}" != "" ]; then
+          echo "⚠️ \`kind\` input is deprecated, set \`tool.pdm.distribution=true\` in \`pyproject.toml\` instead"
+        fi
+      shell: bash
+    - name: Clone and install dependencies
+      uses: LedgerHQ/actions/pdm/init@main
+      id: meta
+      with:
+        group: ${{ inputs.group }}
+        exclude-group: ${{ inputs.exclude-group }}
+        history: true
+        github-token: ${{ inputs.github-token }}
+        python-version: ${{ inputs.python-version }}
+
+    - name: Bump using commitizen
+      id: bump
+      working-directory: ${{ inputs.sdk-path }}
+      run: |
+        : Bump using commitizen
+        # Setup git config
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+
+        CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
+        if [[ $INPUT_INCREMENT ]]; then
+          CMD+=('--increment' "$INPUT_INCREMENT")
+        fi
+        "${CMD[@]}" > ../../body.md
+
+        REV="$(pdm run cz version --project)"
+        echo "REVISION=${REV}" >>"$GITHUB_ENV"
+        echo "version=${REV}" >>"$GITHUB_OUTPUT"
+      env:
+        FORCE_COLOR: 'true'
+        INPUT_INCREMENT: ${{ inputs.increment }}
+      shell: bash
+
+    # Build once to publish the same package on every repository
+    - name: Build distribution
+      working-directory: ${{ inputs.sdk-path }}
+      if: inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true'
+      run: |
+        : Build distribution
+        pdm build
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    ################################################################
+    #                                                              #
+    #                  💥 Side-effect zone 💥                      #
+    #                                                              #
+    # Successful actions will need cleanup 🧹 in case of failure ! #
+    #                                                              #
+    ################################################################
+
+    - name: Push to our internal JFrog Artifactory
+      id: artifactory
+      if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.JFROG_REPOSITORY
+      working-directory: ${{ inputs.sdk-path }}
+      env:
+        PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
+        PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
+        PDM_PUBLISH_PASSWORD: ${{ env.JFROG_TOKEN }}
+        FORCE_COLOR: 'true'
+      run: |
+        : Push to our internal JFrog Artifactory
+        pdm publish --no-build
+      shell: bash
+
+    - name: Attest
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-path: ${{ inputs.sdk-path }}/dist/*
+
+    - name: Sign
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+      with:
+        path: ${{ inputs.sdk-path }}/dist/*
+
+    - name: Push to PyPI
+      id: pypi
+      if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      working-directory: ${{ inputs.sdk-path }}
+      env:
+        PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
+        FORCE_COLOR: 'true'
+      run: |
+        : Push to PyPI
+        pdm publish --no-build
+      shell: bash
+
+    - name: Documentation
+      id: doc
+      if: steps.meta.outputs.has_docs == 'true'
+      continue-on-error: true  # Can be manually published after
+      working-directory: ${{ inputs.sdk-path }}
+      uses: LedgerHQ/actions/pdm/doc@main
+      with:
+        version: ${{ env.REVISION }}
+        openapi: ${{ steps.meta.outputs.has_openapi == 'true' }}
+        site: true
+        init: false
+
+    - name: Add documentation URL to release body
+      if: steps.doc.outputs.url
+      continue-on-error: true  # Not critical
+      run: |
+        : Add documentation URL to release body
+        echo -e "\n**SDK Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
+      shell: bash
+
+    - name: Push release commit and tag
+      id: tag
+      working-directory: ${{ inputs.sdk-path }}
+      run: |
+        : Push release commit and tag
+        # Create SDK-specific tag
+        SDK_TAG="sdk-${REVISION}"
+        git tag "$SDK_TAG"
+        git push -f origin "$SDK_TAG"
+        echo "SDK_TAG=${SDK_TAG}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Github Release
+      id: release
+      continue-on-error: true  # Can be manually published after
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: "body.md"
+        tag_name: ${{ env.SDK_TAG }}
+        name: "SDK ${{ env.REVISION }}"
+        token: ${{ inputs.github-token }}
+        fail_on_unmatched_files: false
+        files: |
+          ${{ inputs.sdk-path }}/dist/*
+          ${{ inputs.sdk-path }}/README.md
+
+    - name: Publish summary
+      continue-on-error: true
+      run: |
+        : Publish SDK summary
+        echo "🚀 [SDK ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    #################################################################################################
+    #                                                                                               #
+    #                                     🧹 Cleanup actions 🧹                                     #
+    #                                                                                               #
+    # You must ensure workflow always reach this point in case of failure in the side-effect zone ! #
+    #                                                                                               #
+    #################################################################################################
+
+    - name: Show release failure in summary
+      if: failure()
+      run: |
+        : Show SDK release failure in summary
+        echo "❌ SDK Release ${REVISION} failed" | tee -a $GITHUB_STEP_SUMMARY
+        echo "DIST=${{ steps.meta.outputs.identifier }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Cleanup documentation
+      # Runs on release failure if doc has been published
+      if: failure() && steps.doc.outcome == 'success'
+      working-directory: ${{ inputs.sdk-path }}
+      run: |
+        : Cleanup SDK documentation
+        pdm run mike delete --push ${REVISION}
+        echo "🧹 SDK Documentation for version ${REVISION} has been removed" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup JFrog Artifactory
+      # Runs on release failure if package has been published to JFrog Artifactory
+      if: failure() && steps.artifactory.outcome == 'success'
+      run: |
+        : Cleanup JFrog Artifactory SDK
+        # See:
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/introduction-to-the-jfrog-platform-rest-apis
+        #   - https://jfrog.com/help/r/jfrog-rest-apis/delete-item
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_REPOSITORY}/${DIST}/${REVISION}
+        echo "🧹 SDK Package \`${DIST}==${REVISION}\` has been deleted from JFrog Artifactory" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup PyPI
+      # Runs on release failure if package has been published to PyPI
+      if: failure() && steps.pypi.outcome == 'success'
+      run: |
+        : Cleanup PyPI SDK
+        # See: https://pypi.org/help/#file-name-reuse
+        echo "⚠️ You need to manually delete [\`${DIST}==${REVISION}\` on PyPI](https://pypi.org/project/${DIST}/${REVISION}/)." | tee -a $GITHUB_STEP_SUMMARY
+        echo "⚠️ The SDK version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
