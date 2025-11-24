@@ -15,7 +15,7 @@ jobs:
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `url` | Allure Server root url | `""` | `true` |
 | `username` | Allure Server authentication username (Basic Auth) | `""` | `true` |
 | `password` | Allure Server authentication password (Basic Auth) | `""` | `true` |
@@ -24,6 +24,6 @@ jobs:
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `response` | The Allure Server upload JSON response |
 | `uuid` | The result upload unique identifier |

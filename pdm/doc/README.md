@@ -15,7 +15,7 @@ jobs:
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `version` | Force a version to be built | `""` | `false` |
 | `openapi` | Has OpenAPI specs | `false` | `false` |
 | `site` | Publish a documentation site | `false` | `false` |
@@ -25,5 +25,5 @@ jobs:
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `url` | The published documentation URL |

@@ -49,7 +49,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `python-version` | Python version to use | `""` | `false` |
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
@@ -60,13 +60,13 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `identifier` | The short project identifier |
 | `has_tests` | Whether the project has tests exposed through the `test` command |
 | `has_coverage` | Whether the project has tests with coverage exposed through the `cover` command |
@@ -89,7 +89,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Exported environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_DOMAIN` | JFrog base domain if authenticated |
 | `JFROG_URL` | JFrog base URL if authenticated |
 | `JFROG_USER` | JFrog OIDC user if authenticated |

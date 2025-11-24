@@ -15,7 +15,7 @@ jobs:
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `project` | Project name | `""` | `true` |
 | `version` | Released version | `""` | `true` |
 | `webhook-url` | Slack webhook URL | `""` | `true` |

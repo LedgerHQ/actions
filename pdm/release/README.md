@@ -36,7 +36,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `kind` | DEPRECATED (Set `tool.pdm.distribution=true` on libraries) | `""` | `false` |
 | `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `""` | `true` |
@@ -53,14 +53,14 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository to publish libraries on (triggers authentication and publication) |
 | `JFROG_DOCKER_REPOSITORY` | JFrog repository to publish images to (triggers authentication and publication) |
 
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `url` | The generated Github Release URL |
 | `version` | The released version |
 | `documentation` | The released documentation URL |

@@ -28,7 +28,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `python-version` | Python version used to build | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `init` | Clone & sync | `true` | `false` |
@@ -40,11 +40,11 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `openapi` | The name of the uploaded OpenAPI artifact |

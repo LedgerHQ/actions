@@ -28,7 +28,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
 | `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
@@ -41,7 +41,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 | `JFROG_DOCKER_REPOSITORY` | JFrog repository to publish images to (triggers authentication and publication) |
 | `DOCKERHUB_USERNAME` | Optional Docker Hub username (in case you depend on it and to avoir rate limiting) |
@@ -50,6 +50,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `image` | The published docker image |
 | `digest` | The published docker image digest |

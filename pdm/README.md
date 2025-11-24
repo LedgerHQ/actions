@@ -5,7 +5,7 @@ Provides some reusable PDM actions.
 ## Actions
 
 | Name | Description |
-|--------|-------------|
+| ------ | ----------- |
 | [Documentation (`doc`)](doc/) | Build and publish documentation |
 | [Build Docker Image (`docker`)](docker/) | Build Docker image |
 | [Initialize `pdm` (`init`)](init/) | Install Python and `pdm` with cache and extract metadata |
