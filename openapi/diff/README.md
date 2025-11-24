@@ -19,7 +19,7 @@ jobs:
 
 ## Permissions
 
-This action interact with the GitHub API using the GitHub token and requires the following permissions:
+This action interacts with the GitHub API using the GitHub token and requires the following permissions:
 
 ```yaml
 pull-requests: write  # to comment on the PR
@@ -28,7 +28,7 @@ pull-requests: write  # to comment on the PR
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `base` | Base diff specification file | `""` | `true` |
 | `head` | Head diff specification file | `""` | `true` |
 | `output` | Output directory | `reports/openapi` | `true` |
@@ -37,6 +37,7 @@ pull-requests: write  # to comment on the PR
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `markdown` | Path to the generated markdown diff file |
 | `text` | Path to the generated text diff file |
+| `comment` | Path to the generated PR comment file |

@@ -27,7 +27,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `python-version` | Python version used to build | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `openapi` | Whether or not to build OpenAPI specs. Valid values are: "true" (to generate new specs and run diff steps on PRs), "false" (to skip OpenAPI processing), or an artifact name (to download an existing OpenAPI spec). | `false` | `false` |
@@ -39,7 +39,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 ## Environment variables
 
 | Variable | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 
 ## Outputs

@@ -23,7 +23,7 @@ jobs:
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `url` | Full url of your deployed allure-server' | `""` | `true` |
 | `username` | If your allure-server has basic auth enabled, specify username here | `""` | `false` |
 | `password` | If your allure-server has basic auth enabled, specify password here | `""` | `false` |
@@ -37,7 +37,7 @@ jobs:
 ## Outputs
 
 | Output | Description |
-|--------|-------------|
+| ------ | ----------- |
 | `response` | The Allure Server generation JSON response |
 | `uuid` | The generated report UUID |
 | `url` | The generated report unique URL |

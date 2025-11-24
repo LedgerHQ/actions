@@ -34,7 +34,7 @@ contents: read
 ## Inputs
 
 | Input | Description | Default | Required |
-|-------|-------------|---------|----------|
+| ----- | ----------- | ------- | -------- |
 | `workflow` | Required workflow file | `ci.yml` | `false` |
 | `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
 | `wait` | Wait for the workflow to finish | `true` | `false` |
