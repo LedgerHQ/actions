@@ -58,7 +58,8 @@ runs:
         node-version: "16"
 
     - name: Install Spectral
-      run: npm install -g @stoplight/spectral-cli
+#      run: npm install -g @stoplight/spectral-cli
+
       shell: bash
 
     - name: Run Spectral lint
