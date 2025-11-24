@@ -56,10 +56,12 @@ runs:
       uses: actions/setup-node@v3
       with:
         node-version: "16"
-
+# TODO: Re-enable only after incident RCA & dependencies are vetted
     - name: Install Spectral
 #      run: npm install -g @stoplight/spectral-cli
-
+      run: |
+    echo "SecOps: Spectral CLI install disabled due to current GHA supply chain incident (TSDINT-994)."
+    exit 1
       shell: bash
 
     - name: Run Spectral lint
