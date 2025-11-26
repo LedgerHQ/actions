@@ -1,0 +1,18 @@
+name: Sync Ship-Show-Ask labels
+description: This action will synchronize the Ship, Show, and Ask labels in the repository.
+
+inputs:
+  config-file:
+    description: 'Path to the label configuration file'
+    required: false
+    default: 'https://raw.githubusercontent.com/LedgerHQ/actions/refs/heads/ship-show-ask/sync-labels/ship-show-ask-labels.yaml'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Sync Labels
+      uses: EndBug/label-sync@v2 # v2.3.3
+      with:
+        config-file: ${{ inputs.label_config_file }}
+        token: "${{ secrets.CI_BOT_TOKEN }}"
+        delete-other-labels: false
