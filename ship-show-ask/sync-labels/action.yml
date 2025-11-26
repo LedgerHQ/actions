@@ -5,7 +5,7 @@ inputs:
   config-file:
     description: 'Path to the label configuration file'
     required: false
-    default: 'https://raw.githubusercontent.com/LedgerHQ/actions/refs/heads/ship-show-ask/sync-labels/ship-show-ask-labels.yaml'
+    default: 'https://raw.githubusercontent.com/LedgerHQ/actions/7d0558f947763239ca3a33f477036398e5e719e4/ship-show-ask/sync-labels/ship-show-ask-labels.yaml'
 
 runs:
   using: "composite"
