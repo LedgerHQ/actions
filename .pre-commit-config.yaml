@@ -44,6 +44,6 @@ repos:
       additional_dependencies: [markdownlint-cli2-formatter-pretty]
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 3.5.0
+    rev: 3.6.0
     hooks:
     -   id: editorconfig-checker
