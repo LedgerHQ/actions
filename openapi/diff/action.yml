@@ -44,6 +44,23 @@ runs:
         echo "Pulling openapitools image"
         docker pull openapitools/openapi-diff:latest
 
+        echo "Checking for changes"
+        state=$(docker run --rm -t \
+          -v "${{ github.workspace }}":/specs \
+          openapitools/openapi-diff:latest --off \
+          "/specs/${{ inputs.base }}" \
+          "/specs/${{ inputs.head }}" \
+          --state | tr -d '\r\n' | xargs)
+
+        echo "State: ${state}"
+
+        # Check if there are actual differences
+        if [ "${state}" = "no_changes" ]; then
+          echo "has-changes=false" >> "$GITHUB_OUTPUT"
+        else
+          echo "has-changes=true" >> "$GITHUB_OUTPUT"
+        fi
+
         echo "Generating Markdown diff"
         md_output="${{ inputs.output }}/diff.md"
 
@@ -77,7 +94,7 @@ runs:
       shell: bash
 
     - name: Comment PR with OpenAPI diff
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && steps.generate.outputs.has-changes == 'true'
       uses: thollander/actions-comment-pull-request@v3
       with:
         file-path: ${{ steps.generate.outputs.comment }}
