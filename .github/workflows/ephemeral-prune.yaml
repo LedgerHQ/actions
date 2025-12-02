@@ -1,0 +1,15 @@
+name: Ephemeral Environment Prune
+on:
+    schedule:
+        - cron: "0 20 * * *" # Runs every day at 20:00 UTC
+
+jobs:
+    remove-ephemeral-tags:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checking out
+              uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+            - name: Remove argocd preview tags
+              run: gh pr list --label argocd/preview --json number --jq '.[].number' | xargs -I {} gh pr edit {} --remove-label argocd/preview
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
