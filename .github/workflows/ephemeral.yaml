@@ -1,0 +1,84 @@
+name: Ephemeral Workflow
+
+#
+# Permissions for publishing Docker images to JFrog and GHCR
+#
+permissions:
+  packages: write
+  pull-requests: write
+  contents: read
+  id-token: write
+
+# In the ephemeral workflow, we trigger on PR label 'ephemeral'
+# on:
+#   pull_request:
+#     types: [labeled, unlabeled, opened, synchronize, reopened]
+#
+# jobs:
+#    ephemeral-deployment:
+#      uses: .github/workflows/ephemeral.yaml
+#        with:
+#          label-to-add: "argocd/preview" # optional, defaults to "argocd/preview"
+#          label-to-remove: "ephemeral"   # optional, defaults to "ephemeral"
+#        secrets: inherit
+
+on:
+  workflow_call:
+    inputs:
+      label-to-add:
+        type: string
+        default: "argocd/preview"
+      label-to-remove:
+        type: string
+        default: "ephemeral"
+env:
+  GITHUB_TOKEN: ${{ secrets.CI_BOT_TOKEN }}
+  ANONYMIZED_LOGS: false
+
+jobs:
+  ephemeral:
+    runs-on: ledgerhq-shared-medium
+    if: contains(github.event.pull_request.labels.*.name, 'ephemeral')
+    steps:
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6
+      - name: Login to Docker Hub
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.CI_BOT_USERNAME }}
+          password: ${{ secrets.CI_BOT_TOKEN }}
+      - name: Login to JFrog Ledger
+        id: jfrog-login
+        uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+      - name: Login to JFrog OCI Registry
+        uses: docker/login-action@v3
+        with:
+          registry: jfrog.ledgerlabs.net/ptx-oci-prod-green
+          username: ${{ steps.jfrog-login.outputs.oidc-user }}
+          password: ${{ steps.jfrog-login.outputs.oidc-token }}
+      - uses: /LedgerHQ/actions/scala/setup@main
+        with:
+          java-version: "23"
+      - name: Push ephemeral environment
+        uses: /LedgerHQ/actions/scala/sbt@main
+        env:
+          EPHEMERAL_VERSION: pr-${{ github.event.pull_request.number }}
+        with:
+          command: Docker/publish
+          upload-cache: false
+      - name: Add argocd/preview Label
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          github_token: ${{ github.token }}
+          labels: "${{ inputs.label-to-add }}"
+      - name: Remove Ephemeral Label
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          github_token: ${{ github.token }}
+          labels: "${{ inputs.label-to-remove }}"
