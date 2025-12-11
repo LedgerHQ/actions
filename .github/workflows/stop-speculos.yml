@@ -3,14 +3,6 @@ name: Stop speculos instance
 on:
   workflow_call:
     inputs:
-      cluster:
-        description: Cluster where to launch the speculos instance
-        required: true
-        type: string
-      aws_role:
-        description: AWS role to assume
-        required: true
-        type: string
       aws_region:
         description: AWS region
         required: false
@@ -22,14 +14,6 @@ on:
         type: string
   workflow_dispatch:
     inputs:
-      cluster:
-        description: Cluster where to launch the speculos instance
-        required: true
-        type: string
-      aws_role:
-        description: AWS role to assume
-        required: true
-        type: string
       aws_region:
         description: AWS region
         required: false
@@ -51,11 +35,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ inputs.aws_role }}
+          role-to-assume: ${{ secrets.SPECULOS_ROLE }}
           aws-region: ${{ inputs.aws_region }}
       - name: Update kubeconfig
         run: |
-          aws eks update-kubeconfig --name ${{ inputs.cluster }} --region ${{ inputs.aws_region }}
+          aws eks update-kubeconfig --name ${{ secrets.SPECULOS_CLUSTER }} --region ${{ inputs.aws_region }}
       - name: Cleanup resources
         shell: bash
         run: |
