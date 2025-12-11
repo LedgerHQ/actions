@@ -13,7 +13,7 @@ This workflow sets up an ephemeral environment for Scala projects, installing th
 **Usage:**
 
 ```yaml
-name: Scala Ephemeral Environment Setup 
+name: Scala Ephemeral Environment Setup
 on: [push, pull_request]
 
 jobs:
