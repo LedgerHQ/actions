@@ -40,11 +40,11 @@ runs:
         history: true
         python-version: ${{ inputs.python-version }}
 
-    - uses: actions/download-artifact@v6
+    - uses: actions/download-artifact@v7
       with:
         name: changelog
 
-    - uses: actions/download-artifact@v6
+    - uses: actions/download-artifact@v7
       if: inputs.openapi == 'true'
       with:
         name: openapi
