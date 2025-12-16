@@ -2,6 +2,14 @@ name: Initialize `pdm`
 description: Install Python and `pdm` with cache and extract metadata
 
 inputs:
+  repository:
+    description: Repository to clone (if different from the one doing the workflow)
+    required: false
+    default: ${{ github.repository }}
+  working-directory:
+    description: Working directory to use (if not root)
+    required: false
+    default: ${{ github.workspace }}
   python-version:
     description: Python version to use
   group:
@@ -84,6 +92,7 @@ runs:
     - name: Clone
       uses: actions/checkout@v6
       with:
+        repository: ${{ inputs.repository }}
         token: ${{ inputs.github-token }}
         fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
 
@@ -96,6 +105,7 @@ runs:
 
     - name: detect-jfrog
       id: detect-jfrog
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Detect JFrog requirement
         HAS_JFROG=$(grep "jfrog" pyproject.toml > /dev/null && echo "true" || echo "false")
@@ -113,14 +123,17 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: true
+        cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     - name: Set some settings
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Set some settings
         pdm config install.cache true
       shell: bash
 
     - name: Install dependencies (main, all extras and specified dev group)
+      working-directory: ${{ inputs.working-directory }}
       if: inputs.skip-dependencies == null
       run: |
         : Install dependencies
@@ -136,6 +149,7 @@ runs:
       shell: bash
 
     - name: Extract some metadata
+      working-directory: ${{ inputs.working-directory }}
       id: meta
       run: |
         : Extract some metadata

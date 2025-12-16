@@ -11,6 +11,18 @@ description: |
   ```
 
 inputs:
+  version:
+    description: Force a version (won't use commitizen)
+    required: false
+    default: ""
+  working-directory:
+    description: Working directory if not the root of the repository
+    required: false
+    default: ${{ github.workspace }}
+  require-clone:
+    description: clone the repository
+    required: false
+    default: "true"
   kind:
     description: DEPRECATED (Set `tool.pdm.distribution=true` on libraries)
     default: ""
@@ -81,6 +93,7 @@ runs:
         fi
       shell: bash
     - name: Clone and install dependencies
+      if: inputs.require-clone == 'true'
       uses: LedgerHQ/actions/pdm/init@main
       id: meta
       with:
@@ -92,6 +105,8 @@ runs:
 
     - name: Bump using commitizen
       id: bump
+      if: inputs.version == ''
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Bump using commitizen
         CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
@@ -107,10 +122,18 @@ runs:
         FORCE_COLOR: 'true'
         INPUT_INCREMENT: ${{ inputs.increment }}
       shell: bash
+    - name: set the version
+      if: inputs.version != ''
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        : Set version to be build
+        echo "__version__ = '${{ inputs.version }}'" > VERSION
+      shell: bash
 
     # Build once to publish the same package on every repository
     - name: Build distribution
       if: inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Build distribution
         pdm build
@@ -128,6 +151,7 @@ runs:
 
     - name: Push to our internal JFrog Artifactory
       id: artifactory
+      working-directory: ${{ inputs.working-directory }}
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.JFROG_REPOSITORY
       env:
         PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
@@ -136,23 +160,24 @@ runs:
         FORCE_COLOR: 'true'
       run: |
         : Push to our internal JFrog Artifactory
-        pdm publish --no-build
+        pdm publish --no-build -v
       shell: bash
 
     - name: Attest
       if: steps.artifactory.outcome == 'success'
       uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
       with:
-        subject-path: dist/*
+        subject-path: ${{ inputs.working-directory}}/dist/*
 
     - name: Sign
       if: steps.artifactory.outcome == 'success'
       uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
       with:
-        path: dist/*
+        path: ${{ inputs.working-directory}}/dist/*
 
     - name: Push to PyPI
       id: pypi
+      working-directory: ${{ inputs.working-directory }}
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
@@ -160,92 +185,6 @@ runs:
       run: |
         : Push to PyPI
         pdm publish --no-build
-      shell: bash
-
-    - name: Docker image
-      uses: LedgerHQ/actions/pdm/docker@main
-      id: docker
-      if: steps.meta.outputs.has_docker == 'true'
-      with:
-        clone: false
-        version: ${{ env.REVISION }}
-        github-token: ${{ inputs.github-token }}
-        dgoss-args: ${{ inputs.dgoss-args }}
-        name: ${{ inputs.docker-name }}
-
-    - name: Add Docker image to release body
-      if: steps.docker.outputs.image
-      continue-on-error: true  # Not critical
-      run: |
-        : Add Docker image to release body
-        echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
-      shell: bash
-
-    - name: Extra Docker image
-      uses: LedgerHQ/actions/pdm/docker@main
-      id: extra-docker
-      if: inputs.extra-docker
-      with:
-        clone: false
-        version: ${{ env.REVISION }}
-        github-token: ${{ inputs.github-token }}
-        name: ${{ inputs.extra-docker }}
-        suffix: ${{ inputs.extra-docker }}
-
-    - name: Add Extra Docker image to release body
-      if: steps.extra-docker.outputs.image
-      continue-on-error: true  # Not critical
-      run: |
-        : Add extra Docker image to release body
-        echo -e "\n**Additional Docker image**: \`${{ steps.extra-docker.outputs.image }}@${{ steps.extra-docker.outputs.digest }}\`\n" >> body.md
-      shell: bash
-
-    - name: Documentation
-      id: doc
-      if: steps.meta.outputs.has_docs == 'true'
-      continue-on-error: true  # Can be manually published after
-      uses: LedgerHQ/actions/pdm/doc@main
-      with:
-        version: ${{ env.REVISION }}
-        openapi: ${{ steps.meta.outputs.has_openapi == 'true' }}
-        site: true
-        init: false
-
-    - name: Add documentation URL to release body
-      if: steps.doc.outputs.url
-      continue-on-error: true  # Not critical
-      run: |
-        : Add documentation URL to release body
-        echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
-      shell: bash
-
-    - name: Push release commit and tag
-      id: tag
-      run: |
-        : Push release commit and tag
-        git push -f
-        git push -f origin ${{ env.REVISION }}
-      shell: bash
-
-    - name: Github Release
-      id: release
-      continue-on-error: true  # Can be manually published after
-      uses: softprops/action-gh-release@v2
-      with:
-        body_path: "body.md"
-        tag_name: ${{ env.REVISION }}
-        token: ${{ inputs.github-token }}
-        fail_on_unmatched_files: false
-        files: |
-          dist/*
-          docs/openapi.yaml
-          CHANGELOG.md
-
-    - name: Publish summary
-      continue-on-error: true
-      run: |
-        : Publish summary
-        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     #################################################################################################
