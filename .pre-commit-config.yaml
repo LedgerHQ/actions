@@ -22,7 +22,7 @@ repos:
       - id: check-merge-conflict
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.35.0
+    rev: 0.36.0
     hooks:
       - id: check-github-actions
         files: ^(.+/)action.ya?ml$
@@ -37,13 +37,13 @@ repos:
       args: ["--write-changes"]
 
   - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: v0.19.1
+    rev: v0.20.0
     hooks:
     - id: markdownlint-cli2
       args: ["--fix"]
       additional_dependencies: [markdownlint-cli2-formatter-pretty]
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 3.5.0
+    rev: 3.6.0
     hooks:
     -   id: editorconfig-checker
