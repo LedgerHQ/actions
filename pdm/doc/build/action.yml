@@ -2,6 +2,9 @@ name: Build documentation
 description: Build the documentation using `pdm` commands
 
 inputs:
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
   python-version:
     description: Python version used to build
   github-token:
@@ -34,6 +37,7 @@ runs:
       id: init
       if: inputs.init == 'true'
       with:
+        working-directory: ${{ inputs.working-directory }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
@@ -41,6 +45,7 @@ runs:
 
     - name: Update the CHANGELOG
       # Failsafe changelog to avoid failure when there is no update
+      working-directory: ${{ inputs.working-directory }}
       run: |
         pdm changelog || true
       env:
@@ -51,7 +56,7 @@ runs:
       uses: actions/upload-artifact@v6
       with:
         name: changelog
-        path: CHANGELOG.md
+        path: ${{ inputs.working-directory }}/CHANGELOG.md
 
     - name: Download provided OpenAPI artifact
       if: inputs.openapi != 'true' && inputs.openapi != 'false'
@@ -59,10 +64,11 @@ runs:
       uses: actions/download-artifact@v7
       with:
         name: ${{ inputs.openapi }}
-        path: docs
+        path: ${{ inputs.working-directory }}/docs
 
     - name: Generate OpenAPI specs (fallback)
       if: inputs.openapi == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         pdm doc:openapi
       env:
@@ -74,10 +80,11 @@ runs:
       uses: actions/upload-artifact@v6
       with:
         name: openapi
-        path: docs/openapi.yaml
+        path: ${{ inputs.working-directory }}/docs/openapi.yaml
 
     - name: Generate the documentation
       if: inputs.site == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         pdm doc:build
       env:
@@ -89,13 +96,14 @@ runs:
       uses: actions/upload-artifact@v6
       with:
         name: documentation
-        path: site/
+        path: ${{ inputs.working-directory }}/site/
         retention-days: 7
         if-no-files-found: error
 
     - name: Move current OpenAPI specs
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
       run: |
         mv docs/openapi.yaml openapi.head.yaml
       shell: bash
@@ -104,6 +112,7 @@ runs:
       id: checkout-base
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
       run: |
         CURRENT_REF=$(git rev-parse HEAD)
         echo "backup-ref=${CURRENT_REF}" >> $GITHUB_OUTPUT
@@ -115,6 +124,7 @@ runs:
     - name: Synchronize dependencies (base ref)
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
       run: |
         pdm sync
       shell: bash
@@ -122,6 +132,7 @@ runs:
     - name: Generate base OpenAPI specs
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
       run: |
         pdm doc:openapi
       env:
@@ -131,6 +142,7 @@ runs:
     - name: Move base OpenAPI specs
       if: success() && steps.init.outputs.is_pr == 'true' && inputs.openapi == 'true'
       continue-on-error: true
+      working-directory: ${{ inputs.working-directory }}
       run: |
         mv docs/openapi.yaml openapi.base.yaml
       shell: bash
@@ -140,6 +152,6 @@ runs:
       continue-on-error: true
       uses: LedgerHQ/actions/openapi/diff@main
       with:
-        base: openapi.base.yaml
-        head: openapi.head.yaml
+        base: ${{ inputs.working-directory }}/openapi.base.yaml
+        head: ${{ inputs.working-directory }}/openapi.head.yaml
         github-token: ${{ inputs.github-token }}

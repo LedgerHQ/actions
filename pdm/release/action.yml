@@ -11,6 +11,9 @@ description: |
   ```
 
 inputs:
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
   kind:
     description: DEPRECATED (Set `tool.pdm.distribution=true` on libraries)
     default: ""
@@ -55,6 +58,9 @@ outputs:
   version:
     description: The released version
     value: ${{ steps.bump.outputs.version }}
+  tag:
+    description: The released tag (may include prefix)
+    value: ${{ steps.bump.outputs.tag }}
   documentation:
     description: The released documentation URL
     value: ${{ steps.doc.outputs.url }}
@@ -84,6 +90,7 @@ runs:
       uses: LedgerHQ/actions/pdm/init@main
       id: meta
       with:
+        working-directory: ${{ inputs.working-directory }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
@@ -92,6 +99,7 @@ runs:
 
     - name: Bump using commitizen
       id: bump
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Bump using commitizen
         CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
@@ -101,8 +109,11 @@ runs:
         "${CMD[@]}" > body.md
 
         REV="$(pdm run cz version --project)"
+        TAG="$(git describe --tags --abbrev=0 2>/dev/null || echo "${REV}")"
         echo "REVISION=${REV}" >>"$GITHUB_ENV"
+        echo "TAG=${TAG}" >>"$GITHUB_ENV"
         echo "version=${REV}" >>"$GITHUB_OUTPUT"
+        echo "tag=${TAG}" >>"$GITHUB_OUTPUT"
       env:
         FORCE_COLOR: 'true'
         INPUT_INCREMENT: ${{ inputs.increment }}
@@ -111,6 +122,7 @@ runs:
     # Build once to publish the same package on every repository
     - name: Build distribution
       if: inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Build distribution
         pdm build
@@ -129,6 +141,7 @@ runs:
     - name: Push to our internal JFrog Artifactory
       id: artifactory
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.JFROG_REPOSITORY
+      working-directory: ${{ inputs.working-directory }}
       env:
         PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
         PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
@@ -143,17 +156,18 @@ runs:
       if: steps.artifactory.outcome == 'success'
       uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
       with:
-        subject-path: dist/*
+        subject-path: ${{ inputs.working-directory }}/dist/*
 
     - name: Sign
       if: steps.artifactory.outcome == 'success'
       uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
       with:
-        path: dist/*
+        path: ${{ inputs.working-directory }}/dist/*
 
     - name: Push to PyPI
       id: pypi
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      working-directory: ${{ inputs.working-directory }}
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
         FORCE_COLOR: 'true'
@@ -167,6 +181,7 @@ runs:
       id: docker
       if: steps.meta.outputs.has_docker == 'true'
       with:
+        working-directory: ${{ inputs.working-directory }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -176,6 +191,7 @@ runs:
     - name: Add Docker image to release body
       if: steps.docker.outputs.image
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add Docker image to release body
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
@@ -186,6 +202,7 @@ runs:
       id: extra-docker
       if: inputs.extra-docker
       with:
+        working-directory: ${{ inputs.working-directory }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -195,6 +212,7 @@ runs:
     - name: Add Extra Docker image to release body
       if: steps.extra-docker.outputs.image
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add extra Docker image to release body
         echo -e "\n**Additional Docker image**: \`${{ steps.extra-docker.outputs.image }}@${{ steps.extra-docker.outputs.digest }}\`\n" >> body.md
@@ -206,6 +224,7 @@ runs:
       continue-on-error: true  # Can be manually published after
       uses: LedgerHQ/actions/pdm/doc@main
       with:
+        working-directory: ${{ inputs.working-directory }}
         version: ${{ env.REVISION }}
         openapi: ${{ steps.meta.outputs.has_openapi == 'true' }}
         site: true
@@ -214,6 +233,7 @@ runs:
     - name: Add documentation URL to release body
       if: steps.doc.outputs.url
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add documentation URL to release body
         echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
@@ -224,7 +244,7 @@ runs:
       run: |
         : Push release commit and tag
         git push -f
-        git push -f origin ${{ env.REVISION }}
+        git push -f origin ${{ env.TAG }}
       shell: bash
 
     - name: Github Release
@@ -232,20 +252,20 @@ runs:
       continue-on-error: true  # Can be manually published after
       uses: softprops/action-gh-release@v2
       with:
-        body_path: "body.md"
-        tag_name: ${{ env.REVISION }}
+        body_path: "${{ inputs.working-directory }}/body.md"
+        tag_name: ${{ env.TAG }}
         token: ${{ inputs.github-token }}
         fail_on_unmatched_files: false
         files: |
-          dist/*
-          docs/openapi.yaml
-          CHANGELOG.md
+          ${{ inputs.working-directory }}/dist/*
+          ${{ inputs.working-directory }}/docs/openapi.yaml
+          ${{ inputs.working-directory }}/CHANGELOG.md
 
     - name: Publish summary
       continue-on-error: true
       run: |
         : Publish summary
-        echo "🚀 [Version ${{ env.REVISION }}](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
+        echo "🚀 [Version ${{ env.REVISION }} (${{ env.TAG }})](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 
     #################################################################################################
@@ -268,6 +288,7 @@ runs:
     - name: Cleanup documentation
       # Runs on release failure if doc has been published
       if: failure() && steps.doc.outcome == 'success'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Cleanup documentation
         pdm run mike delete --push ${REVISION}
@@ -283,12 +304,12 @@ runs:
         #   - https://docs.github.com/en/rest/packages/packages#list-package-versions-for-a-package-owned-by-an-organization
         #   - https://docs.github.com/en/rest/packages/packages#delete-package-version-for-an-organization
         GHAPI=("gh" "api" "-H" "Accept: application/vnd.github+json" "-H" "X-GitHub-Api-Version: 2022-11-28")
-        PKG='${{ github.event.repository.name }}'
+        PKG='${{ inputs.docker-name || github.event.repository.name }}'
         VERSIONS=$(${GHAPI[@]} /orgs/LedgerHQ/packages/container/${PKG}/versions)
         QUERY='.[] | select(.name == "${{ steps.docker.outputs.digest }}") | .id'
         VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
         ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
-        IMAGE="ghcr.io/${{ github.repository }}:${REVISION}@${{ steps.docker.outputs.digest }}"
+        IMAGE="ghcr.io/${{ github.repository_owner }}/${PKG}:${REVISION}@${{ steps.docker.outputs.digest }}"
         echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
 

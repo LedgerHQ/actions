@@ -2,6 +2,9 @@ name: Initialize `pdm`
 description: Install Python and `pdm` with cache and extract metadata
 
 inputs:
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
   python-version:
     description: Python version to use
   group:
@@ -98,7 +101,8 @@ runs:
       id: detect-jfrog
       run: |
         : Detect JFrog requirement
-        HAS_JFROG=$(grep "jfrog" pyproject.toml > /dev/null && echo "true" || echo "false")
+        PYPROJECT="${{ inputs.working-directory }}/pyproject.toml"
+        HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -122,9 +126,10 @@ runs:
 
     - name: Install dependencies (main, all extras and specified dev group)
       if: inputs.skip-dependencies == null
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Install dependencies
-        echo "${{ github.workspace }}/.venv/bin/python" > .pdm-python
+        echo "${{ github.workspace }}/${{ inputs.working-directory }}/.venv/bin/python" > .pdm-python
         params=(--group :all --dev)
         [ -z "${GROUPS}" ] || params+=(--group ${GROUPS})
         [ -z "${EXCLUDED_GROUPS}" ] || params+=(--without ${EXCLUDED_GROUPS})
@@ -137,6 +142,7 @@ runs:
 
     - name: Extract some metadata
       id: meta
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Extract some metadata
         echo "identifier=$(pdm show --name)" >> $GITHUB_OUTPUT

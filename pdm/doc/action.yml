@@ -2,6 +2,9 @@ name: Documentation
 description: Build and publish documentation
 
 inputs:
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
   version:
     description: Force a version to be built
     required: false
@@ -27,6 +30,7 @@ runs:
   steps:
     - uses: LedgerHQ/actions/pdm/doc/build@main
       with:
+        working-directory: ${{ inputs.working-directory }}
         init: ${{ inputs.init }}
         python-version: ${{ inputs.python-version }}
         openapi: ${{ inputs.openapi }}
@@ -34,6 +38,7 @@ runs:
     - uses: LedgerHQ/actions/pdm/doc/publish@main
       id: publish
       with:
+        working-directory: ${{ inputs.working-directory }}
         init: false
         openapi: ${{ inputs.openapi }}
         site: ${{ inputs.site }}
