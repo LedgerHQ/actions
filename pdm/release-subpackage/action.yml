@@ -1,0 +1,517 @@
+name: Release Subpackage
+description: |
+  Bump version and publish release assets for a subpackage located in a subdirectory.
+
+  This action is designed for monorepos where packages are located in subdirectories
+  like `packages/<package_name>/` with their own `pyproject.toml`.
+
+  For prefixed tags, configure `tag_format` in the subpackage's `pyproject.toml`:
+
+  ```toml
+  [tool.commitizen]
+  tag_format = "mypackage/$version"
+  ```
+
+  For JFrog Artifactory, repository needs to be authorized on Artifactory.
+  Calling workflow need to have OIDC permissions:
+
+  ```yaml
+    permissions:
+      id-token: write
+      contents: write
+      packages: write
+  ```
+
+inputs:
+  package-path:
+    description: Path to the subpackage directory (e.g., packages/mypackage)
+    required: true
+  github-token:
+    description: A Github token with proper permissions
+    required: true
+  pypi-token:
+    description: A Token to publish on PyPI (private or public)
+    required: false
+  increment:
+    description: "Kind of increment (optional: `MAJOR|MINOR|PATCH`)"
+    required: false
+  group:
+    description: Dependency group(s) to install
+    default: ''
+  exclude-group:
+    description: Dependency group(s) to exclude from install
+    default: ''
+  public:
+    description: Is it a public library ?
+    default: 'false'
+  dgoss-args:
+    description: "`dgoss` extra docker parameters"
+    default: ""
+  docker-name:
+    description: Optionally override the docker image name (default to package identifier)
+    default: ""
+  python-version:
+    description: Python version used to build
+
+
+outputs:
+  url:
+    description: The generated Github Release URL
+    value: ${{ steps.release.outputs.url }}
+  version:
+    description: The released version
+    value: ${{ steps.bump.outputs.version }}
+  tag:
+    description: The released tag (may include prefix)
+    value: ${{ steps.bump.outputs.tag }}
+  docker:
+    description: The released docker image URL
+    value: ${{ steps.docker-summary.outputs.image }}
+
+
+runs:
+  using: composite
+  steps:
+    ################################################################
+    #                                                              #
+    #                    📦 Setup Phase 📦                         #
+    #                                                              #
+    ################################################################
+
+    - name: Clone with full history
+      uses: actions/checkout@v6
+      with:
+        token: ${{ inputs.github-token }}
+        fetch-depth: 0
+
+    - name: Setup git
+      run: |
+        : Setup git
+        git config user.name github-actions
+        git config user.email github-actions@ledger.fr
+      shell: bash
+
+    - name: Detect JFrog requirement
+      id: detect-jfrog
+      run: |
+        : Detect JFrog requirement
+        PYPROJECT="${{ inputs.package-path }}/pyproject.toml"
+        HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
+        echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Authenticate against JFrog Artifactory
+      id: jfrog-login
+      if: (steps.detect-jfrog.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY) && !env.JFROG_TOKEN
+      uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
+
+    - name: Set up Python and PDM
+      id: setup-pdm
+      uses: pdm-project/setup-pdm@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: true
+
+    - name: Set PDM settings
+      run: |
+        : Set PDM settings
+        pdm config install.cache true
+      shell: bash
+
+    - name: Install dependencies
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Install dependencies
+        echo "${{ github.workspace }}/${{ inputs.package-path }}/.venv/bin/python" > .pdm-python
+        params=(--group :all --dev)
+        [ -z "${GROUPS}" ] || params+=(--group ${GROUPS})
+        [ -z "${EXCLUDED_GROUPS}" ] || params+=(--without ${EXCLUDED_GROUPS})
+        [ "${{ runner.debug }}" == "1" ] && params+=(-vv)
+        pdm sync "${params[@]}"
+      env:
+        GROUPS: ${{ inputs.group }}
+        EXCLUDED_GROUPS: ${{ inputs.exclude-group }}
+      shell: bash
+
+    - name: Extract metadata
+      id: meta
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Extract metadata
+        echo "identifier=$(pdm show --name)" >> $GITHUB_OUTPUT
+
+        IS_DIST=$(grep -E "distribution\s*=\s*true" pyproject.toml > /dev/null && echo "true" || echo "false")
+        echo "is_distribution=${IS_DIST}" >> $GITHUB_OUTPUT
+
+        [ -f Dockerfile ] && HAS_DOCKER='true' || HAS_DOCKER='false'
+        echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
+
+        [ -f goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
+        echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    ################################################################
+    #                                                              #
+    #                   🚀 Release Phase 🚀                        #
+    #                                                              #
+    ################################################################
+
+    - name: Bump using commitizen
+      id: bump
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Bump using commitizen
+        CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
+        if [[ $INPUT_INCREMENT ]]; then
+          CMD+=('--increment' "$INPUT_INCREMENT")
+        fi
+        "${CMD[@]}" > body.md
+
+        # Get the version number
+        VERSION="$(pdm run cz version --project)"
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+        # Get the actual tag (may include prefix from tag_format)
+        TAG=$(git describe --tags --abbrev=0)
+        echo "tag=${TAG}" >> $GITHUB_OUTPUT
+        echo "TAG=${TAG}" >> $GITHUB_ENV
+        echo "VERSION=${VERSION}" >> $GITHUB_ENV
+      env:
+        FORCE_COLOR: 'true'
+        INPUT_INCREMENT: ${{ inputs.increment }}
+      shell: bash
+
+    - name: Build distribution
+      if: steps.meta.outputs.is_distribution == 'true'
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Build distribution
+        pdm build
+      env:
+        FORCE_COLOR: 'true'
+      shell: bash
+
+    ################################################################
+    #                                                              #
+    #                  💥 Side-effect zone 💥                      #
+    #                                                              #
+    # Successful actions will need cleanup 🧹 in case of failure ! #
+    #                                                              #
+    ################################################################
+
+    - name: Push to our internal JFrog Artifactory
+      id: artifactory
+      if: steps.meta.outputs.is_distribution == 'true' && inputs.public != 'true' && env.JFROG_REPOSITORY
+      working-directory: ${{ inputs.package-path }}
+      env:
+        PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
+        PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
+        PDM_PUBLISH_PASSWORD: ${{ env.JFROG_TOKEN }}
+        FORCE_COLOR: 'true'
+      run: |
+        : Push to our internal JFrog Artifactory
+        pdm publish --no-build
+      shell: bash
+
+    - name: Attest
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-path: ${{ inputs.package-path }}/dist/*
+
+    - name: Sign
+      if: steps.artifactory.outcome == 'success'
+      uses: LedgerHQ/actions-security/actions/sign-blob@actions/sign-blob-1
+      with:
+        path: ${{ inputs.package-path }}/dist/*
+
+    - name: Push to PyPI
+      id: pypi
+      if: steps.meta.outputs.is_distribution == 'true' && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      working-directory: ${{ inputs.package-path }}
+      env:
+        PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
+        FORCE_COLOR: 'true'
+      run: |
+        : Push to PyPI
+        pdm publish --no-build
+      shell: bash
+
+    # Docker build (inlined from pdm/docker with working-directory support)
+    - name: Login to Docker Hub
+      if: steps.meta.outputs.has_docker == 'true' && env.DOCKERHUB_USERNAME && env.DOCKERHUB_PASSWORD
+      uses: docker/login-action@v3
+      with:
+        username: ${{ env.DOCKERHUB_USERNAME }}
+        password: ${{ env.DOCKERHUB_PASSWORD }}
+
+    - name: Login to GitHub Container Registry
+      if: steps.meta.outputs.has_docker == 'true'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Login to JFrog Artifactory internal registry
+      if: steps.meta.outputs.has_docker == 'true' && env.JFROG_TOKEN
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.JFROG_DOMAIN }}/${{ env.JFROG_DOCKER_REPOSITORY }}
+        username: ${{ env.JFROG_USER }}
+        password: ${{ env.JFROG_TOKEN }}
+
+    - name: Set up QEMU
+      if: steps.meta.outputs.has_docker == 'true'
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      if: steps.meta.outputs.has_docker == 'true'
+      uses: docker/setup-buildx-action@v3
+      with:
+        version: latest
+
+    - name: Compute docker variables
+      id: docker-vars
+      if: steps.meta.outputs.has_docker == 'true'
+      run: |
+        : Compute docker variables
+        NAME=${{ inputs.docker-name || steps.meta.outputs.identifier }}
+        echo "name=${NAME}" >> $GITHUB_OUTPUT
+        echo "images<<EOF" >> $GITHUB_OUTPUT
+        if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
+          JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${NAME}
+          echo "${JFROG_IMAGE}" >> $GITHUB_OUTPUT
+        fi
+        GHCR_IMAGE=ghcr.io/ledgerhq/${NAME}
+        echo "${GHCR_IMAGE}" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+        # Keep only one image as canonical reference
+        if [ -n "${JFROG_IMAGE}" ]; then
+          echo "image=${JFROG_IMAGE}" >> $GITHUB_OUTPUT
+        else
+          echo "image=${GHCR_IMAGE}" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+
+    - name: Compute docker metadata
+      id: docker-meta
+      if: steps.meta.outputs.has_docker == 'true'
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ steps.docker-vars.outputs.images }}
+        flavor: latest=false
+        tags: |
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+          type=raw,value=${{ env.VERSION }}
+          type=ref,event=branch
+          type=ref,event=tag
+          type=ref,event=pr
+          type=pep440,pattern={{major}}
+          type=pep440,pattern={{major}}.{{minor}}
+        labels: |
+          org.opencontainers.image.title=${{ steps.docker-vars.outputs.name }}
+
+    - name: Build docker image for testing
+      if: steps.meta.outputs.has_goss == 'true'
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.package-path }}
+        file: ${{ inputs.package-path }}/Dockerfile
+        build-args: |
+          VERSION=${{ env.VERSION }}
+          DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
+          DD_GIT_COMMIT_SHA=${{ github.sha }}
+          JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
+        secrets: |
+          JFROG_USER=${{ env.JFROG_USER }}
+          JFROG_TOKEN=${{ env.JFROG_TOKEN }}
+        pull: true
+        load: true
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
+        annotations: ${{ steps.docker-meta.outputs.annotations }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Install goss
+      uses: e1himself/goss-installation-action@v1.3.0
+      if: steps.meta.outputs.has_goss == 'true'
+      with:
+        version: v0.4.7
+
+    - name: Run GOSS validation
+      id: goss
+      if: steps.meta.outputs.has_goss == 'true'
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Run GOSS validation
+        dgoss run ${{ inputs.dgoss-args }} ${{ steps.docker-vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}
+      env:
+        GOSS_FILES_STRATEGY: cp
+        CONTAINER_LOG_OUTPUT: ${{ runner.temp }}/goss.log
+      shell: bash
+
+    - name: Display GOSS failure log
+      if: failure() && steps.meta.outputs.has_goss == 'true' && steps.goss.conclusion == 'failure'
+      run: |
+        : Display GOSS failure log
+        cat ${{ runner.temp }}/goss.log
+      shell: bash
+
+    - name: Push docker image
+      uses: docker/build-push-action@v6
+      id: docker
+      if: steps.meta.outputs.has_docker == 'true'
+      with:
+        context: ${{ inputs.package-path }}
+        file: ${{ inputs.package-path }}/Dockerfile
+        build-args: |
+          VERSION=${{ env.VERSION }}
+          DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
+          DD_GIT_COMMIT_SHA=${{ github.sha }}
+          JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
+        secrets: |
+          JFROG_USER=${{ env.JFROG_USER }}
+          JFROG_TOKEN=${{ env.JFROG_TOKEN }}
+        pull: ${{ steps.meta.outputs.has_goss != 'true' }}
+        push: true
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        labels: ${{ steps.docker-meta.outputs.labels }}
+        annotations: ${{ steps.docker-meta.outputs.annotations }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: Attest Docker image for JFrog Artifactory
+      if: steps.docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/attest@actions/attest-1
+      with:
+        subject-name: ${{ steps.docker-vars.outputs.image }}
+        subject-digest: ${{ steps.docker.outputs.digest }}
+
+    - name: Sign Docker image for JFrog Artifactory
+      if: steps.docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
+      uses: LedgerHQ/actions-security/actions/sign-container@actions/sign-container-1
+      with:
+        tags: ${{ steps.docker-meta.outputs.tags }}
+        digest: ${{ steps.docker.outputs.digest }}
+
+    - name: Create Docker Summary
+      id: docker-summary
+      if: steps.docker.outcome == 'success'
+      run: |
+        : Create Docker Summary
+        IMAGES=$(echo "${DOCKER_META}" | jq -r '."image.name"')
+        case $IMAGES in
+          *","*)
+            echo "**Images:**" >> $GITHUB_STEP_SUMMARY
+            for image in ${IMAGES//,/$'\n'}; do
+              echo "- \`${image}\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            ;;
+          *)
+            echo "**Image:** \`${IMAGES}\`" >> $GITHUB_STEP_SUMMARY
+            ;;
+        esac
+
+        DIGEST=$(echo ${DOCKER_META} | jq -r '."containerimage.digest"')
+        echo "**Digest:** \`${DIGEST}\`" >> $GITHUB_STEP_SUMMARY
+
+        echo "image=${IMAGES%%,*}" >> $GITHUB_OUTPUT
+        echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+      env:
+        DOCKER_META: ${{ steps.docker.outputs.metadata }}
+      shell: bash
+
+    - name: Add Docker image to release body
+      if: steps.docker-summary.outputs.image
+      continue-on-error: true
+      working-directory: ${{ inputs.package-path }}
+      run: |
+        : Add Docker image to release body
+        echo -e "\n**Docker image**: \`${{ steps.docker-summary.outputs.image }}@${{ steps.docker-summary.outputs.digest }}\`\n" >> body.md
+      shell: bash
+
+    - name: Push release commit and tag
+      id: tag
+      run: |
+        : Push release commit and tag
+        git push -f
+        git push -f origin ${TAG}
+      shell: bash
+
+    - name: Github Release
+      id: release
+      continue-on-error: true
+      uses: softprops/action-gh-release@v2
+      with:
+        body_path: ${{ inputs.package-path }}/body.md
+        tag_name: ${{ env.TAG }}
+        token: ${{ inputs.github-token }}
+        fail_on_unmatched_files: false
+        files: |
+          ${{ inputs.package-path }}/dist/*
+          ${{ inputs.package-path }}/CHANGELOG.md
+
+    - name: Publish summary
+      continue-on-error: true
+      run: |
+        : Publish summary
+        echo "🚀 [Version ${VERSION} (${TAG})](${{ steps.release.outputs.url }}) has been published" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    #################################################################################################
+    #                                                                                               #
+    #                                     🧹 Cleanup actions 🧹                                     #
+    #                                                                                               #
+    # You must ensure workflow always reach this point in case of failure in the side-effect zone ! #
+    #                                                                                               #
+    #################################################################################################
+
+    - name: Show release failure in summary
+      if: failure()
+      run: |
+        : Show release failure in summary
+        echo "❌ Release ${TAG} failed" | tee -a $GITHUB_STEP_SUMMARY
+        echo "DIST=${{ steps.meta.outputs.identifier }}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Cleanup docker GHCR image
+      if: failure() && steps.docker.outcome == 'success'
+      run: |
+        : Cleanup docker GHCR image
+        GHAPI=("gh" "api" "-H" "Accept: application/vnd.github+json" "-H" "X-GitHub-Api-Version: 2022-11-28")
+        PKG='${{ steps.docker-vars.outputs.name }}'
+        VERSIONS=$(${GHAPI[@]} /orgs/LedgerHQ/packages/container/${PKG}/versions)
+        QUERY='.[] | select(.name == "${{ steps.docker-summary.outputs.digest }}") | .id'
+        VERSION_ID=$(echo ${VERSIONS} | jq --raw-output ${QUERY})
+        ${GHAPI[@]} --method DELETE /orgs/LedgerHQ/packages/container/${PKG}/versions/${VERSION_ID}
+        IMAGE="ghcr.io/ledgerhq/${PKG}:${VERSION}@${{ steps.docker-summary.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup docker JFrog Artifactory image
+      if: failure() && steps.docker.outcome == 'success' && env.JFROG_DOCKER_REPOSITORY
+      run: |
+        : Cleanup docker JFrog Artifactory image
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_DOCKER_REPOSITORY}/${{ steps.docker-vars.outputs.name }}/${VERSION}
+        IMAGE="${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${{ steps.docker-vars.outputs.name }}:${VERSION}@${{ steps.docker-summary.outputs.digest }}"
+        echo "🧹 Docker image \`${IMAGE}\` has been deleted" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup JFrog Artifactory
+      if: failure() && steps.artifactory.outcome == 'success'
+      run: |
+        : Cleanup JFrog Artifactory
+        curl -X DELETE -u ${JFROG_USER}:${JFROG_TOKEN} ${JFROG_URL}/artifactory/${JFROG_REPOSITORY}/${DIST}/${VERSION}
+        echo "🧹 Package \`${DIST}==${VERSION}\` have been deleted from JFrog Artifactory" | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
+
+    - name: Cleanup PyPI
+      if: failure() && steps.pypi.outcome == 'success'
+      run: |
+        : Cleanup PyPI
+        echo "⚠️ You need to manually delete [\`${DIST}==${VERSION}\` on PyPI](https://pypi.org/project/${DIST}/${VERSION}/)." | tee -a $GITHUB_STEP_SUMMARY
+        echo "⚠️ The version is not usable anymore. See the [dedicated PyPI FAQ entry](https://pypi.org/help/#file-name-reuse)." | tee -a $GITHUB_STEP_SUMMARY
+      shell: bash
