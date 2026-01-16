@@ -99,9 +99,10 @@ runs:
 
     - name: detect-jfrog
       id: detect-jfrog
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Detect JFrog requirement
-        PYPROJECT="${{ inputs.working-directory }}/pyproject.toml"
+        PYPROJECT="pyproject.toml"
         HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
       shell: bash
