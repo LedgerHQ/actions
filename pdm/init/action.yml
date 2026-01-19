@@ -120,6 +120,7 @@ runs:
         cache: true
 
     - name: Set some settings
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Set some settings
         pdm config install.cache true
