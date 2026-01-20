@@ -119,6 +119,8 @@ runs:
 
         # DEBUG
         # TODO: TO BE REMOVED
+        pwd
+        echo ${{ inputs.working-directory }}
         echo ${DOCKERFILE}
         echo ${HAS_DOCKER}
         echo ${HAS_GOSS}
