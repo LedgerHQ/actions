@@ -86,13 +86,12 @@ runs:
 
     - name: Compute some variables
       id: vars
-      working-directory: ${{ inputs.working-directory }}
       run: |
         : Compute some variables
         NAME=${{ inputs.name || github.event.repository.name }}
         VERSION=${{ inputs.version || github.ref_type == 'tag' && github.ref_name || format('0.dev+{0}.{1}', env.DOCKER_METADATA_OUTPUT_VERSION, github.sha) }}
-        DOCKERFILE=${{ inputs.suffix && format('Dockerfile.{0}', inputs.suffix) || 'Dockerfile' }}
-        GOSSPATH=${{ inputs.suffix || '.' }}
+        DOCKERFILE=${{ inputs.working-directory }}/${{ inputs.suffix && format('Dockerfile.{0}', inputs.suffix) || 'Dockerfile' }}
+        GOSSPATH=${{ inputs.working-directory }}/${{ inputs.suffix || '.' }}
 
         echo "name=${NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
