@@ -117,6 +117,13 @@ runs:
         else
           echo "image=${GHCR_IMAGE}" >> $GITHUB_OUTPUT
         fi
+
+        # DEBUG
+        # TODO: TO BE REMOVED
+        echo ${DOCKERFILE}
+        echo ${HAS_DOCKER}
+        echo ${HAS_GOSS}
+
       shell: bash
 
     - name: Compute docker metadata
