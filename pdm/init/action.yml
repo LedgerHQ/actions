@@ -97,9 +97,14 @@ runs:
         git config user.email github-actions@ledger.fr
       shell: bash
 
+    - name: Setup working directory
+      run: |
+        : Setup working directory for release
+        cd ${{inputs.working-directory}}
+      shell: bash
+
     - name: detect-jfrog
       id: detect-jfrog
-      working-directory: ${{ inputs.working-directory }}
       run: |
         : Detect JFrog requirement
         PYPROJECT="pyproject.toml"
@@ -120,7 +125,6 @@ runs:
         cache: true
 
     - name: Set some settings
-      working-directory: ${{ inputs.working-directory }}
       run: |
         : Set some settings
         pdm config install.cache true
@@ -128,7 +132,6 @@ runs:
 
     - name: Install dependencies (main, all extras and specified dev group)
       if: inputs.skip-dependencies == null
-      working-directory: ${{ inputs.working-directory }}
       run: |
         : Install dependencies
         echo "${{ github.workspace }}/${{ inputs.working-directory }}/.venv/bin/python" > .pdm-python
@@ -144,7 +147,6 @@ runs:
 
     - name: Extract some metadata
       id: meta
-      working-directory: ${{ inputs.working-directory }}
       run: |
         : Extract some metadata
         echo "identifier=$(pdm show --name)" >> $GITHUB_OUTPUT
