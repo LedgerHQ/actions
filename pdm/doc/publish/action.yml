@@ -36,7 +36,7 @@ runs:
   steps:
     - name: Clone and install dependencies
       if: inputs.init == 'true'
-      uses: LedgerHQ/actions/pdm/init@feat/allow-repository-subpackage-release-and-build
+      uses: LedgerHQ/actions/pdm/init@main
       with:
         working-directory: ${{ inputs.working-directory }}
         group: ${{ inputs.group }}
