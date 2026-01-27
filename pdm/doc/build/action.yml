@@ -33,7 +33,7 @@ runs:
   using: composite
   steps:
     - name: Clone and install dependencies
-      uses: LedgerHQ/actions/pdm/init@main
+      uses: LedgerHQ/actions/pdm/init@feat/allow-repository-subpackage-release-and-build
       id: init
       if: inputs.init == 'true'
       with:
