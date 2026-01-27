@@ -90,6 +90,7 @@ runs:
       uses: LedgerHQ/actions/pdm/init@feat/allow-repository-subpackage-release-and-build
       id: meta
       with:
+        working-directory: ${{ inputs.working-directory }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
@@ -98,6 +99,7 @@ runs:
 
     - name: Bump using commitizen
       id: bump
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Bump using commitizen
         CMD=('pdm' 'bump' '--changelog-to-stdout' '--git-output-to-stderr')
@@ -120,6 +122,7 @@ runs:
     # Build once to publish the same package on every repository
     - name: Build distribution
       if: inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Build distribution
         pdm build
@@ -138,6 +141,7 @@ runs:
     - name: Push to our internal JFrog Artifactory
       id: artifactory
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public != 'true' && env.JFROG_REPOSITORY
+      working-directory: ${{ inputs.working-directory }}
       env:
         PDM_PUBLISH_REPO: ${{ env.JFROG_URL }}/artifactory/api/pypi/${{ env.JFROG_REPOSITORY }}
         PDM_PUBLISH_USERNAME: ${{ env.JFROG_USER }}
@@ -163,6 +167,7 @@ runs:
     - name: Push to PyPI
       id: pypi
       if: (inputs.kind == 'lib' || steps.meta.outputs.is_distribution == 'true') && inputs.public == 'true' && env.PDM_PUBLISH_PASSWORD != null
+      working-directory: ${{ inputs.working-directory }}
       env:
         PDM_PUBLISH_PASSWORD: ${{ inputs.pypi-token }}
         FORCE_COLOR: 'true'
@@ -176,6 +181,7 @@ runs:
       id: docker
       if: steps.meta.outputs.has_docker == 'true'
       with:
+        working-directory: ${{ inputs.working-directory }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -185,6 +191,7 @@ runs:
     - name: Add Docker image to release body
       if: steps.docker.outputs.image
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add Docker image to release body
         echo -e "\n**Docker image**: \`${{ steps.docker.outputs.image }}@${{ steps.docker.outputs.digest }}\`\n" >> body.md
@@ -195,6 +202,7 @@ runs:
       id: extra-docker
       if: inputs.extra-docker
       with:
+        working-directory: ${{ inputs.working-directory }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -204,6 +212,7 @@ runs:
     - name: Add Extra Docker image to release body
       if: steps.extra-docker.outputs.image
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add extra Docker image to release body
         echo -e "\n**Additional Docker image**: \`${{ steps.extra-docker.outputs.image }}@${{ steps.extra-docker.outputs.digest }}\`\n" >> body.md
@@ -215,6 +224,7 @@ runs:
       continue-on-error: true  # Can be manually published after
       uses: LedgerHQ/actions/pdm/doc@feat/allow-repository-subpackage-release-and-build
       with:
+        working-directory: ${{ inputs.working-directory }}
         version: ${{ env.REVISION }}
         openapi: ${{ steps.meta.outputs.has_openapi == 'true' }}
         site: true
@@ -223,6 +233,7 @@ runs:
     - name: Add documentation URL to release body
       if: steps.doc.outputs.url
       continue-on-error: true  # Not critical
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Add documentation URL to release body
         echo -e "\n**Documentation**: <${{ steps.doc.outputs.url }}>\n" >> body.md
@@ -277,6 +288,7 @@ runs:
     - name: Cleanup documentation
       # Runs on release failure if doc has been published
       if: failure() && steps.doc.outcome == 'success'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Cleanup documentation
         pdm run mike delete --push ${REVISION}

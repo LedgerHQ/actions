@@ -169,6 +169,7 @@ runs:
     - name: Run GOSS validation
       id: goss
       if: steps.vars.outputs.has_goss == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Run GOSS validation
         dgoss run ${{ inputs.dgoss-args }} ${{ steps.vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}

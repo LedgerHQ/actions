@@ -30,6 +30,7 @@ runs:
   steps:
     - uses: LedgerHQ/actions/pdm/doc/build@feat/allow-repository-subpackage-release-and-build
       with:
+        working-directory: ${{ inputs.working-directory }}
         init: ${{ inputs.init }}
         python-version: ${{ inputs.python-version }}
         openapi: ${{ inputs.openapi }}
@@ -37,6 +38,7 @@ runs:
     - uses: LedgerHQ/actions/pdm/doc/publish@feat/allow-repository-subpackage-release-and-build
       id: publish
       with:
+        working-directory: ${{ inputs.working-directory }}
         init: false
         openapi: ${{ inputs.openapi }}
         site: ${{ inputs.site }}
