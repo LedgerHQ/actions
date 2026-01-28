@@ -20,6 +20,25 @@ jobs:
       - uses: LedgerHQ/actions/pdm/release@main
 ```
 
+### Subpackage releases
+
+To release a package from a subdirectory (e.g. `packages/<name>`), set `working-directory` to that path. All steps (build, publish, docker, docs, release) will run from there.
+
+## Testing checklist
+
+- Root release (current usage): run with default `working-directory: .` and confirm behavior is unchanged.
+- Subpackage release: run with `working-directory: packages/<name>` and confirm:
+  - Tag uses commitizen `tag_format` if configured
+  - `body.md`, `dist/*`, `CHANGELOG.md`, and docs paths are resolved from the subdirectory
+- Safety mode: disable publishing in a staging run by keeping `public: 'false'` and leaving `JFROG_REPOSITORY` unset.
+
+## Controlling publications and builds
+
+- **PyPI publish**: set `public: 'true'` and provide `pypi-token`. If `public` is `false`, PyPI publish is skipped.
+- **JFrog publish**: set `JFROG_REPOSITORY` in the environment. If unset, JFrog publish is skipped.
+- **Docker build/publish**: runs only if a `Dockerfile` exists in `working-directory`. Extra docker image runs only if `extra-docker` is set.
+- **Docs build/publish**: runs only if the project exposes `doc`/`doc:openapi` commands (detected by `pdm run --json`).
+
 ## Permissions
 
 This action interacts with the GitHub API using the GitHub token and requires the following permissions:
@@ -48,6 +67,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `artifactory-repository` | DEPRECATED (Use `JFROG_REPOSITORY` environment variable) | `""` | `false` |
 | `docker-name` | Optionally override the docker image name (default to the repository name) | `""` | `false` |
 | `extra-docker` | An optional extra docker image to build | `""` | `false` |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 | `python-version` | Python version used to build | `""` | `false` |
 
 ## Environment variables

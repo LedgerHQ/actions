@@ -2,6 +2,9 @@ name: Build Docker Image
 description: Build Docker image
 
 inputs:
+  working-directory:
+    description: Working directory containing the Dockerfile
+    default: '.'
   clone:
     description: Whether to clone or not
     default: 'true'
@@ -87,17 +90,17 @@ runs:
         : Compute some variables
         NAME=${{ inputs.name || github.event.repository.name }}
         VERSION=${{ inputs.version || github.ref_type == 'tag' && github.ref_name || format('0.dev+{0}.{1}', env.DOCKER_METADATA_OUTPUT_VERSION, github.sha) }}
-        DOCKERFILE=${{ inputs.suffix && format('Dockerfile.{0}', inputs.suffix) || 'Dockerfile' }}
-        GOSSPATH=${{ inputs.suffix || '.' }}
+        DOCKERFILE=${{ inputs.working-directory }}/${{ inputs.suffix && format('Dockerfile.{0}', inputs.suffix) || 'Dockerfile' }}
+        GOSSPATH=${{ inputs.working-directory }}/${{ inputs.suffix || '.' }}
 
         echo "name=${NAME}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "dockerfile=${DOCKERFILE}" >> $GITHUB_OUTPUT
         echo "gosspath=${GOSSPATH}" >> $GITHUB_OUTPUT
 
-        [ -f ${DOCKERFILE} ] && HAS_DOCKER='true' || HAS_DOCKER='false'
+        [ -f "${DOCKERFILE}" ] && HAS_DOCKER='true' || HAS_DOCKER='false'
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
-        [ -f ${GOSSPATH}/goss.yaml ] && HAS_GOSS='true' || HAS_GOSS='false'
+        [ -f "${GOSSPATH}/goss.yaml" ] && HAS_GOSS='true' || HAS_GOSS='false'
         echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
         echo "images<<EOF" >> $GITHUB_OUTPUT
         if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
@@ -113,6 +116,7 @@ runs:
         else
           echo "image=${GHCR_IMAGE}" >> $GITHUB_OUTPUT
         fi
+
       shell: bash
 
     - name: Compute docker metadata
@@ -136,6 +140,7 @@ runs:
       if: steps.vars.outputs.has_goss == 'true'
       uses: docker/build-push-action@v6
       with:
+        context: ${{ inputs.working-directory }}
         file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
@@ -164,6 +169,7 @@ runs:
     - name: Run GOSS validation
       id: goss
       if: steps.vars.outputs.has_goss == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Run GOSS validation
         dgoss run ${{ inputs.dgoss-args }} ${{ steps.vars.outputs.image }}:${DOCKER_METADATA_OUTPUT_VERSION}
@@ -186,6 +192,7 @@ runs:
       id: docker
       if: steps.vars.outputs.has_docker == 'true'
       with:
+        context: ${{ inputs.working-directory }}
         file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
