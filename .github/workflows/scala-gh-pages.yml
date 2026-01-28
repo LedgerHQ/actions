@@ -52,7 +52,7 @@ jobs:
         id: jfrog-login
         uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
       - name: Login to JFROG
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: jfrog.ledgerlabs.net
           username: ${{ env.JFROG_USER }}
