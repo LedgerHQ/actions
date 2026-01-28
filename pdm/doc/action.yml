@@ -28,14 +28,14 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/pdm/doc/build@feat/allow-repository-subpackage-release-and-build
+    - uses: LedgerHQ/actions/pdm/doc/build@main
       with:
         working-directory: ${{ inputs.working-directory }}
         init: ${{ inputs.init }}
         python-version: ${{ inputs.python-version }}
         openapi: ${{ inputs.openapi }}
         site: ${{ inputs.site }}
-    - uses: LedgerHQ/actions/pdm/doc/publish@feat/allow-repository-subpackage-release-and-build
+    - uses: LedgerHQ/actions/pdm/doc/publish@main
       id: publish
       with:
         working-directory: ${{ inputs.working-directory }}

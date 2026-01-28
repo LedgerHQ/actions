@@ -87,7 +87,7 @@ runs:
         fi
       shell: bash
     - name: Clone and install dependencies
-      uses: LedgerHQ/actions/pdm/init@feat/allow-repository-subpackage-release-and-build
+      uses: LedgerHQ/actions/pdm/init@main
       id: meta
       with:
         working-directory: ${{ inputs.working-directory }}
@@ -177,7 +177,7 @@ runs:
       shell: bash
 
     - name: Docker image
-      uses: LedgerHQ/actions/pdm/docker@feat/allow-repository-subpackage-release-and-build
+      uses: LedgerHQ/actions/pdm/docker@main
       id: docker
       if: steps.meta.outputs.has_docker == 'true'
       with:
@@ -198,7 +198,7 @@ runs:
       shell: bash
 
     - name: Extra Docker image
-      uses: LedgerHQ/actions/pdm/docker@feat/allow-repository-subpackage-release-and-build
+      uses: LedgerHQ/actions/pdm/docker@main
       id: extra-docker
       if: inputs.extra-docker
       with:
@@ -222,7 +222,7 @@ runs:
       id: doc
       if: steps.meta.outputs.has_docs == 'true'
       continue-on-error: true  # Can be manually published after
-      uses: LedgerHQ/actions/pdm/doc@feat/allow-repository-subpackage-release-and-build
+      uses: LedgerHQ/actions/pdm/doc@main
       with:
         working-directory: ${{ inputs.working-directory }}
         version: ${{ env.REVISION }}
