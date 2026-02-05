@@ -22,6 +22,12 @@ inputs:
     description: An optional extra Docker image URL
   documentation:
     description: An optional documentation URL
+  release_emoji:
+    description: An optional emoji to use in the release header
+    default: ":rocket_vault:"
+  avatar_url:
+    description: An optional avatar URL to use for the notification
+    default: "https://emoji.slack-edge.com/T032Z0S1J/rocket_vault/db3b32d9d9f82429.png"
 
 runs:
   using: composite
@@ -48,7 +54,7 @@ runs:
               "type": "header",
               "text": {
                 "type": "plain_text",
-                "text": ":rocket_vault: \($project) \($version) :rocket_vault:",
+                "text": "${{ inputs.release_emoji }} \($project) \($version) ${{ inputs.release_emoji }}",
                 "emoji": true
               }
             },
@@ -156,5 +162,5 @@ runs:
       env:
           SLACK_WEBHOOK: ${{ inputs.webhook-url }}
           SLACK_CHANNEL: ${{ inputs.channel }}
-          SLACK_AVATAR: https://emoji.slack-edge.com/T032Z0S1J/rocket_vault/db3b32d9d9f82429.png
+          SLACK_AVATAR: ${{ inputs.avatar_url }}
           SLACK_CUSTOM_PAYLOAD: ${{ steps.blocks.outputs.json }}
