@@ -1,0 +1,25 @@
+---
+name: "Sync Ship-Show-Ask labels"
+
+on:
+  workflow_call:
+    inputs:
+      label_config_file:
+        required: false
+        default: 'https://raw.githubusercontent.com/LedgerHQ/actions/7d0558f947763239ca3a33f477036398e5e719e4/ship-show-ask/sync-labels/ship-show-ask-labels.yaml'
+        type: string
+    secrets:
+      CI_BOT_TOKEN:
+        required: true
+
+jobs:
+  labels:
+    name: Sync Labels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sync Labels
+        uses: EndBug/label-sync@v2
+        with:
+          config-file: ${{ inputs.label_config_file }}
+          token: "${{ secrets.CI_BOT_TOKEN }}"
+          delete-other-labels: false
