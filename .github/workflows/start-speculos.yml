@@ -115,7 +115,7 @@ jobs:
         run: |
           echo "COIN_APP=$( echo ${{ inputs.coin_app }} | sed 's/ //g')" >> $GITHUB_ENV
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.SPECULOS_ROLE }}
           aws-region: ${{ env.AWS_REGION }}
