@@ -118,6 +118,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: true
+        cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     - name: Set some settings
       working-directory: ${{ inputs.working-directory }}
