@@ -48,6 +48,7 @@ runs:
       with:
         name: changelog
         path: ${{ inputs.working-directory }}
+      continue-on-error: true
 
     - uses: actions/download-artifact@v7
       if: inputs.openapi == 'true'
