@@ -60,7 +60,7 @@ outputs:
     value: ${{ steps.meta.outputs.branch }}
   has_jfrog:
     description: Whether this project uses JFrog Artifactory or not
-    value: ${{ steps.detect-jfrog.outputs.has_jfrog }}
+    value: ${{ steps.detect.outputs.has_jfrog }}
   jfrog-domain:
     description: Base domain of Ledger's JFrog platform if authenticated
     value: ${{ steps.jfrog-login.outputs.jfrog-domain }}
@@ -79,6 +79,9 @@ outputs:
   pdm-version:
     description: The version of `pdm` used by this action
     value: ${{ steps.setup-pdm.outputs.pdm-version }}
+  use_uv:
+    description: Whether this project uses uv as PDM backend
+    value: ${{ steps.detect.outputs.use_uv }}
 
 
 runs:
@@ -97,19 +100,21 @@ runs:
         git config user.email github-actions@ledger.fr
       shell: bash
 
-    - name: detect-jfrog
-      id: detect-jfrog
+    - name: Detect JFrog and uv requirements
+      id: detect
       working-directory: ${{ inputs.working-directory }}
       run: |
-        : Detect JFrog requirement
+        : Detect JFrog and uv requirements
         PYPROJECT="pyproject.toml"
         HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
+        USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml)
+        echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Authenticate against JFrog Artifactory
       id: jfrog-login
-      if: (steps.detect-jfrog.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY) && !env.JFROG_TOKEN
+      if: (steps.detect.outputs.has_jfrog == 'true' || env.JFROG_REPOSITORY) && !env.JFROG_TOKEN
       uses: LedgerHQ/actions-security/actions/jfrog-login@actions/jfrog-login-1
 
     - name: Set up Python and PDM
@@ -119,6 +124,10 @@ runs:
         python-version: ${{ inputs.python-version }}
         cache: true
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
+
+    - name: Install uv
+      if: steps.detect.outputs.use_uv == 'true'
+      uses: astral-sh/setup-uv@v7
 
     - name: Set some settings
       working-directory: ${{ inputs.working-directory }}
