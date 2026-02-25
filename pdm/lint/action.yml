@@ -1,11 +1,18 @@
 name: Lint
 description: Lint running pre-commit hooks
 
+inputs:
+  setup:
+    description: Whether to skip the setup or not
+    default: 'true'
+
 runs:
   using: composite
   steps:
     - uses: actions/checkout@v6
+      if: inputs.setup == 'true'
     - uses: actions/setup-python@v6
+      if: inputs.setup == 'true'
       with:
         python-version-file: pyproject.toml
     - name: Lint with `prek`
