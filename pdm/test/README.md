@@ -38,6 +38,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `report-only` | Only perform aggregation and reporting (parallelism closure) | `""` | `false` |
 | `docker-compose` | Start and wait Docker Compose | `""` | `false` |
 | `sonar-token` | SonarCloud token | `""` | `false` |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 
 ## Environment variables
 

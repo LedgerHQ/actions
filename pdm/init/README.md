@@ -50,6 +50,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 | `python-version` | Python version to use | `""` | `false` |
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |

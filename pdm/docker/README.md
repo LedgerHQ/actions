@@ -29,6 +29,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
+| `working-directory` | Working directory containing the Dockerfile | `.` | `false` |
 | `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
 | `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |
