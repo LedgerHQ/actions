@@ -28,6 +28,9 @@ inputs:
   sonar-token:
     description: SonarCloud token
     required: false
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
 
 runs:
   using: composite
@@ -41,6 +44,7 @@ runs:
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         skip-dependencies: ${{ inputs.report-only }}
+        working-directory: ${{ inputs.working-directory }}
 
     - name: Compute unique matrix hashable ID
       if: inputs.matrix-id
@@ -59,6 +63,7 @@ runs:
         : Start and wait Docker Compoose
         docker compose up --detach --wait
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Run tests
       if: inputs.report-only == null
@@ -73,6 +78,7 @@ runs:
         COVERAGE_XML: reports/coverage${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.xml
         JUNIT_XML: reports/junit${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}.xml
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Detect Allure report presence
       id: check-allure
@@ -88,6 +94,7 @@ runs:
         echo "has_credentials=${CREDENTIALS}" >> $GITHUB_OUTPUT
         echo "has_allure=${ALLURE}" >> $GITHUB_OUTPUT
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Generate Allure environment file
       if: steps.check-allure.outputs.has_allure
@@ -109,6 +116,7 @@ runs:
           echo "pull_request = https://github.com/${{ github.repository }}/pull/${{ github.event.number }}" >> $ENV_FILE
         fi
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Upload Allure results
       if: steps.check-allure.outputs.has_allure
@@ -118,13 +126,13 @@ runs:
         url: ${{ env.ALLURE_URL }}
         username: ${{ env.ALLURE_USERNAME }}
         password: ${{ env.ALLURE_PASSWORD }}
-        results: reports/allure
+        results: ${{ inputs.working-directory }}/reports/allure
 
     - name: Save Allure UUID
       if: steps.allure-upload.outputs.uuid
       run: |
         : Save Allure UUID
-        echo $UUID > reports/allure.uuid${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}
+        echo $UUID > ${{ inputs.working-directory }}/reports/allure.uuid${{ inputs.matrix-id && steps.matrix-meta.outputs.suffix || '' }}
       env:
         UUID: ${{ steps.allure-upload.outputs.uuid }}
       shell: bash
@@ -135,9 +143,9 @@ runs:
       with:
         name: reports${{ inputs.matrix-id && format('-{0}', steps.matrix-meta.outputs.id) || '' }}
         path: |
-          reports/coverage*
-          reports/junit*
-          reports/allure.uuid*
+          ${{ inputs.working-directory }}/reports/coverage*
+          ${{ inputs.working-directory }}/reports/junit*
+          ${{ inputs.working-directory }}/reports/allure.uuid*
 
     - name: Merge reports artifacts
       if: inputs.report-only
@@ -168,6 +176,7 @@ runs:
         echo "Generate XML coverage report"
         coverage xml --data-file reports/coverage.all -o reports/coverage.xml
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Cache coverage report
       if: inputs.matrix-id == null
@@ -183,13 +192,14 @@ runs:
           fi
         done
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Upload coverage reports
       if: inputs.matrix-id == null
       uses: actions/upload-artifact@v6
       with:
         name: coverage_reports
-        path: ./coverage/
+        path: ${{ inputs.working-directory }}/coverage/
         if-no-files-found: ignore
 
     - name: Generate Pytest coverage report
@@ -199,8 +209,8 @@ runs:
       with:
         github-token: ${{ inputs.github-token }}
         coverage-path-prefix: ${{ steps.meta.outputs.has_src == 'true' && 'src/' || '' }}
-        pytest-xml-coverage-path: ./reports/coverage.xml
-        junitxml-path: ./reports/junit.xml
+        pytest-xml-coverage-path: ${{ inputs.working-directory }}/reports/coverage.xml
+        junitxml-path: ${{ inputs.working-directory }}/reports/junit.xml
         hide-comment: true
 
     - name: Add coverage report to summary
@@ -268,11 +278,14 @@ runs:
         curl -X POST -H "Content-Type:text/xml" -d @reports/coverage.xml "${REPORT_URL}&coverageType=cobertura"
         echo "📊 Coverage report uploaded to Backstage: <${REPORT_URL}>" | tee -a $GITHUB_STEP_SUMMARY
       shell: bash
+      working-directory: ${{ inputs.working-directory }}
 
     - name: Run SonarCloud analysis
       if: hashFiles('sonar-project.properties') && inputs.sonar-token
       continue-on-error: true  # Not critical
       uses: sonarsource/sonarqube-scan-action@v7
+      with:
+        projectBaseDir: ${{ inputs.working-directory }}
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
         SONAR_TOKEN: ${{ inputs.sonar-token }}
