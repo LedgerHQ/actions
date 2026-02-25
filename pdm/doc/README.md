@@ -16,6 +16,7 @@ jobs:
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 | `version` | Force a version to be built | `""` | `false` |
 | `openapi` | Has OpenAPI specs | `false` | `false` |
 | `site` | Publish a documentation site | `false` | `false` |

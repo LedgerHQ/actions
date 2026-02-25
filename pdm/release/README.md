@@ -56,6 +56,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 | `kind` | DEPRECATED (Set `tool.pdm.distribution=true` on libraries) | `""` | `false` |
 | `pypi-token` | A Token to publish on PyPI (private or public) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `""` | `true` |
@@ -67,7 +68,6 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `artifactory-repository` | DEPRECATED (Use `JFROG_REPOSITORY` environment variable) | `""` | `false` |
 | `docker-name` | Optionally override the docker image name (default to the repository name) | `""` | `false` |
 | `extra-docker` | An optional extra docker image to build | `""` | `false` |
-| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
 | `python-version` | Python version used to build | `""` | `false` |
 
 ## Environment variables
@@ -83,6 +83,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | ------ | ----------- |
 | `url` | The generated Github Release URL |
 | `version` | The released version |
+| `tag` | The released tag (may include prefix) |
 | `documentation` | The released documentation URL |
 | `docker` | The released docker image URL |
 | `extra-docker` | The released additional docker image URL |
