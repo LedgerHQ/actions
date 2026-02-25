@@ -35,6 +35,15 @@ inputs:
 runs:
   using: composite
   steps:
+    # Fail early if any of the dependencies failed to avoid wasting time
+    # Move this at the end of the action if we want to submit failure report
+    - name: Fail report if a dependency failed
+      if: inputs.report-only && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled'))
+      run: |
+        : ❌ Build failed due to a failed dependency
+        exit 1
+      shell: bash
+
     - name: Clone and install dependencies
       if: inputs.init == 'true'
       id: meta
