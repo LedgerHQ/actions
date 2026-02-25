@@ -14,7 +14,9 @@ jobs:
 
 ## Inputs
 
-N/A
+| Input | Description | Default | Required |
+| ----- | ----------- | ------- | -------- |
+| `setup` | Whether to skip the setup or not | `true` | `false` |
 
 ## Outputs
 
