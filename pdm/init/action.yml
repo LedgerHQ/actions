@@ -108,7 +108,7 @@ runs:
         PYPROJECT="pyproject.toml"
         HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
-        USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml)
+        USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml || true)
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
       shell: bash
 
