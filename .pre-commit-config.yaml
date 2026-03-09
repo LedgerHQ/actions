@@ -30,7 +30,7 @@ repos:
       - id: check-dependabot
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
     - id: codespell
       additional_dependencies: [tomli]
@@ -44,6 +44,6 @@ repos:
       additional_dependencies: [markdownlint-cli2-formatter-pretty]
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 3.6.0
+    rev: 3.6.1
     hooks:
     -   id: editorconfig-checker
