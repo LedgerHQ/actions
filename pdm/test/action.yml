@@ -177,7 +177,7 @@ runs:
       run: |
         : Merge reports
         echo "Install merge tooling"
-        pip install coverage[toml] junitparser
+        ${PIP} install coverage[toml] junitparser
         echo "Merge JUnit reports"
         junitparser merge --glob reports/junit.*.xml reports/junit.xml
         echo "Combine coverage report"
