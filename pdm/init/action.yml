@@ -110,6 +110,8 @@ runs:
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
         USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml || true)
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
+        # If `uv` is enabled, we will use it to manually install dependencies, otherwise we'll use `pip`.
+        echo "PIP=$([[ ${USE_UV} = true ]] && echo 'uv pip' || echo 'pip')" >> $GITHUB_ENV
       shell: bash
 
     - name: Authenticate against JFrog Artifactory
@@ -119,11 +121,27 @@ runs:
 
     - name: Set up Python and PDM
       id: setup-pdm
+      if: steps.detect.outputs.use_uv != 'true'
       uses: pdm-project/setup-pdm@v4
       with:
         python-version: ${{ inputs.python-version }}
         cache: true
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
+
+    # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
+    - name: Install uv
+      if: steps.detect.outputs.use_uv == 'true'
+      uses: astral-sh/setup-uv@v7
+      with:
+        activate-environment: true
+        python-version: ${{ inputs.python-version }}
+        working-directory: ${{ inputs.working-directory }}
+    - name: Install pdm
+      if: steps.detect.outputs.use_uv == 'true'
+      run: |
+        uv pip install pdm
+        pdm config python.install_root $(uv python dir --color never)
+      shell: bash
 
     - name: Install uv
       if: steps.detect.outputs.use_uv == 'true'
