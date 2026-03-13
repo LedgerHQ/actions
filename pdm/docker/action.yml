@@ -144,7 +144,7 @@ runs:
         file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
-          DD_GIT_REPOSITORY_URL=github.com/${{ github.repository }}
+          DD_GIT_REPOSITORY_URL=https://github.com/${{ github.repository }}
           DD_GIT_COMMIT_SHA=${{ github.sha }}
           JFROG_REPOSITORY=${{ env.JFROG_REPOSITORY }}
           ${{ inputs.build-args }}
