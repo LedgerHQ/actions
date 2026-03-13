@@ -125,7 +125,7 @@ runs:
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Build and push
       id: docker_build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         context: .
         # See: https://docs.docker.com/build/ci/github-actions/secrets/
