@@ -61,7 +61,7 @@ runs:
     - name: Download provided OpenAPI artifact
       if: inputs.openapi != 'true' && inputs.openapi != 'false'
       continue-on-error: true
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: ${{ inputs.openapi }}
         path: ${{ inputs.working-directory }}/docs
