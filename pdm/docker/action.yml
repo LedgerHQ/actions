@@ -77,7 +77,7 @@ runs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
       with:
         # Default behavior is to use the latest available version on the runner
         # but the runner version is too old to handle GHA new cache
