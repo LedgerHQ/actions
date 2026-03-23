@@ -53,7 +53,7 @@ runs:
       shell: bash
 
     - name: Upload the CHANGELOG
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: changelog
         path: ${{ inputs.working-directory }}/CHANGELOG.md
@@ -77,7 +77,7 @@ runs:
 
     - name: Upload OpenAPI specs (fallback)
       if: inputs.openapi == 'true'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: openapi
         path: ${{ inputs.working-directory }}/docs/openapi.yaml
@@ -93,7 +93,7 @@ runs:
 
     - name: Upload the generated documentation
       if: inputs.site == 'true'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: documentation
         path: ${{ inputs.working-directory }}/site/
