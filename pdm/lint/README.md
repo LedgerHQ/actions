@@ -16,7 +16,9 @@ jobs:
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
-| `setup` | Whether to skip the setup or not | `true` | `false` |
+| `init` | Whether to skip the initialization or not | `true` | `false` |
+| `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
+| `python-version` | Python version to run the tests with | `""` | `false` |
 
 ## Outputs
 
