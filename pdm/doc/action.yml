@@ -28,14 +28,14 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/pdm/doc/build@main
+    - uses: LedgerHQ/actions/pdm/doc/build@pdm/faster-uv
       with:
         working-directory: ${{ inputs.working-directory }}
         init: ${{ inputs.init }}
         python-version: ${{ inputs.python-version }}
         openapi: ${{ inputs.openapi }}
         site: ${{ inputs.site }}
-    - uses: LedgerHQ/actions/pdm/doc/publish@main
+    - uses: LedgerHQ/actions/pdm/doc/publish@pdm/faster-uv
       id: publish
       with:
         working-directory: ${{ inputs.working-directory }}
