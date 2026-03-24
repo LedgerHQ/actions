@@ -237,7 +237,7 @@ jobs:
       - name: Create ingress
         shell: bash
         run: |
-          kubectl -n speculos create ingress speculos-${{ env.RUN_ID }} --class="traefik-trusted" --rule="${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ env.RUN_ID }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ env.RUN_ID }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
+          kubectl -n speculos create ingress speculos-${{ env.RUN_ID }} --class="trusted" --rule="${{ env.RUN_ID }}.speculos.aws.stg.ldg-tech.com/=speculos-${{ env.RUN_ID }}:5000" --dry-run=client -o yaml | kubectl label --local -f - run-id=${{ env.RUN_ID }} -o yaml | sed 's/pathType: .*/pathType: ImplementationSpecific/' | kubectl apply -f -
       - name: Wait for speculos to become available
         shell: bash
         env:
