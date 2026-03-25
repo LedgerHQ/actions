@@ -13,12 +13,13 @@ updates:
       prefix: "ci"
       include: "scope"
 
-  # Each repository action have to be manually declared until dependabot supports it.
-  # See: https://github.com/dependabot/dependabot-core/issues/2178
+  # Group by scope/dir so code owners of different actions groups have different pull requests
+  # See: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/controlling-dependencies-updated#defining-multiple-locations-for-manifest-files
   -
-    # Maintain dependencies for gh-context
+    # Maintain dependencies for gh-* actions
     package-ecosystem: github-actions
-    directory: /gh-context
+    directories:
+      - /gh-*
     schedule:
       interval: daily
     labels:
@@ -28,9 +29,11 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for gh-metadata
+    # Maintain dependencies for python-app and python-lib
     package-ecosystem: github-actions
-    directory: /gh-metadata
+    directories:
+      - /python-app/**
+      - /python-lib/**
     schedule:
       interval: daily
     labels:
@@ -40,9 +43,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for python-app
+    # Maintain dependencies for pdm actions
     package-ecosystem: github-actions
-    directory: /python-app
+    directories:
+      - /pdm/**
     schedule:
       interval: daily
     labels:
@@ -52,17 +56,18 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for python-lib
+    # Maintain dependencies for allure actions
     package-ecosystem: github-actions
-    directory: /python-lib
+    directories:
+      - /allure/**
     schedule:
       interval: daily
     labels:
       - dependencies
       - ci
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: ci
+      include: scope
   -
     # Maintain dependencies for slack-notification
     package-ecosystem: github-actions
@@ -112,9 +117,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for gemfury/install
+    # Maintain dependencies for gemfury actions
     package-ecosystem: github-actions
-    directory: /gemfury/install
+    directories:
+      - /gemfury/**
     schedule:
       interval: daily
     labels:
@@ -124,9 +130,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for gemfury/latest-version
+    # Maintain dependencies for nexus actions
     package-ecosystem: github-actions
-    directory: /gemfury/latest-version
+    directories:
+      - /nexus/**
     schedule:
       interval: daily
     labels:
@@ -136,9 +143,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for gemfury/publish
+    # Maintain dependencies for redocly actions
     package-ecosystem: github-actions
-    directory: /gemfury/publish
+    directories:
+      - /redocly/**
     schedule:
       interval: daily
     labels:
@@ -148,9 +156,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for nexus/latest-version
+    # Maintain dependencies for helm actions
     package-ecosystem: github-actions
-    directory: /nexus/latest-version
+    directories:
+      - /helm/**
     schedule:
       interval: daily
     labels:
@@ -160,9 +169,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for nexus/publish
+    # Maintain dependencies for scala actions
     package-ecosystem: github-actions
-    directory: /nexus/publish
+    directories:
+      - /scala/**
     schedule:
       interval: daily
     labels:
@@ -172,729 +182,10 @@ updates:
       prefix: "ci"
       include: "scope"
   -
-    # Maintain dependencies for python-app/doc
+    # Maintain dependencies for slack actions
     package-ecosystem: github-actions
-    directory: /python-app/doc
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-app/docker
-    package-ecosystem: github-actions
-    directory: /python-app/docker
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-app/goss
-    package-ecosystem: github-actions
-    directory: /python-app/goss
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-app/init
-    package-ecosystem: github-actions
-    directory: /python-app/init
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-app/lint
-    package-ecosystem: github-actions
-    directory: /python-app/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-app/test
-    package-ecosystem: github-actions
-    directory: /python-app/test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-lib/check-version
-    package-ecosystem: github-actions
-    directory: /python-lib/check-version
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-lib/publish
-    package-ecosystem: github-actions
-    directory: /python-lib/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for python-lib/test
-    package-ecosystem: github-actions
-    directory: /python-lib/test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for redocly/add-to-portal
-    package-ecosystem: github-actions
-    directory: /redocly/add-to-portal
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for redocly/publish
-    package-ecosystem: github-actions
-    directory: /redocly/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for redocly/lint
-    package-ecosystem: github-actions
-    directory: /redocly/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for redocly/add-to-portal/update-config
-    package-ecosystem: github-actions
-    directory: /redocly/add-to-portal/update-config
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/doc
-    package-ecosystem: github-actions
-    directory: /pdm/doc
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/docker
-    package-ecosystem: github-actions
-    directory: /pdm/docker
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/init
-    package-ecosystem: github-actions
-    directory: /pdm/init
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/lint
-    package-ecosystem: github-actions
-    directory: /pdm/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/meta
-    package-ecosystem: github-actions
-    directory: /pdm/meta
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/release
-    package-ecosystem: github-actions
-    directory: /pdm/release
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/test
-    package-ecosystem: github-actions
-    directory: /pdm/test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/doc/build
-    package-ecosystem: github-actions
-    directory: /pdm/doc/build
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for pdm/doc/publish
-    package-ecosystem: github-actions
-    directory: /pdm/doc/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for allure/generate
-    package-ecosystem: github-actions
-    directory: /allure/generate
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: ci
-      include: scope
-  -
-    # Maintain dependencies for allure/publish
-    package-ecosystem: github-actions
-    directory: /allure/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for allure/upload
-    package-ecosystem: github-actions
-    directory: /allure/upload
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: ci
-      include: scope
-  -
-    # Maintain dependencies for helm/conform
-    package-ecosystem: github-actions
-    directory: /helm/conform
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for helm/lint
-    package-ecosystem: github-actions
-    directory: /helm/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for helm/publish-cm
-    package-ecosystem: github-actions
-    directory: /helm/publish-cm
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for helm/argocd-test
-    package-ecosystem: github-actions
-    directory: /helm/argocd-test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for scala
-    package-ecosystem: github-actions
-    directory: /scala
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/cascade-merge
-    package-ecosystem: github-actions
-    directory: /site/cascade-merge
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/docker-metadata
-    package-ecosystem: github-actions
-    directory: /site/docker-metadata
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/gh-context
-    package-ecosystem: github-actions
-    directory: /site/gh-context
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/gh-metadata
-    package-ecosystem: github-actions
-    directory: /site/gh-metadata
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app
-    package-ecosystem: github-actions
-    directory: /site/python-app
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-lib
-    package-ecosystem: github-actions
-    directory: /site/python-lib
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/slack-notification
-    package-ecosystem: github-actions
-    directory: /site/slack-notification
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/allure/publish
-    package-ecosystem: github-actions
-    directory: /site/allure/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/documentation/c4
-    package-ecosystem: github-actions
-    directory: /site/documentation/c4
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/gemfury/install
-    package-ecosystem: github-actions
-    directory: /site/gemfury/install
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/gemfury/latest-version
-    package-ecosystem: github-actions
-    directory: /site/gemfury/latest-version
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/gemfury/publish
-    package-ecosystem: github-actions
-    directory: /site/gemfury/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/helm/conform
-    package-ecosystem: github-actions
-    directory: /site/helm/conform
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/helm/lint
-    package-ecosystem: github-actions
-    directory: /site/helm/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/helm/publish-cm
-    package-ecosystem: github-actions
-    directory: /site/helm/publish-cm
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/nexus/latest-version
-    package-ecosystem: github-actions
-    directory: /site/nexus/latest-version
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/nexus/publish
-    package-ecosystem: github-actions
-    directory: /site/nexus/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/doc
-    package-ecosystem: github-actions
-    directory: /site/python-app/doc
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/docker
-    package-ecosystem: github-actions
-    directory: /site/python-app/docker
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/goss
-    package-ecosystem: github-actions
-    directory: /site/python-app/goss
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/init
-    package-ecosystem: github-actions
-    directory: /site/python-app/init
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/lint
-    package-ecosystem: github-actions
-    directory: /site/python-app/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-app/test
-    package-ecosystem: github-actions
-    directory: /site/python-app/test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-lib/check-version
-    package-ecosystem: github-actions
-    directory: /site/python-lib/check-version
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-lib/publish
-    package-ecosystem: github-actions
-    directory: /site/python-lib/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/python-lib/test
-    package-ecosystem: github-actions
-    directory: /site/python-lib/test
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/redocly/add-to-portal
-    package-ecosystem: github-actions
-    directory: /site/redocly/add-to-portal
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/redocly/lint
-    package-ecosystem: github-actions
-    directory: /site/redocly/lint
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/redocly/publish
-    package-ecosystem: github-actions
-    directory: /site/redocly/publish
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for site/redocly/add-to-portal/update-config
-    package-ecosystem: github-actions
-    directory: /site/redocly/add-to-portal/update-config
-    schedule:
-      interval: daily
-    labels:
-      - dependencies
-      - ci
-    commit-message:
-      prefix: "ci"
-      include: "scope"
-  -
-    # Maintain dependencies for slack/release
-    package-ecosystem: github-actions
-    directory: /slack/release
+    directories:
+      - /slack/**
     schedule:
       interval: daily
     labels:
