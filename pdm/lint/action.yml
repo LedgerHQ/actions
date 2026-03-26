@@ -2,18 +2,25 @@ name: Lint
 description: Lint running pre-commit hooks
 
 inputs:
-  setup:
-    description: Whether to skip the setup or not
+  init:
+    description: Whether to skip the initialization or not
     default: 'true'
+  working-directory:
+    description: Working directory for the project (relative to repo root)
+    default: '.'
+  python-version:
+    description: Python version to run the tests with
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
-      if: inputs.setup == 'true'
-    - uses: actions/setup-python@v6
-      if: inputs.setup == 'true'
+    - name: Clone and install dependencies
+      if: inputs.init == 'true'
+      id: meta
+      uses: LedgerHQ/actions/pdm/init@pdm/faster-uv
       with:
-        python-version-file: pyproject.toml
+        python-version: ${{ inputs.python-version }}
+        group: lint
+        working-directory: ${{ inputs.working-directory }}
     - name: Lint with `prek`
       uses: j178/prek-action@v2
