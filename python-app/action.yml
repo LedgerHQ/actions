@@ -45,24 +45,24 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - uses: LedgerHQ/actions/python-app/init@main
+    - uses: LedgerHQ/actions/python-app/init@debug-pipenv-sync-issue
 
-    - uses: LedgerHQ/actions/python-app/lint@main
+    - uses: LedgerHQ/actions/python-app/lint@debug-pipenv-sync-issue
 
-    - uses: LedgerHQ/actions/python-app/test@main
+    - uses: LedgerHQ/actions/python-app/test@debug-pipenv-sync-issue
       with:
         src-path: ${{ inputs.src-path }}
         ignore-mypy: ${{ inputs.ignore-mypy }}
 
-    - uses: LedgerHQ/actions/python-app/goss@main
+    - uses: LedgerHQ/actions/python-app/goss@debug-pipenv-sync-issue
       with:
         GOSS_IMAGE: goss_image:latest
         GOSS_FILES_PATH: .github/goss
 
-    - uses: LedgerHQ/actions/python-app/docker@main
+    - uses: LedgerHQ/actions/python-app/docker@debug-pipenv-sync-issue
       with:
         build-args: ${{ inputs.docker-build-args }}
 
-    - uses: LedgerHQ/actions/python-app/doc@main
+    - uses: LedgerHQ/actions/python-app/doc@debug-pipenv-sync-issue
       with:
         redocly-project: ${{ inputs.redocly-project }}

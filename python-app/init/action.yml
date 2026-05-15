@@ -51,7 +51,7 @@ runs:
 
     - name: Install packages
       run: |
-        pipenv sync ${{ inputs.sync-dev == 'true' && '--dev' || '' }}
+        pipenv sync ${{ inputs.sync-dev == 'true' && '--dev' || '' }} --verbose
       env:
         PYPI_DEPLOY_TOKEN: ${{ env.PYPI_DEPLOY_TOKEN }}
       shell: bash
