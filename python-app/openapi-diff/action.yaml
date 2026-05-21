@@ -57,7 +57,8 @@ runs:
     - name: upgrade dependencies (pipenv)
       if: steps.dep_manager.outputs.manager == 'pipenv'
       run: |
-        python -m pip install --upgrade pip pipenv
+        python -m pip install --upgrade pip
+        python -m pip install 'pipenv==2026.2.2'
       shell: bash
 
     - name: upgrade dependencies (pdm)

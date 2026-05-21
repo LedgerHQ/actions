@@ -45,7 +45,8 @@ runs:
 
     - name: Install pipenv
       run: |
-        pip install --upgrade pip pipenv wheel
+        pip install --upgrade pip wheel
+        pip install 'pipenv==2026.2.2'
         python --version ; pip --version ; pipenv --version
       shell: bash
 
