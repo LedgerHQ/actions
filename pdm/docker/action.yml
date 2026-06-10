@@ -158,7 +158,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         cache-from: type=gha,scope=pdm-docker-build-${{ github.repository }}-${{ github.ref_name }}
-        cache-to: type=gha,mode=max,scope=pdm-docker-build-${{ github.repository }}-${{ github.ref_name }}
+        cache-to: type=gha,mode=min,scope=pdm-docker-build-${{ github.repository }}-${{ github.ref_name }}
 
     - name: Install goss
       uses: e1himself/goss-installation-action@v1.3.0
@@ -210,7 +210,7 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
         cache-from: type=gha,scope=pdm-docker-push-${{ github.repository }}-${{ github.ref_name }}
-        cache-to: type=gha,mode=max,scope=pdm-docker-push-${{ github.repository }}-${{ github.ref_name }}
+        cache-to: type=gha,mode=min,scope=pdm-docker-push-${{ github.repository }}-${{ github.ref_name }}
 
     - name: Attest Docker image for JFrog Artifactory
       if: env.JFROG_DOCKER_REPOSITORY
