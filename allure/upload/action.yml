@@ -38,19 +38,58 @@ runs:
       id: upload
       run: |
         : Upload Allure results
-        response=$(\
-          curl -X POST '${{ inputs.url }}/api/result' \
-          --no-progress-meter \
-          --header  "accept: */*" \
-          --header  "Content-Type: multipart/form-data" \
-          --user '${{ inputs.username }}:${{ inputs.password }}' \
-          --form "allureResults=@allure.zip;type=application/x-zip-compressed" \
-        )
-        UUID=$(echo "${response}" | jq -r .uuid)
 
-        echo "response<<EOF" >> $GITHUB_OUTPUT
-        echo "${response}" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "uuid=${UUID}" >> $GITHUB_OUTPUT
-        echo "📊 Uploaded result ${UUID}"
+        ZIP_PATH="${{ github.workspace }}/allure.zip"
+        BODY_FILE="$(mktemp)"
+        trap 'rm -f "${BODY_FILE}"' EXIT
+
+        set +e
+        http_code=$(curl --silent --show-error \
+          --fail-with-body \
+          --user '${{ inputs.username }}:${{ inputs.password }}' \
+          --header 'accept: */*' \
+          --header 'Content-Type: multipart/form-data' \
+          --form "allureResults=@${ZIP_PATH};type=application/x-zip-compressed" \
+          --output "${BODY_FILE}" \
+          --write-out '%{http_code}' \
+          --max-time 300 \
+          --request POST '${{ inputs.url }}/api/result')
+        curl_rc=$?
+        set -e
+
+        response="$(cat "${BODY_FILE}")"
+
+        fail() {
+          local msg="$1"
+          local zip_size
+          zip_size=$(du -h "${ZIP_PATH}" 2>/dev/null | cut -f1 || echo "?")
+          echo "::error::${msg}"
+          echo "  URL:        ${{ inputs.url }}/api/result"
+          echo "  curl exit:  ${curl_rc}"
+          echo "  HTTP code:  ${http_code:-<none>}"
+          echo "  Zip size:   ${zip_size}"
+          echo "  Response body (first 2000 bytes):"
+          printf '%s\n' "${response}" | head -c 2000 | sed 's/^/    /'
+          echo
+          exit 1
+        }
+
+        if [[ "${curl_rc}" -ne 0 ]]; then
+          fail "Allure upload failed (curl exit ${curl_rc})"
+        fi
+
+        if [[ -z "${response}" ]]; then
+          fail "Allure server returned empty body (HTTP ${http_code})"
+        fi
+
+        UUID="$(printf '%s' "${response}" | jq -e -r .uuid 2>/dev/null)" \
+          || fail "Allure server reply was not JSON with .uuid (HTTP ${http_code})"
+
+        {
+          echo "response<<EOF"
+          printf '%s\n' "${response}"
+          echo "EOF"
+          echo "uuid=${UUID}"
+        } >> "${GITHUB_OUTPUT}"
+        echo "📊 Uploaded result ${UUID} (HTTP ${http_code})"
       shell: bash
