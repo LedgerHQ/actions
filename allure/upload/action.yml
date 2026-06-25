@@ -72,23 +72,31 @@ runs:
           echo "  curl exit:  ${curl_rc}"
           echo "  HTTP code:  ${http_code:-<none>}"
           echo "  Zip size:   ${zip_size}"
+          local body="${response_pretty:-${response}}"
           echo "  Response body: (if ACTIONS_STEP_DEBUG is 'true')"
           while IFS= read -r line; do
             echo "::debug::body: ${line}"
-          done <<< "${response:0:2000}"
+          done <<< "${body:0:2000}"
           exit 1
         }
 
         if [[ "${curl_rc}" -ne 0 ]]; then
-          fail "Allure upload failed (curl exit ${curl_rc})"
+          fail "Allure upload failed"
         fi
 
         if [[ -z "${response}" ]]; then
-          fail "Allure server returned empty body (HTTP ${http_code})"
+          fail "Allure server returned empty body"
         fi
 
-        UUID="$(printf '%s' "${response}" | jq -e -r .uuid 2>/dev/null)" \
-          || fail "Allure server reply was not JSON with .uuid (HTTP ${http_code})"
+        response_pretty="$(printf '%s' "${response}" | jq . 2>/dev/null)" || response_pretty=""
+        if [[ -z "${response_pretty}" ]]; then
+          fail "Allure server reply was not valid JSON"
+        fi
+
+        UUID="$(printf '%s' "${response_pretty}" | jq -r '.uuid // empty')"
+        if [[ -z "${UUID}" ]]; then
+          fail "Allure server reply is JSON but has no .uuid field"
+        fi
 
         {
           echo "response<<EOF"
