@@ -36,6 +36,10 @@ runs:
 
     - name: Upload Allure results
       id: upload
+      env:
+        ALLURE_URL: ${{ inputs.url }}
+        ALLURE_USERNAME: ${{ inputs.username }}
+        ALLURE_PASSWORD: ${{ inputs.password }}
       run: |
         : Upload Allure results
 
@@ -46,14 +50,13 @@ runs:
         set +e
         http_code=$(curl --silent --show-error \
           --fail-with-body \
-          --user '${{ inputs.username }}:${{ inputs.password }}' \
+          --user "${ALLURE_USERNAME}:${ALLURE_PASSWORD}" \
           --header 'accept: */*' \
-          --header 'Content-Type: multipart/form-data' \
           --form "allureResults=@${ZIP_PATH};type=application/x-zip-compressed" \
           --output "${BODY_FILE}" \
           --write-out '%{http_code}' \
           --max-time 300 \
-          --request POST '${{ inputs.url }}/api/result')
+          --request POST "${ALLURE_URL}/api/result")
         curl_rc=$?
         set -e
 
@@ -62,15 +65,17 @@ runs:
         fail() {
           local msg="$1"
           local zip_size
-          zip_size=$(du -h "${ZIP_PATH}" 2>/dev/null | cut -f1 || echo "?")
+          zip_size=$(du -h "${ZIP_PATH}" 2>/dev/null | cut -f1)
+          zip_size="${zip_size:-?}"
           echo "::error::${msg}"
-          echo "  URL:        ${{ inputs.url }}/api/result"
+          echo "  URL:        ${ALLURE_URL}/api/result"
           echo "  curl exit:  ${curl_rc}"
           echo "  HTTP code:  ${http_code:-<none>}"
           echo "  Zip size:   ${zip_size}"
-          echo "  Response body (first 2000 bytes):"
-          printf '%s\n' "${response}" | head -c 2000 | sed 's/^/    /'
-          echo
+          echo "  Response body: (if ACTIONS_STEP_DEBUG is 'true')"
+          while IFS= read -r line; do
+            echo "::debug::body: ${line}"
+          done <<< "${response:0:2000}"
           exit 1
         }
 
