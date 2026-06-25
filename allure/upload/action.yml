@@ -36,21 +36,73 @@ runs:
 
     - name: Upload Allure results
       id: upload
+      env:
+        ALLURE_URL: ${{ inputs.url }}
+        ALLURE_USERNAME: ${{ inputs.username }}
+        ALLURE_PASSWORD: ${{ inputs.password }}
       run: |
         : Upload Allure results
-        response=$(\
-          curl -X POST '${{ inputs.url }}/api/result' \
-          --no-progress-meter \
-          --header  "accept: */*" \
-          --header  "Content-Type: multipart/form-data" \
-          --user '${{ inputs.username }}:${{ inputs.password }}' \
-          --form "allureResults=@allure.zip;type=application/x-zip-compressed" \
-        )
-        UUID=$(echo "${response}" | jq -r .uuid)
 
-        echo "response<<EOF" >> $GITHUB_OUTPUT
-        echo "${response}" >> $GITHUB_OUTPUT
-        echo "EOF" >> $GITHUB_OUTPUT
-        echo "uuid=${UUID}" >> $GITHUB_OUTPUT
-        echo "📊 Uploaded result ${UUID}"
+        ZIP_PATH="${{ github.workspace }}/allure.zip"
+        BODY_FILE="$(mktemp)"
+        trap 'rm -f "${BODY_FILE}"' EXIT
+
+        set +e
+        http_code=$(curl --silent --show-error \
+          --fail-with-body \
+          --user "${ALLURE_USERNAME}:${ALLURE_PASSWORD}" \
+          --header 'accept: */*' \
+          --form "allureResults=@${ZIP_PATH};type=application/x-zip-compressed" \
+          --output "${BODY_FILE}" \
+          --write-out '%{http_code}' \
+          --max-time 300 \
+          --request POST "${ALLURE_URL}/api/result")
+        curl_rc=$?
+        set -e
+
+        response="$(cat "${BODY_FILE}")"
+
+        fail() {
+          local msg="$1"
+          local zip_size
+          zip_size=$(du -h "${ZIP_PATH}" 2>/dev/null | cut -f1)
+          zip_size="${zip_size:-?}"
+          echo "::error::${msg}"
+          echo "  URL:        ${ALLURE_URL}/api/result"
+          echo "  curl exit:  ${curl_rc}"
+          echo "  HTTP code:  ${http_code:-<none>}"
+          echo "  Zip size:   ${zip_size}"
+          local body="${response_pretty:-${response}}"
+          echo "  Response body: (if ACTIONS_STEP_DEBUG is 'true')"
+          while IFS= read -r line; do
+            echo "::debug::body: ${line}"
+          done <<< "${body:0:2000}"
+          exit 1
+        }
+
+        if [[ "${curl_rc}" -ne 0 ]]; then
+          fail "Allure upload failed"
+        fi
+
+        if [[ -z "${response}" ]]; then
+          fail "Allure server returned empty body"
+        fi
+
+        response_pretty="$(printf '%s' "${response}" | jq . 2>/dev/null)" || response_pretty=""
+        if [[ -z "${response_pretty}" ]]; then
+          fail "Allure server reply was not valid JSON"
+        fi
+
+        UUID="$(printf '%s' "${response_pretty}" | jq -r '.uuid // empty')"
+        if [[ -z "${UUID}" ]]; then
+          fail "Allure server reply is JSON but has no .uuid field"
+        fi
+
+        {
+          echo "response<<EOF"
+          printf '%s\n' "${response}"
+          echo "EOF"
+          echo "uuid=${UUID}"
+        } >> "${GITHUB_OUTPUT}"
+        echo "📊 Uploaded result ${UUID} (HTTP ${http_code})"
       shell: bash
