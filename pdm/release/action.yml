@@ -250,7 +250,7 @@ runs:
     - name: Github Release
       id: release
       continue-on-error: true  # Can be manually published after
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         body_path: "${{ inputs.working-directory }}/body.md"
         tag_name: ${{ env.TAG }}
