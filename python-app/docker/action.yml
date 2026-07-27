@@ -92,7 +92,7 @@ runs:
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - if: ${{ steps.check-docker.outputs.is-docker-needed == 'true' }}
       name: Set up Docker Buildx
