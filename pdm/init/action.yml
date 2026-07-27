@@ -119,7 +119,7 @@ runs:
 
     - name: Set up Python and PDM
       id: setup-pdm
-      uses: pdm-project/setup-pdm@v4
+      uses: pdm-project/setup-pdm@v4.5
       with:
         python-version: ${{ inputs.python-version }}
         cache: true

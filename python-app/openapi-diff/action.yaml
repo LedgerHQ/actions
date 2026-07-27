@@ -63,7 +63,7 @@ runs:
 
     - name: upgrade dependencies (pdm)
       if: steps.dep_manager.outputs.manager == 'pdm'
-      uses: pdm-project/setup-pdm@v3
+      uses: pdm-project/setup-pdm@v4.5
       with:
         python-version: ${{ inputs.python-version }}
 
