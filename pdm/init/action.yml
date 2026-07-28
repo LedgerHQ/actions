@@ -75,10 +75,10 @@ outputs:
     value: ${{ steps.jfrog-login.outputs.oidc-token }}
   python-version:
     description: The Python version used by this action
-    value: ${{ steps.setup-pdm.outputs.python-version }}
+    value: ${{ steps.setup-pdm.outputs.python-version || steps.setup-uv-pdm.outputs.python-version }}
   pdm-version:
     description: The version of `pdm` used by this action
-    value: ${{ steps.setup-pdm.outputs.pdm-version }}
+    value: ${{ steps.setup-pdm.outputs.pdm-version || steps.setup-uv-pdm.outputs.pdm-version }}
   use_uv:
     description: Whether this project uses uv as PDM backend
     value: ${{ steps.detect.outputs.use_uv }}
@@ -129,6 +129,8 @@ runs:
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
+    # `enable-cache` is explicitly enabled because the default (`auto`) disables caching on self-hosted runners
+    # and the default `cache-dependency-glob` never matches a PDM project.
     - name: Install uv
       if: steps.detect.outputs.use_uv == 'true'
       uses: astral-sh/setup-uv@v7
@@ -136,21 +138,29 @@ runs:
         activate-environment: true
         python-version: ${{ inputs.python-version }}
         working-directory: ${{ inputs.working-directory }}
+        enable-cache: true
+        cache-dependency-glob: ${{ inputs.working-directory }}/pdm.lock
+        cache-suffix: ${{ inputs.python-version }}
+
     - name: Install pdm
+      id: setup-uv-pdm
       if: steps.detect.outputs.use_uv == 'true'
       run: |
+        : Install pdm
         uv pip install pdm
         pdm config python.install_root $(uv python dir --color never)
+        echo "python-version=$(python -c 'import platform; print(platform.python_version())')" >> $GITHUB_OUTPUT
+        echo "pdm-version=$(pdm --version | awk '{print $3}')" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Install uv
-      if: steps.detect.outputs.use_uv == 'true'
-      uses: astral-sh/setup-uv@v7
-
     - name: Set some settings
+      if: steps.detect.outputs.use_uv != 'true'
       working-directory: ${{ inputs.working-directory }}
       run: |
         : Set some settings
+        # Only enabled for the pip/PDM installer: with `uv`, this forces `--link-mode symlink`,
+        # producing a virtualenv made of symlinks into `~/.cache/uv` which breaks as soon as the
+        # virtualenv is reused, cached or uploaded without the `uv` cache.
         pdm config install.cache true
       shell: bash
 
