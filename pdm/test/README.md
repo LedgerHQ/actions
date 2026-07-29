@@ -29,6 +29,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
 | `python-version` | Python version to run the tests with | `""` | `false` |
+| `extra-python-versions` | Additional Python versions to install, one per line, for projects testing against several interpreters (requires `uv`) | `""` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `init` | Clone & sync | `true` | `false` |
 | `parameters` | Some extra parameters to pass to `pdm cover` | `""` | `false` |

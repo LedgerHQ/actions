@@ -4,6 +4,11 @@ description: Execute test using `pdm` scripts
 inputs:
   python-version:
     description: Python version to run the tests with
+  extra-python-versions:
+    description: >-
+      Additional Python versions to install, one per line,
+      for projects testing against several interpreters (requires `uv`)
+    default: ''
   github-token:
     description: A Github token with proper permissions
     default: ${{ github.token }}
@@ -50,6 +55,7 @@ runs:
       uses: LedgerHQ/actions/pdm/init@main
       with:
         python-version: ${{ inputs.python-version }}
+        extra-python-versions: ${{ inputs.extra-python-versions }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         skip-dependencies: ${{ inputs.report-only }}
@@ -177,7 +183,7 @@ runs:
       run: |
         : Merge reports
         echo "Install merge tooling"
-        pip install coverage[toml] junitparser
+        ${PIP:-pip} install coverage[toml] junitparser
         echo "Merge JUnit reports"
         junitparser merge --glob reports/junit.*.xml reports/junit.xml
         echo "Combine coverage report"

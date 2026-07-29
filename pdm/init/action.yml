@@ -6,7 +6,14 @@ inputs:
     description: Working directory for the project (relative to repo root)
     default: '.'
   python-version:
-    description: Python version to use
+    description: >-
+      Python version to use
+      (defaults to `.python-version` if present, else to the lower bound of `requires-python`)
+  extra-python-versions:
+    description: >-
+      Additional Python versions to install, one per line,
+      for projects testing against several interpreters (requires `uv`)
+    default: ''
   group:
     description: Dependency group(s) to install
     default: ''
@@ -23,6 +30,9 @@ inputs:
     default: ${{ github.token }}
   skip-dependencies:
     description: Skip dependencies installation
+  cache:
+    description: Cache the dependencies (only used when dependencies are installed)
+    default: 'true'
 
 outputs:
   identifier:
@@ -75,10 +85,10 @@ outputs:
     value: ${{ steps.jfrog-login.outputs.oidc-token }}
   python-version:
     description: The Python version used by this action
-    value: ${{ steps.setup-pdm.outputs.python-version }}
+    value: ${{ steps.setup-pdm.outputs.python-version || steps.setup-uv-pdm.outputs.python-version }}
   pdm-version:
     description: The version of `pdm` used by this action
-    value: ${{ steps.setup-pdm.outputs.pdm-version }}
+    value: ${{ steps.setup-pdm.outputs.pdm-version || steps.setup-uv-pdm.outputs.pdm-version }}
   use_uv:
     description: Whether this project uses uv as PDM backend
     value: ${{ steps.detect.outputs.use_uv }}
@@ -110,6 +120,18 @@ runs:
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
         USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml || true)
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
+        # If `uv` is enabled, we will use it to manually install dependencies, otherwise we'll use `pip`.
+        echo "PIP=$([[ ${USE_UV} = true ]] && echo 'uv pip' || echo 'pip')" >> $GITHUB_ENV
+        # Without an explicit version nor a `.python-version` file (which `uv` honors on its own),
+        # fallback on the lower bound of `requires-python`: it is deterministic and libraries are
+        # set up on their minimal supported version.
+        if [ -z "${PYTHON_VERSION}" ] && [ ! -f .python-version ] && [ ! -f "${GITHUB_WORKSPACE}/.python-version" ]; then
+          # Never fail on projects without a parseable `requires-python`: `uv` will resolve it
+          PYTHON_VERSION=$(yq -p toml -oy '.project.requires-python' "${PYPROJECT}" | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)
+        fi
+        echo "python-version=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
       shell: bash
 
     - name: Authenticate against JFrog Artifactory
@@ -119,20 +141,55 @@ runs:
 
     - name: Set up Python and PDM
       id: setup-pdm
+      if: steps.detect.outputs.use_uv != 'true'
       uses: pdm-project/setup-pdm@v4.5
       with:
         python-version: ${{ inputs.python-version }}
-        cache: true
+        cache: ${{ inputs.cache }}
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
+    # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
+    # Caching is explicitly disabled: the GitHub Actions cache is served at ~2 MB/s from our self-hosted
+    # runners and `setup-uv` prunes the wheel archives anyway, so it measured no gain over fetching from JFrog.
     - name: Install uv
       if: steps.detect.outputs.use_uv == 'true'
       uses: astral-sh/setup-uv@v7
+      with:
+        activate-environment: true
+        python-version: ${{ steps.detect.outputs.python-version }}
+        working-directory: ${{ inputs.working-directory }}
+        enable-cache: false
+
+    # `uv python install` also exposes `pythonX.Y` executables in `~/.local/bin`,
+    # so they are discoverable by `pdm` too.
+    - name: Install extra Python versions
+      if: steps.detect.outputs.use_uv == 'true' && inputs.extra-python-versions
+      run: |
+        : Install extra Python versions
+        uv python install ${EXTRA_PYTHON_VERSIONS}
+      env:
+        EXTRA_PYTHON_VERSIONS: ${{ inputs.extra-python-versions }}
+      shell: bash
+
+    - name: Install pdm
+      id: setup-uv-pdm
+      if: steps.detect.outputs.use_uv == 'true'
+      run: |
+        : Install pdm
+        uv pip install pdm
+        pdm config python.install_root $(uv python dir --color never)
+        echo "python-version=$(python -c 'import platform; print(platform.python_version())')" >> $GITHUB_OUTPUT
+        echo "pdm-version=$(pdm --version | awk '{print $3}')" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Set some settings
+      if: steps.detect.outputs.use_uv != 'true'
       working-directory: ${{ inputs.working-directory }}
       run: |
         : Set some settings
+        # Only enabled for the pip/PDM installer: with `uv`, this forces `--link-mode symlink`,
+        # producing a virtualenv made of symlinks into `~/.cache/uv` which breaks as soon as the
+        # virtualenv is reused, cached or uploaded without the `uv` cache.
         pdm config install.cache true
       shell: bash
 
