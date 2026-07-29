@@ -6,7 +6,9 @@ inputs:
     description: Working directory for the project (relative to repo root)
     default: '.'
   python-version:
-    description: Python version to use (defaults to the lower bound of `requires-python`)
+    description: >-
+      Python version to use
+      (defaults to `.python-version` if present, else to the lower bound of `requires-python`)
   extra-python-versions:
     description: >-
       Additional Python versions to install, one per line,
@@ -117,9 +119,12 @@ runs:
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
         # If `uv` is enabled, we will use it to manually install dependencies, otherwise we'll use `pip`.
         echo "PIP=$([[ ${USE_UV} = true ]] && echo 'uv pip' || echo 'pip')" >> $GITHUB_ENV
-        # Without an explicit version, fallback on the lower bound of `requires-python`:
-        # it is deterministic and libraries are set up on their minimal supported version.
-        PYTHON_VERSION="${PYTHON_VERSION:-$(yq -p toml -oy '.project.requires-python' "${PYPROJECT}" | grep -oE '[0-9]+\.[0-9]+' | head -1)}"
+        # Without an explicit version nor a `.python-version` file (which `uv` honors on its own),
+        # fallback on the lower bound of `requires-python`: it is deterministic and libraries are
+        # set up on their minimal supported version.
+        if [ -z "${PYTHON_VERSION}" ] && [ ! -f .python-version ] && [ ! -f "${GITHUB_WORKSPACE}/.python-version" ]; then
+          PYTHON_VERSION=$(yq -p toml -oy '.project.requires-python' "${PYPROJECT}" | grep -oE '[0-9]+\.[0-9]+' | head -1)
+        fi
         echo "python-version=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
