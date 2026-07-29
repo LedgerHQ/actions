@@ -129,8 +129,8 @@ runs:
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
-    # `enable-cache` is explicitly enabled because the default (`auto`) disables caching on self-hosted runners
-    # and the default `cache-dependency-glob` never matches a PDM project.
+    # Caching is explicitly disabled: the GitHub Actions cache is served at ~2 MB/s from our self-hosted
+    # runners and `setup-uv` prunes the wheel archives anyway, so it measured no gain over fetching from JFrog.
     - name: Install uv
       if: steps.detect.outputs.use_uv == 'true'
       uses: astral-sh/setup-uv@v7
@@ -138,9 +138,7 @@ runs:
         activate-environment: true
         python-version: ${{ inputs.python-version }}
         working-directory: ${{ inputs.working-directory }}
-        enable-cache: true
-        cache-dependency-glob: ${{ inputs.working-directory }}/pdm.lock
-        cache-suffix: ${{ inputs.python-version }}
+        enable-cache: false
 
     - name: Install pdm
       id: setup-uv-pdm
