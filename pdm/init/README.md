@@ -51,7 +51,8 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
 | `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
-| `python-version` | Python version to use | `""` | `false` |
+| `python-version` | Python version to use (defaults to the lower bound of `requires-python`) | `""` | `false` |
+| `extra-python-versions` | Additional Python versions to install, one per line, for projects testing against several interpreters (requires `uv`) | `""` | `false` |
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
 | `history` | Fetch the full history | `false` | `false` |

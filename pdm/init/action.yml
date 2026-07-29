@@ -6,7 +6,12 @@ inputs:
     description: Working directory for the project (relative to repo root)
     default: '.'
   python-version:
-    description: Python version to use
+    description: Python version to use (defaults to the lower bound of `requires-python`)
+  extra-python-versions:
+    description: >-
+      Additional Python versions to install, one per line,
+      for projects testing against several interpreters (requires `uv`)
+    default: ''
   group:
     description: Dependency group(s) to install
     default: ''
@@ -112,6 +117,12 @@ runs:
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
         # If `uv` is enabled, we will use it to manually install dependencies, otherwise we'll use `pip`.
         echo "PIP=$([[ ${USE_UV} = true ]] && echo 'uv pip' || echo 'pip')" >> $GITHUB_ENV
+        # Without an explicit version, fallback on the lower bound of `requires-python`:
+        # it is deterministic and libraries are set up on their minimal supported version.
+        PYTHON_VERSION="${PYTHON_VERSION:-$(yq -p toml -oy '.project.requires-python' "${PYPROJECT}" | grep -oE '[0-9]+\.[0-9]+' | head -1)}"
+        echo "python-version=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
+      env:
+        PYTHON_VERSION: ${{ inputs.python-version }}
       shell: bash
 
     - name: Authenticate against JFrog Artifactory
@@ -136,9 +147,20 @@ runs:
       uses: astral-sh/setup-uv@v7
       with:
         activate-environment: true
-        python-version: ${{ inputs.python-version }}
+        python-version: ${{ steps.detect.outputs.python-version }}
         working-directory: ${{ inputs.working-directory }}
         enable-cache: false
+
+    # `uv python install` also exposes `pythonX.Y` executables in `~/.local/bin`,
+    # so they are discoverable by `pdm` too.
+    - name: Install extra Python versions
+      if: steps.detect.outputs.use_uv == 'true' && inputs.extra-python-versions
+      run: |
+        : Install extra Python versions
+        uv python install ${EXTRA_PYTHON_VERSIONS}
+      env:
+        EXTRA_PYTHON_VERSIONS: ${{ inputs.extra-python-versions }}
+      shell: bash
 
     - name: Install pdm
       id: setup-uv-pdm
