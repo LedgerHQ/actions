@@ -183,7 +183,7 @@ runs:
       run: |
         : Merge reports
         echo "Install merge tooling"
-        ${PIP} install coverage[toml] junitparser
+        ${PIP:-pip} install coverage[toml] junitparser
         echo "Merge JUnit reports"
         junitparser merge --glob reports/junit.*.xml reports/junit.xml
         echo "Combine coverage report"
