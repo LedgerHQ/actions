@@ -3,7 +3,7 @@ description: Lint running pre-commit hooks
 
 inputs:
   init:
-    description: Whether to skip the initialization or not
+    description: Clone the repository and set up Python and `pdm` (disable it if already done)
     default: 'true'
   setup:
     description: DEPRECATED (Use `init` instead)

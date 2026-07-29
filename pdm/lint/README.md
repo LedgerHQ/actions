@@ -16,7 +16,7 @@ jobs:
 
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
-| `init` | Whether to skip the initialization or not | `true` | `false` |
+| `init` | Clone the repository and set up Python and `pdm` (disable it if already done) | `true` | `false` |
 | `setup` | DEPRECATED (Use `init` instead) | `""` | `false` |
 | `install` | Install the project dependencies, only required by hooks relying on the project environment (`repo: local`, `language: system`) | `false` | `false` |
 | `working-directory` | Working directory for the project (relative to repo root) | `.` | `false` |
