@@ -6,7 +6,7 @@ inputs:
     description: Whether to skip the initialization or not
     default: 'true'
   setup:
-    description: 'Deprecated: use `init` instead'
+    description: DEPRECATED (Use `init` instead)
     default: ''
   install:
     description: >-
@@ -22,6 +22,13 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Handle deprecations
+      run: |
+        : Handle deprecations
+        if [ "${{ inputs.setup }}" != "" ]; then
+          echo "⚠️ \`setup\` input is deprecated, use the \`init\` input instead"
+        fi
+      shell: bash
     # Hooks are self-contained by default, so dependencies (and their cache) are skipped:
     # they cost more than the linting itself.
     - name: Clone and install dependencies
