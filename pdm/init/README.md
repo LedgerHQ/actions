@@ -58,6 +58,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `history` | Fetch the full history | `false` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `skip-dependencies` | Skip dependencies installation | `""` | `false` |
+| `cache` | Cache the dependencies (only used when dependencies are installed) | `true` | `false` |
 
 ## Environment variables
 

@@ -30,6 +30,9 @@ inputs:
     default: ${{ github.token }}
   skip-dependencies:
     description: Skip dependencies installation
+  cache:
+    description: Cache the dependencies (only used when dependencies are installed)
+    default: 'true'
 
 outputs:
   identifier:
@@ -142,7 +145,7 @@ runs:
       uses: pdm-project/setup-pdm@v4.5
       with:
         python-version: ${{ inputs.python-version }}
-        cache: true
+        cache: ${{ inputs.cache }}
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.

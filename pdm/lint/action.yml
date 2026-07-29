@@ -5,6 +5,14 @@ inputs:
   init:
     description: Whether to skip the initialization or not
     default: 'true'
+  setup:
+    description: 'Deprecated: use `init` instead'
+    default: ''
+  install:
+    description: >-
+      Install the project dependencies,
+      only required by hooks relying on the project environment (`repo: local`, `language: system`)
+    default: 'false'
   working-directory:
     description: Working directory for the project (relative to repo root)
     default: '.'
@@ -14,13 +22,17 @@ inputs:
 runs:
   using: composite
   steps:
+    # Hooks are self-contained by default, so dependencies (and their cache) are skipped:
+    # they cost more than the linting itself.
     - name: Clone and install dependencies
-      if: inputs.init == 'true'
+      if: inputs.init == 'true' && inputs.setup != 'false'
       id: meta
       uses: LedgerHQ/actions/pdm/init@main
       with:
         python-version: ${{ inputs.python-version }}
         group: lint
         working-directory: ${{ inputs.working-directory }}
+        skip-dependencies: ${{ inputs.install == 'true' && '' || 'true' }}
+        cache: ${{ inputs.install }}
     - name: Lint with `prek`
       uses: j178/prek-action@v2
