@@ -31,7 +31,9 @@ inputs:
   skip-dependencies:
     description: Skip dependencies installation
   cache:
-    description: Cache the dependencies (only used when dependencies are installed)
+    description: >-
+      Cache the dependencies (only used when dependencies are installed,
+      and ignored on self-hosted runners where the GitHub Actions cache is slower than fetching from JFrog)
     default: 'true'
 
 outputs:
@@ -145,12 +147,14 @@ runs:
       uses: pdm-project/setup-pdm@v4.5
       with:
         python-version: ${{ inputs.python-version }}
-        cache: ${{ inputs.cache }}
+        # The GitHub Actions cache is served at ~2 MB/s from our self-hosted runners,
+        # making it slower than fetching from JFrog, so it is only enabled on GitHub-hosted ones.
+        cache: ${{ inputs.cache == 'true' && runner.environment == 'github-hosted' }}
         cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
 
     # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
-    # Caching is explicitly disabled: the GitHub Actions cache is served at ~2 MB/s from our self-hosted
-    # runners and `setup-uv` prunes the wheel archives anyway, so it measured no gain over fetching from JFrog.
+    # Caching is explicitly disabled: on top of the slow self-hosted cache described above,
+    # `setup-uv` prunes the wheel archives anyway, so it measured no gain over fetching from JFrog.
     - name: Install uv
       if: steps.detect.outputs.use_uv == 'true'
       uses: astral-sh/setup-uv@v7

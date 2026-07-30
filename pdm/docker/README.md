@@ -25,6 +25,12 @@ packages: write      # Docker image publication on ghcr
 
 See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/actions/tree/main/pdm#jfrog-artifactory)
 
+## Layer caching
+
+Docker layer caching (`type=gha`) is only enabled on GitHub-hosted runners:
+the GitHub Actions cache is served at ~2 MB/s from our self-hosted runners,
+so saving/restoring layers costs more than rebuilding them.
+
 ## Inputs
 
 | Input | Description | Default | Required |

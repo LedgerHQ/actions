@@ -74,16 +74,6 @@ runs:
         username: ${{ env.JFROG_USER }}
         password: ${{ env.JFROG_TOKEN }}
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v4
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v4
-      with:
-        # Default behavior is to use the latest available version on the runner
-        # but the runner version is too old to handle GHA new cache
-        # cf. https://github.com/docker/build-push-action/issues/1345#issuecomment-2770572479
-        version: latest
-
     - name: Compute some variables
       id: vars
       run: |
@@ -102,6 +92,12 @@ runs:
         echo "has_docker=${HAS_DOCKER}" >> $GITHUB_OUTPUT
         [ -f "${GOSSPATH}/goss.yaml" ] && HAS_GOSS='true' || HAS_GOSS='false'
         echo "has_goss=${HAS_GOSS}" >> $GITHUB_OUTPUT
+
+        # The GitHub Actions cache is served at ~2 MB/s from our self-hosted runners:
+        # saving/restoring layers costs more than rebuilding them.
+        [ "${RUNNER_ENVIRONMENT}" = "github-hosted" ] && USE_GHA_CACHE='true' || USE_GHA_CACHE='false'
+        echo "use_gha_cache=${USE_GHA_CACHE}" >> $GITHUB_OUTPUT
+
         echo "images<<EOF" >> $GITHUB_OUTPUT
         if [ -n "${JFROG_DOCKER_REPOSITORY}" ]; then
           JFROG_IMAGE=${JFROG_DOMAIN}/${JFROG_DOCKER_REPOSITORY}/${NAME}
@@ -118,6 +114,17 @@ runs:
         fi
 
       shell: bash
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+      with:
+        # Default behavior is to use the latest available version on the runner
+        # but the runner version is too old to handle GHA new cache
+        # cf. https://github.com/docker/build-push-action/issues/1345#issuecomment-2770572479
+        # Only needed when the GHA cache is actually used, downloading it is pure overhead otherwise.
+        version: ${{ steps.vars.outputs.use_gha_cache == 'true' && 'latest' || '' }}
 
     - name: Compute docker metadata
       id: meta
@@ -157,8 +164,8 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
-        cache-from: type=gha,scope=pdm-docker-build-${{ github.repository }}-${{ github.ref_name }}
-        cache-to: type=gha,mode=min,scope=pdm-docker-build-${{ github.repository }}-${{ github.ref_name }}
+        cache-from: ${{ steps.vars.outputs.use_gha_cache == 'true' && format('type=gha,scope=pdm-docker-build-{0}-{1}', github.repository, github.ref_name) || '' }}
+        cache-to: ${{ steps.vars.outputs.use_gha_cache == 'true' && format('type=gha,mode=min,scope=pdm-docker-build-{0}-{1}', github.repository, github.ref_name) || '' }}
 
     - name: Install goss
       uses: e1himself/goss-installation-action@v1.3.0
@@ -209,8 +216,8 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
-        cache-from: type=gha,scope=pdm-docker-push-${{ github.repository }}-${{ github.ref_name }}
-        cache-to: type=gha,mode=min,scope=pdm-docker-push-${{ github.repository }}-${{ github.ref_name }}
+        cache-from: ${{ steps.vars.outputs.use_gha_cache == 'true' && format('type=gha,scope=pdm-docker-push-{0}-{1}', github.repository, github.ref_name) || '' }}
+        cache-to: ${{ steps.vars.outputs.use_gha_cache == 'true' && format('type=gha,mode=min,scope=pdm-docker-push-{0}-{1}', github.repository, github.ref_name) || '' }}
 
     - name: Attest Docker image for JFrog Artifactory
       if: env.JFROG_DOCKER_REPOSITORY
