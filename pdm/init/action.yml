@@ -144,7 +144,7 @@ runs:
     - name: Set up Python and PDM
       id: setup-pdm
       if: steps.detect.outputs.use_uv != 'true'
-      uses: pdm-project/setup-pdm@v4.5
+      uses: pdm-project/setup-pdm@v4.6
       with:
         python-version: ${{ inputs.python-version }}
         # The GitHub Actions cache is served at ~2 MB/s from our self-hosted runners,
