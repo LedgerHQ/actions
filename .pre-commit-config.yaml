@@ -22,7 +22,7 @@ repos:
       - id: check-merge-conflict
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.4
+    rev: 0.38.0
     hooks:
       - id: check-github-actions
         files: ^(.+/)action.ya?ml$
@@ -44,6 +44,6 @@ repos:
       additional_dependencies: [markdownlint-cli2-formatter-pretty]
 
   - repo: https://github.com/editorconfig-checker/editorconfig-checker.python
-    rev: 3.6.1
+    rev: 3.11.1
     hooks:
     -   id: editorconfig-checker
