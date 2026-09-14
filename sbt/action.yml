@@ -13,10 +13,6 @@ inputs:
     description: Java distribution
     required: true
     default: zulu
-  retries:
-    description: Number of attempts for the SBT run (with backoff). Use more than one to absorb flaky network or node failures.
-    required: true
-    default: "1"
   fail-on-missing-link-warnings:
     description: Fail when MissingLink reports unresolved parent classes as warnings.
     required: true
@@ -25,16 +21,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Validate inputs
-      shell: bash
-      env:
-        RETRIES: ${{ inputs.retries }}
-      run: |
-        if ! [[ "$RETRIES" =~ ^[1-9][0-9]*$ ]]; then
-          echo "::error::retries must be a positive base-10 integer"
-          exit 1
-        fi
-
     - name: Setup Java
       uses: actions/setup-java@v4
       with:
@@ -61,32 +47,19 @@ runs:
       env:
         COMMAND: ${{ inputs.command }}
         FAIL_ON_MISSING_LINK_WARNINGS: ${{ inputs.fail-on-missing-link-warnings }}
-        RETRIES: ${{ inputs.retries }}
       run: |
         set -o pipefail
         log_file=$(mktemp)
         trap 'rm -f "$log_file"' EXIT
-        for ((attempt = 1; attempt <= RETRIES; attempt++)); do
-          echo "::group::sbt run attempt $attempt/$RETRIES"
-          : > "$log_file"
-          if sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
-            echo "::endgroup::"
-            if [ "$FAIL_ON_MISSING_LINK_WARNINGS" = "true" ] \
-              && grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
-              echo "::error::MissingLink found unresolved runtime parent classes"
-              exit 1
-            fi
-            exit 0
-          fi
-          echo "::endgroup::"
-          if [ "$attempt" -lt "$RETRIES" ]; then
-            sleep_time=$((attempt * 15))
-            echo "::warning::sbt run attempt $attempt failed, retrying in ${sleep_time}s..."
-            sleep "$sleep_time"
-          fi
-        done
-        echo "::error::sbt run failed after $RETRIES attempt(s)"
-        exit 1
+        if ! sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+          echo "::error::sbt run failed"
+          exit 1
+        fi
+        if [ "$FAIL_ON_MISSING_LINK_WARNINGS" = "true" ] \
+          && grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
+          echo "::error::MissingLink found unresolved runtime parent classes"
+          exit 1
+        fi
 
     - name: Save sbt build outputs
       uses: actions/cache/save@v4

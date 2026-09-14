@@ -26,7 +26,6 @@ Sets up Java and SBT, restores Atlas-style content-hashed build outputs, runs a 
 | `command` | SBT command or commands to run. | Required |
 | `java-version` | Java version installed by `actions/setup-java`. | `21` |
 | `java-distribution` | Java distribution installed by `actions/setup-java`. | `zulu` |
-| `retries` | Number of SBT run attempts, with a 15-second incremental backoff. | `1` |
 | `fail-on-missing-link-warnings` | Fail a successful command when MissingLink logs an unresolved parent-class warning. | `false` |
 
 ## Cache behavior
