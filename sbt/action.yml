@@ -27,6 +27,7 @@ runs:
       uses: sbt/setup-sbt@v1
 
     - name: Restore sbt build outputs
+      id: restore-sbt-build-outputs
       uses: actions/cache/restore@v4
       with:
         path: |
@@ -50,4 +51,4 @@ runs:
           ${{ github.workspace }}/**/target
           ~/.ivy2/local
           ~/.cache/scalablytyped
-        key: build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/**', '**/*.scala', '**/*.sbt') }}
+        key: ${{ steps.restore-sbt-build-outputs.outputs.cache-primary-key }}
