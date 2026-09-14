@@ -1,28 +1,33 @@
-# MissingLink check action
+# MissingLink output check action
 
-Runs an SBT MissingLink check and fails when the command exits unsuccessfully or MissingLink reports an unresolved runtime parent class as a warning.
+Checks an existing SBT output log and fails when MissingLink reports an unresolved runtime parent class as a warning. This action does not install Java, run SBT, or manage caches.
 
 ## Usage
 
 ```yaml
 - uses: actions/checkout@v7
 
-- name: Check runtime binary compatibility
-  uses: LedgerHQ/actions/sbt/missinglink@main
+- name: Run MissingLink
+  id: missinglink
+  uses: LedgerHQ/actions/sbt@main
   with:
     command: a4-bitcoin/Runtime/missinglinkCheck
+    java-version: "19"
+
+- name: Check MissingLink output
+  uses: LedgerHQ/actions/sbt/missinglink@main
+  with:
+    log-file: ${{ steps.missinglink.outputs.log-file }}
 ```
 
 ## Requirements
 
-- Check out the SBT project before invoking the action.
+- Produce the log before invoking the action. `LedgerHQ/actions/sbt` exposes a compatible `log-file` output.
 
 ## Inputs
 
 | Input | Description | Default |
 | --- | --- | --- |
-| `command` | MissingLink SBT command to run, including its project and configuration scope. | Required |
-| `java-version` | Java version installed by `actions/setup-java`. | `19` |
-| `java-distribution` | Java distribution installed by `actions/setup-java`. | `zulu` |
+| `log-file` | Path to the captured MissingLink SBT output. | Required |
 
-The action uses A4's warning check exactly: it fails if SBT output contains a line matching `Warning: Cannot find parent ... of class ...`, even when the MissingLink task itself exits successfully.
+The action uses A4's warning check exactly: it fails if the log contains a line matching `Warning: Cannot find parent ... of class ...`.

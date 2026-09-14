@@ -13,6 +13,12 @@ inputs:
     description: Java distribution
     required: true
     default: zulu
+
+outputs:
+  log-file:
+    description: Absolute path to the captured SBT output
+    value: ${{ steps.run-sbt.outputs.log-file }}
+
 runs:
   using: composite
   steps:
@@ -39,10 +45,18 @@ runs:
           build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-
 
     - name: Run sbt
+      id: run-sbt
       shell: bash
       env:
         COMMAND: ${{ inputs.command }}
-      run: sbt -v "$COMMAND"
+      run: |
+        set -o pipefail
+        log_file=$(mktemp "${RUNNER_TEMP}/sbt-output.XXXXXX")
+        echo "log-file=$log_file" >> "$GITHUB_OUTPUT"
+        if ! sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+          echo "::error::sbt run failed"
+          exit 1
+        fi
 
     - name: Save sbt build outputs
       uses: actions/cache/save@v4

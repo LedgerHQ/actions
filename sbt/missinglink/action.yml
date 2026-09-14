@@ -1,66 +1,24 @@
-name: MissingLink check
-description: Run an SBT MissingLink check and fail on unresolved runtime parent classes
+name: MissingLink output check
+description: Fail when captured MissingLink output reports unresolved runtime parent classes
 
 inputs:
-  command:
-    description: MissingLink SBT command to run
+  log-file:
+    description: Path to an SBT output log
     required: true
-  java-version:
-    description: Java version
-    required: true
-    default: "19"
-  java-distribution:
-    description: Java distribution
-    required: true
-    default: zulu
 
 runs:
   using: composite
   steps:
-    - name: Setup Java
-      uses: actions/setup-java@v4
-      with:
-        distribution: ${{ inputs.java-distribution }}
-        java-version: ${{ inputs.java-version }}
-        cache: sbt
-
-    - name: Setup sbt launcher
-      uses: sbt/setup-sbt@v1
-
-    - name: Restore sbt build outputs
-      id: restore-sbt-build-outputs
-      uses: actions/cache/restore@v4
-      with:
-        path: |
-          ${{ github.workspace }}/**/target
-          ~/.ivy2/local
-          ~/.cache/scalablytyped
-        key: build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/**', '**/*.scala', '**/*.sbt') }}
-        restore-keys: |
-          build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-
-
-    - name: Run MissingLink
+    - name: Check MissingLink output
       shell: bash
       env:
-        COMMAND: ${{ inputs.command }}
+        LOG_FILE: ${{ inputs.log-file }}
       run: |
-        set -o pipefail
-        log_file=$(mktemp)
-        trap 'rm -f "$log_file"' EXIT
-        if ! sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
-          echo "::error::sbt run failed"
+        if [ ! -f "$LOG_FILE" ]; then
+          echo "::error::SBT output log not found: $LOG_FILE"
           exit 1
         fi
-        if grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
+        if grep -q '^Warning: Cannot find parent .* of class ' "$LOG_FILE"; then
           echo "::error::MissingLink found unresolved runtime parent classes"
           exit 1
         fi
-
-    - name: Save sbt build outputs
-      uses: actions/cache/save@v4
-      with:
-        path: |
-          ${{ github.workspace }}/**/target
-          ~/.ivy2/local
-          ~/.cache/scalablytyped
-        key: ${{ steps.restore-sbt-build-outputs.outputs.cache-primary-key }}
