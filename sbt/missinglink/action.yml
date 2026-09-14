@@ -1,18 +1,19 @@
-name: SBT build
-description: Set up and run an SBT build
+name: MissingLink check
+description: Run an SBT MissingLink check and fail on unresolved runtime parent classes
 
 inputs:
   command:
-    description: SBT command(s) to run
+    description: MissingLink SBT command to run
     required: true
   java-version:
     description: Java version
     required: true
-    default: "21"
+    default: "19"
   java-distribution:
     description: Java distribution
     required: true
     default: zulu
+
 runs:
   using: composite
   steps:
@@ -37,11 +38,22 @@ runs:
         restore-keys: |
           build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-
 
-    - name: Run sbt
+    - name: Run MissingLink
       shell: bash
       env:
         COMMAND: ${{ inputs.command }}
-      run: sbt -v "$COMMAND"
+      run: |
+        set -o pipefail
+        log_file=$(mktemp)
+        trap 'rm -f "$log_file"' EXIT
+        if ! sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+          echo "::error::sbt run failed"
+          exit 1
+        fi
+        if grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
+          echo "::error::MissingLink found unresolved runtime parent classes"
+          exit 1
+        fi
 
     - name: Save sbt build outputs
       uses: actions/cache/save@v4

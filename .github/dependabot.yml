@@ -544,6 +544,18 @@ updates:
       prefix: "ci"
       include: "scope"
   -
+    # Maintain dependencies for sbt/missinglink
+    package-ecosystem: github-actions
+    directory: /sbt/missinglink
+    schedule:
+      interval: daily
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+  -
     # Maintain dependencies for site/cascade-merge
     package-ecosystem: github-actions
     directory: /site/cascade-merge
