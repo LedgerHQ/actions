@@ -1,5 +1,5 @@
 name: SBT build
-description: Setup and run an SBT build
+description: Set up and run an SBT build
 
 inputs:
   command:
@@ -8,13 +8,13 @@ inputs:
   java-version:
     description: Java version
     required: true
-    default: "19"
+    default: "21"
   java-distribution:
     description: Java distribution
     required: true
     default: zulu
   retries:
-    description: Number of attempts for SBT bootstrap and run (with backoff). Use more than one to absorb flaky network or node failures.
+    description: Number of attempts for the SBT run (with backoff). Use more than one to absorb flaky network or node failures.
     required: true
     default: "1"
   fail-on-missing-link-warnings:
@@ -36,7 +36,7 @@ runs:
         fi
 
     - name: Setup Java
-      uses: actions/setup-java@v5
+      uses: actions/setup-java@v4
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
@@ -45,39 +45,16 @@ runs:
     - name: Setup sbt launcher
       uses: sbt/setup-sbt@v1
 
-    - name: Cache sbt build outputs
-      uses: actions/cache@v5
+    - name: Restore sbt build outputs
+      uses: actions/cache/restore@v4
       with:
         path: |
-          **/target
-          !project/target/**
-          **/avro
+          ${{ github.workspace }}/**/target
           ~/.ivy2/local
-        key: sbt-build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/*.sbt', 'project/build.properties') }}
+          ~/.cache/scalablytyped
+        key: build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/**', '**/*.scala', '**/*.sbt') }}
         restore-keys: |
-          sbt-build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-
-
-    - name: Bootstrap sbt
-      shell: bash
-      env:
-        RETRIES: ${{ inputs.retries }}
-      run: |
-        for ((attempt = 1; attempt <= RETRIES; attempt++)); do
-          echo "::group::sbt bootstrap attempt $attempt/$RETRIES"
-          if sbt --version 2>&1; then
-            echo "::endgroup::"
-            echo "sbt bootstrapped successfully"
-            exit 0
-          fi
-          echo "::endgroup::"
-          if [ "$attempt" -lt "$RETRIES" ]; then
-            sleep_time=$((attempt * 15))
-            echo "::warning::sbt bootstrap attempt $attempt failed, retrying in ${sleep_time}s..."
-            sleep "$sleep_time"
-          fi
-        done
-        echo "::error::sbt bootstrap failed after $RETRIES attempt(s)"
-        exit 1
+          build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-
 
     - name: Run sbt
       shell: bash
@@ -86,6 +63,7 @@ runs:
         FAIL_ON_MISSING_LINK_WARNINGS: ${{ inputs.fail-on-missing-link-warnings }}
         RETRIES: ${{ inputs.retries }}
       run: |
+        set -o pipefail
         log_file=$(mktemp)
         trap 'rm -f "$log_file"' EXIT
         for ((attempt = 1; attempt <= RETRIES; attempt++)); do
@@ -109,3 +87,12 @@ runs:
         done
         echo "::error::sbt run failed after $RETRIES attempt(s)"
         exit 1
+
+    - name: Save sbt build outputs
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ github.workspace }}/**/target
+          ~/.ivy2/local
+          ~/.cache/scalablytyped
+        key: build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/**', '**/*.scala', '**/*.sbt') }}
