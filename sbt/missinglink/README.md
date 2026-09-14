@@ -20,4 +20,4 @@ The default command is `Runtime/missinglinkCheck`. Override it when the MissingL
 | `command` | MissingLink SBT command to run. | `Runtime/missinglinkCheck` |
 | `java-version` | Java version installed by `actions/setup-java`. | `19` |
 | `java-distribution` | Java distribution installed by `actions/setup-java`. | `zulu` |
-| `retries` | Number of SBT run attempts, with a 15-second incremental backoff. | `1` |
+| `retries` | Number of SBT bootstrap and run attempts, with a 15-second incremental backoff. | `1` |

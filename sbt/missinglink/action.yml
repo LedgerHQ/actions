@@ -15,7 +15,7 @@ inputs:
     required: true
     default: zulu
   retries:
-    description: Number of attempts for the SBT run (with backoff)
+    description: Number of attempts for SBT bootstrap and run (with backoff)
     required: true
     default: "1"
 
@@ -46,22 +46,24 @@ runs:
 
     - name: Bootstrap sbt
       shell: bash
+      env:
+        RETRIES: ${{ inputs.retries }}
       run: |
-        for attempt in 1 2 3; do
-          echo "::group::sbt bootstrap attempt $attempt/3"
+        for attempt in $(seq 1 "$RETRIES"); do
+          echo "::group::sbt bootstrap attempt $attempt/$RETRIES"
           if sbt --version 2>&1; then
             echo "::endgroup::"
             echo "sbt bootstrapped successfully"
             exit 0
           fi
           echo "::endgroup::"
-          if [ "$attempt" -lt 3 ]; then
+          if [ "$attempt" -lt "$RETRIES" ]; then
             sleep_time=$((attempt * 15))
             echo "::warning::sbt bootstrap attempt $attempt failed, retrying in ${sleep_time}s..."
             sleep "$sleep_time"
           fi
         done
-        echo "::error::sbt bootstrap failed after 3 attempts"
+        echo "::error::sbt bootstrap failed after $RETRIES attempt(s)"
         exit 1
 
     - name: Run MissingLink
