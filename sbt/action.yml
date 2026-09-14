@@ -13,10 +13,6 @@ inputs:
     description: Java distribution
     required: true
     default: zulu
-  background:
-    description: Fork in background
-    required: true
-    default: "false"
   retries:
     description: Number of attempts for SBT bootstrap and run (with backoff). Use more than one to absorb flaky network or node failures.
     required: true
@@ -29,6 +25,16 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Validate inputs
+      shell: bash
+      env:
+        RETRIES: ${{ inputs.retries }}
+      run: |
+        if ! [[ "$RETRIES" =~ ^[1-9][0-9]*$ ]]; then
+          echo "::error::retries must be a positive base-10 integer"
+          exit 1
+        fi
+
     - name: Setup Java
       uses: actions/setup-java@v5
       with:
@@ -47,16 +53,16 @@ runs:
           !project/target/**
           **/avro
           ~/.ivy2/local
-        key: sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/*.sbt', 'project/build.properties') }}
+        key: sbt-build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/*.sbt', 'project/build.properties') }}
         restore-keys: |
-          sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-
+          sbt-build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-
 
     - name: Bootstrap sbt
       shell: bash
       env:
         RETRIES: ${{ inputs.retries }}
       run: |
-        for attempt in $(seq 1 "$RETRIES"); do
+        for ((attempt = 1; attempt <= RETRIES; attempt++)); do
           echo "::group::sbt bootstrap attempt $attempt/$RETRIES"
           if sbt --version 2>&1; then
             echo "::endgroup::"
@@ -76,24 +82,13 @@ runs:
     - name: Run sbt
       shell: bash
       env:
-        BACKGROUND: ${{ inputs.background }}
         COMMAND: ${{ inputs.command }}
         FAIL_ON_MISSING_LINK_WARNINGS: ${{ inputs.fail-on-missing-link-warnings }}
         RETRIES: ${{ inputs.retries }}
       run: |
-        if [ "$BACKGROUND" = "true" ] && [ "$FAIL_ON_MISSING_LINK_WARNINGS" = "true" ]; then
-          echo "::error::MissingLink warning validation cannot run in the background"
-          exit 1
-        fi
-
-        # Backgrounded runs return immediately and can't be retried.
-        if [ "$BACKGROUND" = "true" ]; then
-          sbt -v "$COMMAND" &
-          exit 0
-        fi
         log_file=$(mktemp)
         trap 'rm -f "$log_file"' EXIT
-        for attempt in $(seq 1 "$RETRIES"); do
+        for ((attempt = 1; attempt <= RETRIES; attempt++)); do
           echo "::group::sbt run attempt $attempt/$RETRIES"
           : > "$log_file"
           if sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
