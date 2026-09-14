@@ -1,0 +1,114 @@
+name: SBT build
+description: Setup and run an SBT build
+
+inputs:
+  command:
+    description: SBT command(s) to run
+    required: true
+  java-version:
+    description: Java version
+    required: true
+    default: "19"
+  java-distribution:
+    description: Java distribution
+    required: true
+    default: zulu
+  background:
+    description: Fork in background
+    required: true
+    default: "false"
+  retries:
+    description: Number of attempts for the SBT run (with backoff). Use more than one to absorb flaky network or node failures.
+    required: true
+    default: "1"
+  fail-on-missing-link-warnings:
+    description: Fail when MissingLink reports unresolved parent classes as warnings.
+    required: true
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: sbt
+
+    - name: Setup sbt launcher
+      uses: sbt/setup-sbt@v1
+
+    - name: Cache sbt build outputs
+      uses: actions/cache@v5
+      with:
+        path: |
+          **/target
+          !project/target/**
+          **/avro
+          ~/.ivy2/local
+        key: sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/*.sbt', 'project/build.properties') }}
+        restore-keys: |
+          sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-
+
+    - name: Bootstrap sbt
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          echo "::group::sbt bootstrap attempt $attempt/3"
+          if sbt --version 2>&1; then
+            echo "::endgroup::"
+            echo "sbt bootstrapped successfully"
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "$attempt" -lt 3 ]; then
+            sleep_time=$((attempt * 15))
+            echo "::warning::sbt bootstrap attempt $attempt failed, retrying in ${sleep_time}s..."
+            sleep "$sleep_time"
+          fi
+        done
+        echo "::error::sbt bootstrap failed after 3 attempts"
+        exit 1
+
+    - name: Run sbt
+      shell: bash
+      env:
+        BACKGROUND: ${{ inputs.background }}
+        COMMAND: ${{ inputs.command }}
+        FAIL_ON_MISSING_LINK_WARNINGS: ${{ inputs.fail-on-missing-link-warnings }}
+        RETRIES: ${{ inputs.retries }}
+      run: |
+        if [ "$BACKGROUND" = "true" ] && [ "$FAIL_ON_MISSING_LINK_WARNINGS" = "true" ]; then
+          echo "::error::MissingLink warning validation cannot run in the background"
+          exit 1
+        fi
+
+        # Backgrounded runs return immediately and can't be retried.
+        if [ "$BACKGROUND" = "true" ]; then
+          sbt -v "$COMMAND" &
+          exit 0
+        fi
+        log_file=$(mktemp)
+        trap 'rm -f "$log_file"' EXIT
+        for attempt in $(seq 1 "$RETRIES"); do
+          echo "::group::sbt run attempt $attempt/$RETRIES"
+          : > "$log_file"
+          if sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+            echo "::endgroup::"
+            if [ "$FAIL_ON_MISSING_LINK_WARNINGS" = "true" ] \
+              && grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
+              echo "::error::MissingLink found unresolved runtime parent classes"
+              exit 1
+            fi
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "$attempt" -lt "$RETRIES" ]; then
+            sleep_time=$((attempt * 15))
+            echo "::warning::sbt run attempt $attempt failed, retrying in ${sleep_time}s..."
+            sleep "$sleep_time"
+          fi
+        done
+        echo "::error::sbt run failed after $RETRIES attempt(s)"
+        exit 1

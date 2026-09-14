@@ -1,0 +1,94 @@
+name: MissingLink check
+description: Run an SBT MissingLink check and fail on unresolved runtime parent classes
+
+inputs:
+  command:
+    description: MissingLink SBT command to run
+    required: true
+    default: Runtime/missinglinkCheck
+  java-version:
+    description: Java version
+    required: true
+    default: "19"
+  java-distribution:
+    description: Java distribution
+    required: true
+    default: zulu
+  retries:
+    description: Number of attempts for the SBT run (with backoff)
+    required: true
+    default: "1"
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v5
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: sbt
+
+    - name: Setup sbt launcher
+      uses: sbt/setup-sbt@v1
+
+    - name: Cache sbt build outputs
+      uses: actions/cache@v5
+      with:
+        path: |
+          **/target
+          !project/target/**
+          **/avro
+          ~/.ivy2/local
+        key: sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/*.sbt', 'project/build.properties') }}
+        restore-keys: |
+          sbt-build-${{ runner.os }}-${{ inputs.java-distribution }}-${{ inputs.java-version }}-
+
+    - name: Bootstrap sbt
+      shell: bash
+      run: |
+        for attempt in 1 2 3; do
+          echo "::group::sbt bootstrap attempt $attempt/3"
+          if sbt --version 2>&1; then
+            echo "::endgroup::"
+            echo "sbt bootstrapped successfully"
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "$attempt" -lt 3 ]; then
+            sleep_time=$((attempt * 15))
+            echo "::warning::sbt bootstrap attempt $attempt failed, retrying in ${sleep_time}s..."
+            sleep "$sleep_time"
+          fi
+        done
+        echo "::error::sbt bootstrap failed after 3 attempts"
+        exit 1
+
+    - name: Run MissingLink
+      shell: bash
+      env:
+        COMMAND: ${{ inputs.command }}
+        RETRIES: ${{ inputs.retries }}
+      run: |
+        log_file=$(mktemp)
+        trap 'rm -f "$log_file"' EXIT
+        for attempt in $(seq 1 "$RETRIES"); do
+          echo "::group::sbt run attempt $attempt/$RETRIES"
+          : > "$log_file"
+          if sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+            echo "::endgroup::"
+            if grep -q '^Warning: Cannot find parent .* of class ' "$log_file"; then
+              echo "::error::MissingLink found unresolved runtime parent classes"
+              exit 1
+            fi
+            exit 0
+          fi
+          echo "::endgroup::"
+          if [ "$attempt" -lt "$RETRIES" ]; then
+            sleep_time=$((attempt * 15))
+            echo "::warning::sbt run attempt $attempt failed, retrying in ${sleep_time}s..."
+            sleep "$sleep_time"
+          fi
+        done
+        echo "::error::sbt run failed after $RETRIES attempt(s)"
+        exit 1
