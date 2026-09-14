@@ -26,5 +26,3 @@ Sets up Java and SBT, restores cached build outputs, bootstraps SBT with retries
 When `fail-on-missing-link-warnings` is enabled, the action fails if the SBT output contains a line matching `Warning: Cannot find parent ... of class ...`. This catches unresolved runtime dependencies that MissingLink reports without returning a non-zero exit code.
 
 `background` and `fail-on-missing-link-warnings` cannot both be enabled because warning validation requires the completed SBT output.
-
-For a dedicated action that always enables this check, see [`sbt/missinglink`](missinglink/README.md).
