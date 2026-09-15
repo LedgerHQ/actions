@@ -1,0 +1,68 @@
+name: SBT build
+description: Set up and run an SBT build
+
+inputs:
+  command:
+    description: SBT command(s) to run
+    required: true
+  java-version:
+    description: Java version
+    required: true
+    default: "21"
+  java-distribution:
+    description: Java distribution
+    required: true
+    default: zulu
+
+outputs:
+  log-file:
+    description: Absolute path to the captured SBT output
+    value: ${{ steps.run-sbt.outputs.log-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: sbt
+
+    - name: Setup sbt launcher
+      uses: sbt/setup-sbt@v1
+
+    - name: Restore sbt build outputs
+      id: restore-sbt-build-outputs
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${{ github.workspace }}/**/target
+          ~/.ivy2/local
+          ~/.cache/scalablytyped
+        key: build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-${{ hashFiles('build.sbt', 'project/**', '**/*.scala', '**/*.sbt') }}
+        restore-keys: |
+          build-${{ runner.os }}-${{ runner.arch }}-${{ inputs.java-distribution }}-jdk${{ inputs.java-version }}-
+
+    - name: Run sbt
+      id: run-sbt
+      shell: bash
+      env:
+        COMMAND: ${{ inputs.command }}
+      run: |
+        set -o pipefail
+        log_file=$(mktemp "${RUNNER_TEMP}/sbt-output.XXXXXX")
+        echo "log-file=$log_file" >> "$GITHUB_OUTPUT"
+        if ! sbt -v "$COMMAND" 2>&1 | tee "$log_file"; then
+          echo "::error::sbt run failed"
+          exit 1
+        fi
+
+    - name: Save sbt build outputs
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${{ github.workspace }}/**/target
+          ~/.ivy2/local
+          ~/.cache/scalablytyped
+        key: ${{ steps.restore-sbt-build-outputs.outputs.cache-primary-key }}
