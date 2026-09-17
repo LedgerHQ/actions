@@ -42,4 +42,4 @@ runs:
         skip-dependencies: ${{ inputs.install == 'true' && '' || 'true' }}
         cache: ${{ inputs.install }}
     - name: Lint with `prek`
-      uses: j178/prek-action@v2
+      uses: j178/prek-action@v2.0.6
