@@ -178,15 +178,16 @@ runs:
     # `uv` reads index credentials from `UV_INDEX_<NAME>_USERNAME`/`_PASSWORD` only,
     # never from the `JFROG_USER`/`JFROG_TOKEN` exported by `jfrog-login`.
     - name: Configure uv for JFrog Artifactory
-      if: steps.detect.outputs.use_uv == 'true' && env.JFROG_TOKEN
+      if: steps.detect.outputs.use_uv == 'true' && env.JFROG_TOKEN && env.JFROG_DOMAIN
       working-directory: ${{ inputs.working-directory }}
       run: |
         : Configure uv for JFrog Artifactory
         INDEXES=$(yq -p toml -o json '.tool.uv.index // []' pyproject.toml)
 
-        # Credentials for every JFrog index declared by the project, as uv names them:
-        # the index name uppercased, with non-alphanumeric characters replaced by `_`
-        jq -r --arg domain "${JFROG_DOMAIN}" '.[] | select(.url | contains($domain)) | .name' <<< "${INDEXES}" |
+        # Credentials for every index served by JFrog itself (the exact HTTPS origin, so a lookalike
+        # host never receives them), as uv names them: the index name uppercased, with
+        # non-alphanumeric characters replaced by `_`
+        jq -r --arg origin "https://${JFROG_DOMAIN}/" '.[] | select(.url | startswith($origin)) | .name' <<< "${INDEXES}" |
           while read -r NAME; do
             VAR="UV_INDEX_$(tr '[:lower:]' '[:upper:]' <<< "${NAME}" | tr -c 'A-Z0-9\n' '_')"
             {
@@ -205,9 +206,11 @@ runs:
         fi
       shell: bash
 
+    # From the project directory, so uv sees the same `[[tool.uv.index]]` as the step above
     - name: Install pdm
       id: setup-uv-pdm
       if: steps.detect.outputs.use_uv == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Install pdm
         uv pip install pdm
