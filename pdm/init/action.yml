@@ -195,15 +195,6 @@ runs:
               echo "${VAR}_PASSWORD=${JFROG_TOKEN}"
             } >> "${GITHUB_ENV}"
           done
-
-        # Without a default index of its own, uv would resolve from the public PyPI
-        if [ "$(jq 'any(.[]; .default == true)' <<< "${INDEXES}")" != "true" ] && [ -n "${JFROG_REPOSITORY}" ]; then
-          {
-            echo "UV_DEFAULT_INDEX=jfrog-ci=https://${JFROG_DOMAIN}/artifactory/api/pypi/${JFROG_REPOSITORY}/simple"
-            echo "UV_INDEX_JFROG_CI_USERNAME=${JFROG_USER}"
-            echo "UV_INDEX_JFROG_CI_PASSWORD=${JFROG_TOKEN}"
-          } >> "${GITHUB_ENV}"
-        fi
       shell: bash
 
     # From the project directory, so uv sees the same `[[tool.uv.index]]` as the step above
