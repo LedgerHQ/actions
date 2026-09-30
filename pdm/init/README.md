@@ -70,7 +70,8 @@ When the project uses `uv` (`use_uv = true` in `pdm.toml`) and JFrog authenticat
 
 - `UV_INDEX_<NAME>_USERNAME` and `UV_INDEX_<NAME>_PASSWORD` for every `[[tool.uv.index]]` of `pyproject.toml` served from `https://${JFROG_DOMAIN}/`,
   `<NAME>` being the index name uppercased with non-alphanumeric characters replaced by `_`
-- `UV_DEFAULT_INDEX` on `JFROG_REPOSITORY` (an index named `jfrog-ci`) with its credentials `UV_INDEX_JFROG_CI_USERNAME` and `UV_INDEX_JFROG_CI_PASSWORD`,
+- `UV_DEFAULT_INDEX` on the `virtual-pypi-all-green` repository (an index named `jfrog-ci`, which includes the PyPI mirror)
+  with its credentials `UV_INDEX_JFROG_CI_USERNAME` and `UV_INDEX_JFROG_CI_PASSWORD`,
   when the project declares no default index, so `uv` never resolves from the public PyPI
 
 ## Outputs
