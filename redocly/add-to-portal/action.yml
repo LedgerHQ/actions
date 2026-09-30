@@ -22,7 +22,7 @@ runs:
         spec-url: ${{ inputs.spec-url }}
     - name: Create Pull Request
       id: cpr
-      uses: peter-evans/create-pull-request@v6
+      uses: peter-evans/create-pull-request@v7
       with:
         token: ${{ env.GITHUB_TOKEN }}
         commit-message: Add new version ${{ inputs.version }} of API ${{ inputs.name }}
