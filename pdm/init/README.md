@@ -66,6 +66,13 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | ------ | ----------- |
 | `JFROG_REPOSITORY` | JFrog repository used to fetch internal dependencies (triggers authentication) |
 
+When the project uses `uv` (`use_uv = true` in `pdm.toml`) and JFrog authentication happened, the action exports the JFrog credentials for `uv`:
+
+- `UV_INDEX_<NAME>_USERNAME` and `UV_INDEX_<NAME>_PASSWORD` for every `[[tool.uv.index]]` of `pyproject.toml` served from `https://${JFROG_DOMAIN}/`,
+  `<NAME>` being the index name uppercased with non-alphanumeric characters replaced by `_`
+- `UV_DEFAULT_INDEX` on `JFROG_REPOSITORY` (an index named `jfrog-ci`) with its credentials `UV_INDEX_JFROG_CI_USERNAME` and `UV_INDEX_JFROG_CI_PASSWORD`,
+  when the project declares no default index, so `uv` never resolves from the public PyPI
+
 ## Outputs
 
 | Output | Description |

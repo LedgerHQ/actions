@@ -175,9 +175,42 @@ runs:
         EXTRA_PYTHON_VERSIONS: ${{ inputs.extra-python-versions }}
       shell: bash
 
+    # `uv` reads index credentials from `UV_INDEX_<NAME>_USERNAME`/`_PASSWORD` only,
+    # never from the `JFROG_USER`/`JFROG_TOKEN` exported by `jfrog-login`.
+    - name: Configure uv for JFrog Artifactory
+      if: steps.detect.outputs.use_uv == 'true' && env.JFROG_TOKEN && env.JFROG_DOMAIN
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        : Configure uv for JFrog Artifactory
+        INDEXES=$(yq -p toml -o json '.tool.uv.index // []' pyproject.toml)
+
+        # Credentials for every index served by JFrog itself (the exact HTTPS origin, so a lookalike
+        # host never receives them), as uv names them: the index name uppercased, with
+        # non-alphanumeric characters replaced by `_`
+        jq -r --arg origin "https://${JFROG_DOMAIN}/" '.[] | select(.url | startswith($origin)) | .name' <<< "${INDEXES}" |
+          while read -r NAME; do
+            VAR="UV_INDEX_$(tr '[:lower:]' '[:upper:]' <<< "${NAME}" | tr -c 'A-Z0-9\n' '_')"
+            {
+              echo "${VAR}_USERNAME=${JFROG_USER}"
+              echo "${VAR}_PASSWORD=${JFROG_TOKEN}"
+            } >> "${GITHUB_ENV}"
+          done
+
+        # Without a default index of its own, uv would resolve from the public PyPI
+        if [ "$(jq 'any(.[]; .default == true)' <<< "${INDEXES}")" != "true" ] && [ -n "${JFROG_REPOSITORY}" ]; then
+          {
+            echo "UV_DEFAULT_INDEX=jfrog-ci=https://${JFROG_DOMAIN}/artifactory/api/pypi/${JFROG_REPOSITORY}/simple"
+            echo "UV_INDEX_JFROG_CI_USERNAME=${JFROG_USER}"
+            echo "UV_INDEX_JFROG_CI_PASSWORD=${JFROG_TOKEN}"
+          } >> "${GITHUB_ENV}"
+        fi
+      shell: bash
+
+    # From the project directory, so uv sees the same `[[tool.uv.index]]` as the step above
     - name: Install pdm
       id: setup-uv-pdm
       if: steps.detect.outputs.use_uv == 'true'
+      working-directory: ${{ inputs.working-directory }}
       run: |
         : Install pdm
         uv pip install pdm
