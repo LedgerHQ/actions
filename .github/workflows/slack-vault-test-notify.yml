@@ -8,6 +8,9 @@ on:
     branches: [ main ]
     paths: [ slack/vault-test-notify/**, .github/workflows/slack-vault-test-notify.yml ]
 
+permissions:
+  contents: read
+
 jobs:
   unit:
     name: Unit tests (${{ matrix.os }})
