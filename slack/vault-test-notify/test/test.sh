@@ -124,7 +124,7 @@ check "empty emoji leaves no double space" ":large_blue_circle: [main][legacy] A
 echo "== triggers"
 EVENT=repository_dispatch run_notify INPUT_SUITE=API INPUT_STATUS=good
 check "repository_dispatch" "repository_dispatch · <https://github.com/octocat | octocat>" "$(field Trigger)"
-EVENT=workflow_dispatch ACTOR= run_notify INPUT_SUITE=API INPUT_STATUS=good
+EVENT=workflow_dispatch ACTOR='' run_notify INPUT_SUITE=API INPUT_STATUS=good
 check "no actor" "manual" "$(field Trigger)"
 
 echo "== counts and status from an Allure summary"
