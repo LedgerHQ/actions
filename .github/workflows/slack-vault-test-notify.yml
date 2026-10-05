@@ -1,0 +1,55 @@
+name: Test slack/vault-test-notify action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ slack/vault-test-notify/**, .github/workflows/slack-vault-test-notify.yml ]
+  pull_request:
+    branches: [ main ]
+    paths: [ slack/vault-test-notify/**, .github/workflows/slack-vault-test-notify.yml ]
+
+jobs:
+  unit:
+    name: Unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Lint the scripts
+        if: runner.os == 'Linux'
+        run: shellcheck slack/vault-test-notify/notify.sh slack/vault-test-notify/test/test.sh
+      - name: Run the tests
+        run: bash slack/vault-test-notify/test/test.sh
+
+  action:
+    name: Run the action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Render a notification without posting it
+        id: notify
+        uses: ./slack/vault-test-notify
+        with:
+          webhook: https://hooks.slack.invalid/not-used-in-dry-run
+          environment: vault-next
+          suite: API
+          qualifier: tradelink
+          status: good
+          summary: 10 passed, 0 failed, 0 broken, 0 skipped, 10 total
+          dry-run: 'true'
+      - name: Check the outputs
+        env:
+          TITLE: ${{ steps.notify.outputs.title }}
+          PAYLOAD: ${{ steps.notify.outputs.payload }}
+        run: |
+          expected=':large_purple_circle: [next][legacy] :vault: API Test Results (tradelink) :green-check:'
+          if [ "$TITLE" != "$expected" ]; then
+            echo "::error::unexpected title: $TITLE"
+            exit 1
+          fi
+          echo "$PAYLOAD" | jq -e '.attachments[0] | .title == "'"$expected"'" and .color == "good"'
