@@ -1,0 +1,94 @@
+name: Vault test notification
+description: >-
+  Post a standard test-run notification (title, body and delivery) to a Slack
+  incoming webhook
+
+inputs:
+  webhook:
+    description: Slack incoming webhook URL. An empty value is an error
+    required: true
+  environment:
+    description: >-
+      One of vault-main, vault-next, minivault, vault-ppr, vault-qa, prd or
+      argocd. Drives the title emoji and tag and the Environment line. Empty
+      renders no environment bracket and no Environment line
+    default: ""
+  environment-detail:
+    description: Optional detail shown after the environment, e.g. a workspace or "scope smoke"
+    default: ""
+  stack:
+    description: >-
+      legacy or revault. Defaults to revault for LedgerHQ/revault and legacy for
+      any other repository
+    default: ""
+  suite:
+    description: >-
+      Suite phrase, rendered as "<suite> Test Results", e.g. API, UI, UI Smoke,
+      Onboarding, Web or Mobile
+    required: true
+  emoji:
+    description: Suite emoji shown before the suite name
+    default: ":vault:"
+  qualifier:
+    description: Optional qualifier rendered as "(<qualifier>)", e.g. tradelink
+    default: ""
+  ref:
+    description: Optional git ref or version rendered as "· <ref>"
+    default: ""
+  status:
+    description: >-
+      good, danger or warning. Colours the sidebar and picks the status emoji
+      (good gives :green-check:, anything else :x:). Wins over the value derived
+      from allure-summary
+    default: ""
+  summary:
+    description: >-
+      Counts text such as "58 passed, 0 failed, 0 broken, 0 skipped, 58 total".
+      Used when allure-summary is empty or unreadable
+    default: ""
+  allure-summary:
+    description: >-
+      Path to an Allure widgets/summary.json. Computes the counts text and a
+      good or danger status (danger if anything failed or is broken, or if no
+      test ran)
+    default: ""
+  report-url:
+    description: URL of the published Allure report. The Allure Report field is omitted when empty
+    default: ""
+  report-path:
+    description: Label for the report link. Defaults to the URL
+    default: ""
+  dry-run:
+    description: Set to "true" to print the payload without posting it
+    default: "false"
+
+outputs:
+  title:
+    description: The rendered notification title
+    value: ${{ steps.notify.outputs.title }}
+  payload:
+    description: The JSON payload that was posted, or would have been with dry-run
+    value: ${{ steps.notify.outputs.payload }}
+
+runs:
+  using: composite
+  steps:
+    - name: Post the notification
+      id: notify
+      shell: bash
+      env:
+        INPUT_WEBHOOK: ${{ inputs.webhook }}
+        INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        INPUT_ENVIRONMENT_DETAIL: ${{ inputs.environment-detail }}
+        INPUT_STACK: ${{ inputs.stack }}
+        INPUT_SUITE: ${{ inputs.suite }}
+        INPUT_EMOJI: ${{ inputs.emoji }}
+        INPUT_QUALIFIER: ${{ inputs.qualifier }}
+        INPUT_REF: ${{ inputs.ref }}
+        INPUT_STATUS: ${{ inputs.status }}
+        INPUT_SUMMARY: ${{ inputs.summary }}
+        INPUT_ALLURE_SUMMARY: ${{ inputs.allure-summary }}
+        INPUT_REPORT_URL: ${{ inputs.report-url }}
+        INPUT_REPORT_PATH: ${{ inputs.report-path }}
+        INPUT_DRY_RUN: ${{ inputs.dry-run }}
+      run: bash "${{ github.action_path }}/notify.sh"
