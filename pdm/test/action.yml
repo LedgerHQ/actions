@@ -227,6 +227,9 @@ runs:
         pytest-xml-coverage-path: ${{ inputs.working-directory }}/reports/coverage.xml
         junitxml-path: ${{ inputs.working-directory }}/reports/junit.xml
         hide-comment: true
+        # The full per-file table exceeds GitHub's 65536 characters comment limit on larger
+        # projects, and is then dropped entirely: only report the files a pull request touches
+        report-only-changed-files: ${{ github.event_name == 'pull_request' }}
 
     - name: Add coverage report to summary
       if: inputs.matrix-id == null
