@@ -1,0 +1,60 @@
+name: Test slack/test-notify action
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ slack/test-notify/**, .github/workflows/slack-test-notify.yml ]
+  pull_request:
+    branches: [ main ]
+    paths: [ slack/test-notify/**, .github/workflows/slack-test-notify.yml ]
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Unit tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Lint the scripts
+        if: runner.os == 'Linux'
+        run: shellcheck slack/test-notify/notify.sh slack/test-notify/test/test.sh
+      - name: Run the tests
+        run: bash slack/test-notify/test/test.sh
+
+  action:
+    name: Run the action
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Render a notification without posting it
+        id: notify
+        uses: ./slack/test-notify
+        with:
+          webhook: https://hooks.slack.invalid/not-used-in-dry-run
+          environment: next
+          stack: v2
+          suite: API
+          emoji: ":fist:"
+          qualifier: nightly
+          status: good
+          summary: 10 passed, 0 failed, 0 broken, 0 skipped, 10 total
+          dry-run: 'true'
+      - name: Check the outputs
+        env:
+          TITLE: ${{ steps.notify.outputs.title }}
+          PAYLOAD: ${{ steps.notify.outputs.payload }}
+        run: |
+          expected=':large_purple_circle: [next][v2] :fist: API Test Results (nightly) :green-check:'
+          if [ "$TITLE" != "$expected" ]; then
+            echo "::error::unexpected title: $TITLE"
+            exit 1
+          fi
+          echo "$PAYLOAD" | jq -e --arg title "$expected" '.attachments[0] | (.text | startswith("*" + $title + "*\n")) and .color == "good"'
