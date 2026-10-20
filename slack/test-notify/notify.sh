@@ -41,7 +41,7 @@ env_emoji="$(oneline "${INPUT_ENVIRONMENT_EMOJI:-$env_emoji}")"
 
 tags=""
 [ -z "$environment" ] || tags="[$environment]"
-[ -z "$stack" ] || tags="$tags[$stack]"
+[ -z "$stack" ] || tags="${tags}[$stack]"
 heading="${env_emoji:+$env_emoji }$tags"
 
 # --- counts and status ---------------------------------------------------------
