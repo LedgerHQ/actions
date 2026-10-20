@@ -55,4 +55,4 @@ jobs:
             echo "::error::unexpected title: $TITLE"
             exit 1
           fi
-          echo "$PAYLOAD" | jq -e '.attachments[0] | .title == "'"$expected"'" and .color == "good"'
+          echo "$PAYLOAD" | jq -e --arg title "$expected" '.attachments[0] | (.text | startswith("*" + $title + "*\n")) and .color == "good"'

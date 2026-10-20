@@ -64,6 +64,9 @@ run_notify() {
 
 # attachment <jq filter>  applies the filter to the first attachment of the payload.
 attachment() { printf '%s' "$PAYLOAD" | jq -r ".attachments[0] | $1"; }
+# The attachment text is the title in bold on the first line, then the body.
+heading() { attachment '.text | split("\n")[0]'; }
+body() { attachment '.text | split("\n") | .[1:] | join("\n")'; }
 field() { attachment ".fields[] | select(.title == \"$1\") | .value"; }
 
 COUNTS="630 passed, 1 failed, 2 broken, 40 skipped, 673 total"
@@ -72,8 +75,10 @@ echo "== a legacy notification, end to end"
 run_notify INPUT_ENVIRONMENT=vault-main INPUT_SUITE=API INPUT_EMOJI=:vault: INPUT_STATUS=good \
   INPUT_SUMMARY="$COUNTS" INPUT_REPORT_URL=https://allure.example/r/1 INPUT_REPORT_PATH=vault_main_api
 check "title" ":large_blue_circle: [main][legacy] :vault: API Test Results :green-check:" "$TITLE"
-check "title output matches the attachment title" "$TITLE" "$(attachment .title)"
-check "text" "Environment: vault-main — $COUNTS" "$(attachment .text)"
+check "title is the first line, in bold" "*$TITLE*" "$(heading)"
+check "title is the notification fallback" "$TITLE" "$(attachment .fallback)"
+check "mrkdwn is enabled on the text" "text" "$(attachment '.mrkdwn_in[0]')"
+check "text" "Environment: vault-main — $COUNTS" "$(body)"
 check "colour" good "$(attachment .color)"
 check "field order" "Allure Report,Workflow,Trigger" "$(attachment '[.fields[].title] | join(",")')"
 check "report field" "<https://allure.example/r/1 | vault_main_api>" "$(field 'Allure Report')"
@@ -102,7 +107,7 @@ done
 echo "== no environment, unknown environment"
 run_notify INPUT_ENVIRONMENT= INPUT_SUITE="UI Smoke" INPUT_STATUS=good INPUT_SUMMARY="10 passed, 0 failed, 0 broken, 0 skipped, 10 total"
 check "no environment: title" "[legacy] :vault: UI Smoke Test Results :green-check:" "$TITLE"
-check "no environment: no Environment line" "10 passed, 0 failed, 0 broken, 0 skipped, 10 total" "$(attachment .text)"
+check "no environment: no Environment line" "10 passed, 0 failed, 0 broken, 0 skipped, 10 total" "$(body)"
 run_notify INPUT_ENVIRONMENT=staging INPUT_SUITE=API INPUT_STATUS=good
 check "unknown environment: bare tag" "[staging][legacy] :vault: API Test Results :green-check:" "$TITLE"
 contains "unknown environment: warns" "::warning" "$OUT"
@@ -112,7 +117,7 @@ REPO=LedgerHQ/revault EVENT=workflow_dispatch run_notify INPUT_ENVIRONMENT=vault
   INPUT_SUITE=Web INPUT_EMOJI=:globe_with_meridians: INPUT_QUALIFIER="ETH Pectra staking" INPUT_REF=web@3.18.3 \
   INPUT_STATUS=danger INPUT_SUMMARY="19 passed, 5 failed, 0 broken, 0 skipped, 24 total"
 check "title" ":large_purple_circle: [next][revault] :globe_with_meridians: Web Test Results (ETH Pectra staking) · web@3.18.3 :x:" "$TITLE"
-check "text" "Environment: vault-next / revaultfunds1 — 19 passed, 5 failed, 0 broken, 0 skipped, 24 total" "$(attachment .text)"
+check "text" "Environment: vault-next / revaultfunds1 — 19 passed, 5 failed, 0 broken, 0 skipped, 24 total" "$(body)"
 check "colour" danger "$(attachment .color)"
 check "manual trigger links the actor" "manual · <https://github.com/octocat | octocat>" "$(field Trigger)"
 check "footer links the revault repo" "<https://github.com/LedgerHQ/revault | LedgerHQ/revault>" "$(attachment .footer)"
@@ -136,7 +141,7 @@ echo '{"statistic":{"passed":0,"failed":0,"broken":0,"skipped":0,"total":0}}' > 
 echo '{"widget":"no statistic"}' > "$TMP/allure/nostat.json"
 echo 'not json' > "$TMP/allure/bad.json"
 run_notify INPUT_ENVIRONMENT=vault-next INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/good.json"
-check "good: text" "Environment: vault-next — 58 passed, 0 failed, 0 broken, 0 skipped, 58 total" "$(attachment .text)"
+check "good: text" "Environment: vault-next — 58 passed, 0 failed, 0 broken, 0 skipped, 58 total" "$(body)"
 check "good: colour" good "$(attachment .color)"
 contains "good: emoji" ":green-check:" "$TITLE"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/failed.json"
@@ -146,25 +151,25 @@ run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/broken.json"
 check "broken: colour" danger "$(attachment .color)"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/empty.json"
 check "nothing ran: not green" danger "$(attachment .color)"
-check "nothing ran: counts are still shown" "0 passed, 0 failed, 0 broken, 0 skipped, 0 total" "$(attachment .text)"
+check "nothing ran: counts are still shown" "0 passed, 0 failed, 0 broken, 0 skipped, 0 total" "$(body)"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/nostat.json"
-check "no statistic object: no results" "No test results" "$(attachment .text)"
+check "no statistic object: no results" "No test results" "$(body)"
 contains "no statistic object: warns" "::warning" "$OUT"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/good.json" INPUT_STATUS=warning
 check "explicit status wins: colour" warning "$(attachment .color)"
 contains "explicit status wins: warning is not a pass" ":x:" "$TITLE"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/good.json" INPUT_SUMMARY="from the string input"
-contains "the Allure summary wins over the string" "58 passed" "$(attachment .text)"
+contains "the Allure summary wins over the string" "58 passed" "$(body)"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/missing.json" INPUT_SUMMARY="from the string input" INPUT_STATUS=good
-check "missing file falls back to the string" "from the string input" "$(attachment .text)"
+check "missing file falls back to the string" "from the string input" "$(body)"
 contains "missing file warns" "::warning" "$OUT"
 run_notify INPUT_SUITE=API INPUT_ALLURE_SUMMARY="$TMP/allure/bad.json"
-check "unparsable file: no results" "No test results" "$(attachment .text)"
+check "unparsable file: no results" "No test results" "$(body)"
 check "unparsable file: danger" danger "$(attachment .color)"
 
 echo "== nothing to report, bad status"
 run_notify INPUT_ENVIRONMENT=vault-main INPUT_SUITE=API
-check "no counts: text" "Environment: vault-main — No test results" "$(attachment .text)"
+check "no counts: text" "Environment: vault-main — No test results" "$(body)"
 check "no counts: danger" danger "$(attachment .color)"
 run_notify INPUT_SUITE=API INPUT_STATUS=blue
 check "unknown status: danger" danger "$(attachment .color)"
@@ -180,7 +185,7 @@ echo "== hostile input stays inert"
 EVIL="A\"B \`touch $TMP/pwned\` \$(touch $TMP/pwned2) \\ end"
 run_notify INPUT_SUITE="$EVIL" INPUT_QUALIFIER="$EVIL" INPUT_STATUS=good
 check "payload is valid JSON" 0 "$(printf '%s' "$PAYLOAD" | jq -e . >/dev/null 2>&1; echo $?)"
-contains "metacharacters are rendered literally" "$EVIL Test Results" "$(attachment .title)"
+contains "metacharacters are rendered literally" "$EVIL Test Results" "$(heading)"
 pwned=no
 for marker in "$TMP/pwned" "$TMP/pwned2"; do
   if [ -e "$marker" ]; then pwned=yes; fi

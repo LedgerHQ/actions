@@ -125,6 +125,9 @@ fields="$(jq -n \
     (if $trigger != "" then {title: "Trigger", value: $trigger, short: false} else empty end)
   ]')"
 
+# The title is the first line of the text in explicit mrkdwn bold: it does not rely on how
+# Slack styles an attachment `title`, which was not rendered in bold. `fallback` feeds
+# the notification preview.
 payload="$(jq -n -c \
   --arg color "$status" \
   --arg title "$title" \
@@ -132,7 +135,7 @@ payload="$(jq -n -c \
   --argjson fields "$fields" \
   --arg footer "$footer" \
   --arg icon "$ICON" \
-  '{attachments: [{mrkdwn_in: ["mrkdwn"], color: $color, title: $title, text: $text, fields: $fields, footer: $footer, footer_icon: $icon}]}')"
+  '{attachments: [{mrkdwn_in: ["text", "fields"], fallback: $title, color: $color, text: ("*" + $title + "*\n" + $text), fields: $fields, footer: $footer, footer_icon: $icon}]}')"
 
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   { echo "title=$title"; echo "payload=$payload"; } >> "$GITHUB_OUTPUT"

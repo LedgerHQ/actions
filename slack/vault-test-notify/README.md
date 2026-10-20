@@ -67,8 +67,8 @@ LedgerHQ/revault
 Everything sits inside the coloured bar of one Slack attachment, with no pretext above it.
 
 - **Title** is `<environment emoji> [<tag>][<stack>] <emoji> <suite> Test Results[ (<qualifier>)][ · <ref>] <status emoji>`.
-  It is the attachment title, which Slack renders in bold. The status emoji is `:green-check:` when the status is
-  `good` and `:x:` for anything else.
+  It is the first line of the attachment text in explicit bold (`*<title>*`), and the notification preview
+  (`fallback`). The status emoji is `:green-check:` when the status is `good` and `:x:` for anything else.
 - **Environment tags**: `vault-main` `:large_blue_circle: [main]`, `vault-next` `:large_purple_circle: [next]`,
   `minivault` `:large_orange_circle: [minivault]`, `vault-ppr` `:black_circle: [ppr]`, `prd` `:white_circle: [prd]`,
   `vault-qa` `:argocd: [qa]`, `argocd` `:argocd: [argocd]`. An unknown value renders a bare `[value]` and a warning.
