@@ -16,6 +16,11 @@ Provides some reusable PDM actions.
 | [Build documentation (`doc/build`)](doc/build/) | Build the documentation using `pdm` commands |
 | [Publish documentation (`doc/publish`)](doc/publish/) | Publish the documentation |
 
+## PDM workspaces
+
+When `working-directory` is a member of a PDM workspace, `init` installs the dependencies from the workspace root
+(`pdm sync` is not supported in members). The member shares the root virtualenv, `pdm.toml` and JFrog sources.
+
 ## JFrog Artifactory
 
 All those actions have opt-in support for both consuming from and publishing to out internal Artifactory repositories.
