@@ -112,15 +112,40 @@ runs:
         git config user.email github-actions@ledger.fr
       shell: bash
 
+    - name: Find PDM workspace root
+      id: workspace
+      working-directory: ${{ github.workspace }}
+      run: |
+        : Find PDM workspace root
+        # `pdm sync` only runs from the workspace root (members share its lock and virtualenv),
+        # so take the closest ancestor declaring `[tool.pdm.workspace]`, defaulting to the project itself.
+        ROOT="${WORKING_DIRECTORY}"
+        DIR="${WORKING_DIRECTORY}"
+        while [ "${DIR}" != "." ] && [ "${DIR}" != "/" ]; do
+          DIR=$(dirname "${DIR}")
+          if [ "$(yq -p toml '.tool.pdm.workspace.members != null' "${DIR}/pyproject.toml" 2>/dev/null)" = "true" ]; then
+            ROOT="${DIR}"
+            break
+          fi
+        done
+        echo "root=${ROOT}" >> $GITHUB_OUTPUT
+      env:
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      shell: bash
+
     - name: Detect JFrog and uv requirements
       id: detect
       working-directory: ${{ inputs.working-directory }}
       run: |
         : Detect JFrog and uv requirements
         PYPROJECT="pyproject.toml"
-        HAS_JFROG=$(grep "jfrog" "${PYPROJECT}" > /dev/null && echo "true" || echo "false")
+        # JFrog sources and `uv` are configured on the workspace root rather than on its members
+        ROOT="${GITHUB_WORKSPACE}/${WORKSPACE_ROOT}"
+        FILES=("${PYPROJECT}")
+        [ "${WORKSPACE_ROOT}" = "${WORKING_DIRECTORY}" ] || FILES+=("${ROOT}/${PYPROJECT}")
+        HAS_JFROG=$(grep -q "jfrog" "${FILES[@]}" && echo "true" || echo "false")
         echo "has_jfrog=${HAS_JFROG}" >> $GITHUB_OUTPUT
-        USE_UV=$([ -f pdm.toml ] && yq '.use_uv' pdm.toml || true)
+        USE_UV=$([ -f "${ROOT}/pdm.toml" ] && yq '.use_uv' "${ROOT}/pdm.toml" || true)
         echo "use_uv=${USE_UV:-false}" >> $GITHUB_OUTPUT
         # If `uv` is enabled, we will use it to manually install dependencies, otherwise we'll use `pip`.
         echo "PIP=$([[ ${USE_UV} = true ]] && echo 'uv pip' || echo 'pip')" >> $GITHUB_ENV
@@ -134,6 +159,8 @@ runs:
         echo "python-version=${PYTHON_VERSION}" >> $GITHUB_OUTPUT
       env:
         PYTHON_VERSION: ${{ inputs.python-version }}
+        WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        WORKSPACE_ROOT: ${{ steps.workspace.outputs.root }}
       shell: bash
 
     - name: Authenticate against JFrog Artifactory
@@ -150,7 +177,7 @@ runs:
         # The GitHub Actions cache is served at ~2 MB/s from our self-hosted runners,
         # making it slower than fetching from JFrog, so it is only enabled on GitHub-hosted ones.
         cache: ${{ inputs.cache == 'true' && runner.environment == 'github-hosted' }}
-        cache-dependency-path: ${{ inputs.working-directory }}/pdm.lock
+        cache-dependency-path: ${{ steps.workspace.outputs.root }}/pdm.lock
 
     # If `uv` is enabled, we install it first and then we use it to install python and pdm as it is way faster.
     # Caching is explicitly disabled: on top of the slow self-hosted cache described above,
@@ -177,6 +204,8 @@ runs:
 
     # `uv` reads index credentials from `UV_INDEX_<NAME>_USERNAME`/`_PASSWORD` only,
     # never from the `JFROG_USER`/`JFROG_TOKEN` exported by `jfrog-login`.
+    # This runs from the project directory (not the workspace root) as it sits next to `uv pip install pdm`,
+    # which reads the `[[tool.uv.index]]` of the project.
     - name: Configure uv for JFrog Artifactory
       if: steps.detect.outputs.use_uv == 'true' && env.JFROG_TOKEN && env.JFROG_DOMAIN
       working-directory: ${{ inputs.working-directory }}
@@ -234,10 +263,10 @@ runs:
 
     - name: Install dependencies (main, all extras and specified dev group)
       if: inputs.skip-dependencies == null
-      working-directory: ${{ inputs.working-directory }}
+      working-directory: ${{ steps.workspace.outputs.root }}
       run: |
         : Install dependencies
-        echo "${{ github.workspace }}/${{ inputs.working-directory }}/.venv/bin/python" > .pdm-python
+        echo "${PWD}/.venv/bin/python" > .pdm-python
         params=(--group :all --dev)
         [ -z "${GROUPS}" ] || params+=(--group ${GROUPS})
         [ -z "${EXCLUDED_GROUPS}" ] || params+=(--without ${EXCLUDED_GROUPS})
