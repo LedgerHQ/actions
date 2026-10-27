@@ -185,6 +185,8 @@ runs:
       if: steps.meta.outputs.has_docker == 'true'
       with:
         working-directory: ${{ inputs.working-directory }}
+        # Workspace members depend on the lock and `pdm.toml` of the workspace root, outside of their context
+        build-contexts: workspace=${{ steps.meta.outputs.workspace-root }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -206,6 +208,8 @@ runs:
       if: inputs.extra-docker
       with:
         working-directory: ${{ inputs.working-directory }}
+        # Workspace members depend on the lock and `pdm.toml` of the workspace root, outside of their context
+        build-contexts: workspace=${{ steps.meta.outputs.workspace-root }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}

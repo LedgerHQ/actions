@@ -99,6 +99,11 @@ outputs:
   use_uv:
     description: Whether this project uses uv as PDM backend
     value: ${{ steps.detect.outputs.use_uv }}
+  workspace-root:
+    description: >-
+      The PDM workspace root (relative to repo root) if the project is a workspace member,
+      else the project directory itself
+    value: ${{ steps.workspace.outputs.root }}
 
 
 runs:

@@ -98,6 +98,7 @@ When the project uses `uv` (`use_uv = true` in `pdm.toml`) and JFrog authenticat
 | `python-version` | The Python version used by this action |
 | `pdm-version` | The version of `pdm` used by this action |
 | `use_uv` | Whether this project uses uv as PDM backend |
+| `workspace-root` | The PDM workspace root (relative to repo root) if the project is a workspace member, else the project directory itself |
 
 ## Exported environment variables
 

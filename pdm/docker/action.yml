@@ -5,6 +5,10 @@ inputs:
   working-directory:
     description: Working directory containing the Dockerfile
     default: '.'
+  build-contexts:
+    description: >-
+      Docker build command extra named `build-contexts` (multiline `name=path` supported)
+    default: ""
   clone:
     description: Whether to clone or not
     default: 'true'
@@ -148,6 +152,7 @@ runs:
       uses: docker/build-push-action@v7
       with:
         context: ${{ inputs.working-directory }}
+        build-contexts: ${{ inputs.build-contexts }}
         file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
@@ -200,6 +205,7 @@ runs:
       if: steps.vars.outputs.has_docker == 'true'
       with:
         context: ${{ inputs.working-directory }}
+        build-contexts: ${{ inputs.build-contexts }}
         file: ${{ steps.vars.outputs.dockerfile }}
         build-args: |
           VERSION=${{ steps.vars.outputs.version }}
