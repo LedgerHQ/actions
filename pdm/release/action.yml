@@ -94,6 +94,9 @@ runs:
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
+        # Release from the current tip of the branch, not from the commit that triggered the workflow:
+        # a run queued behind another release would otherwise bump from a stale base
+        ref: ${{ github.ref }}
         github-token: ${{ inputs.github-token }}
         python-version: ${{ inputs.python-version }}
 
@@ -243,8 +246,9 @@ runs:
       id: tag
       run: |
         : Push release commit and tag
-        git push -f
-        git push -f origin ${{ env.TAG }}
+        # Never force: the release commit must fast-forward the branch, otherwise it would drop commits
+        # pushed in the meantime. Atomic, so the tag is never pushed without its release commit.
+        git push --atomic origin "HEAD:${GITHUB_REF}" "refs/tags/${TAG}"
       shell: bash
 
     - name: Github Release

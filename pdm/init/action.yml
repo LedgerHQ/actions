@@ -20,6 +20,11 @@ inputs:
   exclude-group:
     description: Dependency group(s) to exclude from install
     default: ''
+  ref:
+    description: >-
+      Branch, tag or SHA to check out (defaults to the commit that triggered the workflow,
+      which can be stale for runs queued behind another one: use the branch for releases)
+    default: ''
   history:
     description: Fetch the full history
     required: false
@@ -103,6 +108,7 @@ runs:
       uses: actions/checkout@v7
       with:
         token: ${{ inputs.github-token }}
+        ref: ${{ inputs.ref }}
         fetch-depth: ${{ inputs.history == 'true' && '0' || '1' }}
 
     - name: Setup git
