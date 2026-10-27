@@ -87,13 +87,16 @@ runs:
         fi
       shell: bash
     - name: Clone and install dependencies
-      uses: LedgerHQ/actions/pdm/init@main
+      uses: LedgerHQ/actions/pdm/init@fix/release-push-no-force
       id: meta
       with:
         working-directory: ${{ inputs.working-directory }}
         group: ${{ inputs.group }}
         exclude-group: ${{ inputs.exclude-group }}
         history: true
+        # Release from the current tip of the branch, not from the commit that triggered the workflow:
+        # a run queued behind another release would otherwise bump from a stale base
+        ref: ${{ github.ref }}
         github-token: ${{ inputs.github-token }}
         python-version: ${{ inputs.python-version }}
 
@@ -177,11 +180,13 @@ runs:
       shell: bash
 
     - name: Docker image
-      uses: LedgerHQ/actions/pdm/docker@main
+      uses: LedgerHQ/actions/pdm/docker@fix/release-push-no-force
       id: docker
       if: steps.meta.outputs.has_docker == 'true'
       with:
         working-directory: ${{ inputs.working-directory }}
+        # Workspace members depend on the lock and `pdm.toml` of the workspace root, outside of their context
+        build-contexts: workspace=${{ steps.meta.outputs.workspace-root }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -198,11 +203,13 @@ runs:
       shell: bash
 
     - name: Extra Docker image
-      uses: LedgerHQ/actions/pdm/docker@main
+      uses: LedgerHQ/actions/pdm/docker@fix/release-push-no-force
       id: extra-docker
       if: inputs.extra-docker
       with:
         working-directory: ${{ inputs.working-directory }}
+        # Workspace members depend on the lock and `pdm.toml` of the workspace root, outside of their context
+        build-contexts: workspace=${{ steps.meta.outputs.workspace-root }}
         clone: false
         version: ${{ env.REVISION }}
         github-token: ${{ inputs.github-token }}
@@ -222,7 +229,7 @@ runs:
       id: doc
       if: steps.meta.outputs.has_docs == 'true'
       continue-on-error: true  # Can be manually published after
-      uses: LedgerHQ/actions/pdm/doc@main
+      uses: LedgerHQ/actions/pdm/doc@fix/release-push-no-force
       with:
         working-directory: ${{ inputs.working-directory }}
         version: ${{ env.REVISION }}
@@ -243,8 +250,9 @@ runs:
       id: tag
       run: |
         : Push release commit and tag
-        git push -f
-        git push -f origin ${{ env.TAG }}
+        # Never force: the release commit must fast-forward the branch, otherwise it would drop commits
+        # pushed in the meantime. Atomic, so the tag is never pushed without its release commit.
+        git push --atomic origin "HEAD:${GITHUB_REF}" "refs/tags/${TAG}"
       shell: bash
 
     - name: Github Release
