@@ -34,8 +34,7 @@ on the step so that a notification problem never turns a test run red.
 | ----- | ----------- | ------- | -------- |
 | `webhook` | Slack incoming webhook URL. An empty value is an error | `""` | `true` |
 | `suite` | Suite phrase, rendered as `<suite> Test Results`, e.g. `API`, `UI`, `UI Smoke`, `Web`, `Mobile` | `""` | `true` |
-| `environment` | Environment name, shown in the title as `[<environment>]` and in the `Environment` line. `main`, `next`, `ppr`, `prd`, `qa` and `argocd` also get a coloured emoji. Empty renders neither the tag nor the line | `""` | `false` |
-| `environment-emoji` | Emoji shown before the environment tag. Overrides the built-in one and gives an emoji to any other environment name. Ignored without an `environment` | `""` | `false` |
+| `environment` | Environment name, shown in the title as `[<environment>]` and in the `Environment` line. Empty renders neither the tag nor the line | `""` | `false` |
 | `environment-detail` | Detail shown after the environment, e.g. a workspace or `scope smoke` | `""` | `false` |
 | `stack` | Label rendered as `[<stack>]` after the environment tag, e.g. the framework or the generation of the suite | `""` | `false` |
 | `emoji` | Suite emoji shown before the suite name | `""` | `false` |
@@ -58,7 +57,7 @@ on the step so that a notification problem never turns a test run red.
 ## What it renders
 
 ```text
-:large_purple_circle: [next][v3] :globe_with_meridians: Web Test Results (nightly run) · web@1.2.3 :x:
+[next][v3] :globe_with_meridians: Web Test Results (nightly run) · web@1.2.3 :x:
 Environment: next / workspace-1 — 19 passed, 5 failed, 0 broken, 0 skipped, 24 total
 Allure Report: <link>        Workflow: <link>
 Trigger: manual · <actor>
@@ -67,13 +66,10 @@ octo-org/octo-repo
 
 Everything sits inside the coloured bar of one Slack attachment, with no pretext above it.
 
-- **Title** is `<environment emoji> [<environment>][<stack>] <emoji> <suite> Test Results[ (<qualifier>)][ · <ref>] <status emoji>`,
+- **Title** is `[<environment>][<stack>] <emoji> <suite> Test Results[ (<qualifier>)][ · <ref>] <status emoji>`,
   without the parts that are not set. It is the first line of the attachment text in explicit bold (`*<title>*`),
   and the notification preview (`fallback`). The status emoji is `:green-check:` when the status is `good` and `:x:`
   for anything else.
-- **Environment emoji**: `main` `:large_blue_circle:`, `next` `:large_purple_circle:`, `ppr` `:black_circle:`,
-  `prd` `:white_circle:`, `qa` and `argocd` `:argocd:`. Any other name renders a bare `[name]` unless
-  `environment-emoji` is set.
 - **Body** is `Environment: <environment>[ / <detail>] — <counts>`. Without counts it reads `No test results`.
 - **Fields** are `Allure Report` and `Workflow` side by side, then `Trigger` full width. `Trigger` is `schedule`,
   `manual · <actor>` for a `workflow_dispatch`, or `<event> · <actor>` for any other event. `Workflow`, `Trigger` and

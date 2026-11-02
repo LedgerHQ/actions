@@ -74,7 +74,7 @@ COUNTS="630 passed, 1 failed, 2 broken, 40 skipped, 673 total"
 echo "== a notification, end to end"
 run_notify INPUT_ENVIRONMENT=main INPUT_SUITE=API INPUT_STACK=v2 INPUT_EMOJI=:fist: INPUT_STATUS=good \
   INPUT_SUMMARY="$COUNTS" INPUT_REPORT_URL=https://allure.example/r/1 INPUT_REPORT_PATH=main_api
-check "title" ":large_blue_circle: [main][v2] :fist: API Test Results :green-check:" "$TITLE"
+check "title" "[main][v2] :fist: API Test Results :green-check:" "$TITLE"
 check "title is the first line, in bold" "*$TITLE*" "$(heading)"
 check "title is the notification fallback" "$TITLE" "$(attachment .fallback)"
 check "mrkdwn is enabled on the text" "text" "$(attachment '.mrkdwn_in[0]')"
@@ -89,31 +89,15 @@ check "footer" "<https://github.com/octo-org/octo-repo | octo-org/octo-repo>" "$
 check "no pretext" "null" "$(attachment '.pretext')"
 check "exit code" 0 "$RC"
 
-echo "== environments with a built-in emoji"
-for row in \
-  "main|:large_blue_circle: [main]" \
-  "next|:large_purple_circle: [next]" \
-  "ppr|:black_circle: [ppr]" \
-  "prd|:white_circle: [prd]" \
-  "qa|:argocd: [qa]" \
-  "argocd|:argocd: [argocd]"; do
-  env_name="${row%%|*}"
-  tag="${row#*|}"
+echo "== environments render a bare tag, no environment"
+for env_name in main next ppr prd qa argocd staging; do
   run_notify INPUT_ENVIRONMENT="$env_name" INPUT_SUITE=API INPUT_STATUS=good
-  check "environment $env_name" "$tag API Test Results :green-check:" "$TITLE"
+  check "environment $env_name" "[$env_name] API Test Results :green-check:" "$TITLE"
 done
-
-echo "== other environments, environment emoji, no environment"
-run_notify INPUT_ENVIRONMENT=staging INPUT_SUITE=API INPUT_STATUS=good
-check "unknown environment: bare tag, no emoji" "[staging] API Test Results :green-check:" "$TITLE"
 lacks "unknown environment: no warning" "::warning" "$OUT"
-run_notify INPUT_ENVIRONMENT=sandbox INPUT_ENVIRONMENT_EMOJI=:large_orange_circle: INPUT_SUITE=API INPUT_STATUS=good
-check "environment emoji for another environment" ":large_orange_circle: [sandbox] API Test Results :green-check:" "$TITLE"
-run_notify INPUT_ENVIRONMENT=main INPUT_ENVIRONMENT_EMOJI=:star: INPUT_SUITE=API INPUT_STATUS=good
-check "environment emoji overrides the built-in one" ":star: [main] API Test Results :green-check:" "$TITLE"
-run_notify INPUT_ENVIRONMENT_EMOJI=:star: INPUT_SUITE="UI Smoke" INPUT_STATUS=good \
+run_notify INPUT_SUITE="UI Smoke" INPUT_STATUS=good \
   INPUT_SUMMARY="10 passed, 0 failed, 0 broken, 0 skipped, 10 total"
-check "no environment: the environment emoji is ignored" "UI Smoke Test Results :green-check:" "$TITLE"
+check "no environment: no tag" "UI Smoke Test Results :green-check:" "$TITLE"
 check "no environment: no Environment line" "10 passed, 0 failed, 0 broken, 0 skipped, 10 total" "$(body)"
 run_notify INPUT_STACK=v2 INPUT_SUITE="UI Smoke" INPUT_STATUS=good
 check "stack without environment" "[v2] UI Smoke Test Results :green-check:" "$TITLE"
@@ -122,13 +106,13 @@ echo "== qualifier, ref, environment detail, manual trigger"
 REPO=octo-org/other-repo EVENT=workflow_dispatch run_notify INPUT_ENVIRONMENT=next INPUT_ENVIRONMENT_DETAIL=workspace-1 \
   INPUT_SUITE=Web INPUT_STACK=v3 INPUT_EMOJI=:globe_with_meridians: INPUT_QUALIFIER="nightly run" INPUT_REF=web@1.2.3 \
   INPUT_STATUS=danger INPUT_SUMMARY="19 passed, 5 failed, 0 broken, 0 skipped, 24 total"
-check "title" ":large_purple_circle: [next][v3] :globe_with_meridians: Web Test Results (nightly run) · web@1.2.3 :x:" "$TITLE"
+check "title" "[next][v3] :globe_with_meridians: Web Test Results (nightly run) · web@1.2.3 :x:" "$TITLE"
 check "text" "Environment: next / workspace-1 — 19 passed, 5 failed, 0 broken, 0 skipped, 24 total" "$(body)"
 check "colour" danger "$(attachment .color)"
 check "manual trigger links the actor" "manual · <https://github.com/octocat | octocat>" "$(field Trigger)"
 check "footer links the repository" "<https://github.com/octo-org/other-repo | octo-org/other-repo>" "$(attachment .footer)"
 run_notify INPUT_ENVIRONMENT=main INPUT_SUITE=API INPUT_STATUS=good
-check "no suite emoji, no stack by default" ":large_blue_circle: [main] API Test Results :green-check:" "$TITLE"
+check "no suite emoji, no stack by default" "[main] API Test Results :green-check:" "$TITLE"
 
 echo "== triggers"
 EVENT=repository_dispatch run_notify INPUT_SUITE=API INPUT_STATUS=good
