@@ -29,10 +29,6 @@ report_label="$(oneline "${INPUT_REPORT_PATH:-}")"
 
 # --- environment emoji and tags: <emoji> [<environment>][<stack>] ------------------
 case "$environment" in
-  main)      env_emoji=":large_blue_circle:" ;;
-  next)      env_emoji=":large_purple_circle:" ;;
-  ppr)       env_emoji=":black_circle:" ;;
-  prd)       env_emoji=":white_circle:" ;;
   qa|argocd) env_emoji=":argocd:" ;;
   *)         env_emoji="" ;;
 esac

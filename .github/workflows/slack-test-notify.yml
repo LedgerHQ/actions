@@ -52,7 +52,7 @@ jobs:
           TITLE: ${{ steps.notify.outputs.title }}
           PAYLOAD: ${{ steps.notify.outputs.payload }}
         run: |
-          expected=':large_purple_circle: [next][v2] :fist: API Test Results (nightly) :green-check:'
+          expected='[next][v2] :fist: API Test Results (nightly) :green-check:'
           if [ "$TITLE" != "$expected" ]; then
             echo "::error::unexpected title: $TITLE"
             exit 1
