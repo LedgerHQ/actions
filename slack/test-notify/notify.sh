@@ -27,18 +27,10 @@ report_label="$(oneline "${INPUT_REPORT_PATH:-}")"
 
 [ -n "$suite" ] || fail "the 'suite' input is required"
 
-# --- environment emoji and tags: <emoji> [<environment>][<stack>] ------------------
-case "$environment" in
-  qa|argocd) env_emoji=":argocd:" ;;
-  *)         env_emoji="" ;;
-esac
-env_emoji="$(oneline "${INPUT_ENVIRONMENT_EMOJI:-$env_emoji}")"
-[ -n "$environment" ] || env_emoji=""
-
+# --- tags: [<environment>][<stack>] ------------------------------------------------
 tags=""
 [ -z "$environment" ] || tags="[$environment]"
 [ -z "$stack" ] || tags="${tags}[$stack]"
-heading="${env_emoji:+$env_emoji }$tags"
 
 # --- counts and status ---------------------------------------------------------
 # Path mode: read an Allure widgets/summary.json. String mode: use the summary input.
@@ -73,7 +65,7 @@ esac
 if [ "$status" = "good" ]; then status_emoji=":green-check:"; else status_emoji=":x:"; fi
 
 # --- title ----------------------------------------------------------------------
-title="${heading:+$heading }${emoji:+$emoji }$suite Test Results"
+title="${tags:+$tags }${emoji:+$emoji }$suite Test Results"
 [ -z "$qualifier" ] || title="$title ($qualifier)"
 [ -z "$ref" ] || title="$title · $ref"
 title="$title $status_emoji"

@@ -89,31 +89,15 @@ check "footer" "<https://github.com/octo-org/octo-repo | octo-org/octo-repo>" "$
 check "no pretext" "null" "$(attachment '.pretext')"
 check "exit code" 0 "$RC"
 
-echo "== built-in environments"
-for row in \
-  "main|[main]" \
-  "next|[next]" \
-  "ppr|[ppr]" \
-  "prd|[prd]" \
-  "qa|:argocd: [qa]" \
-  "argocd|:argocd: [argocd]"; do
-  env_name="${row%%|*}"
-  tag="${row#*|}"
+echo "== environments render a bare tag, no environment"
+for env_name in main next ppr prd qa argocd staging; do
   run_notify INPUT_ENVIRONMENT="$env_name" INPUT_SUITE=API INPUT_STATUS=good
-  check "environment $env_name" "$tag API Test Results :green-check:" "$TITLE"
+  check "environment $env_name" "[$env_name] API Test Results :green-check:" "$TITLE"
 done
-
-echo "== other environments, environment emoji, no environment"
-run_notify INPUT_ENVIRONMENT=staging INPUT_SUITE=API INPUT_STATUS=good
-check "unknown environment: bare tag, no emoji" "[staging] API Test Results :green-check:" "$TITLE"
 lacks "unknown environment: no warning" "::warning" "$OUT"
-run_notify INPUT_ENVIRONMENT=sandbox INPUT_ENVIRONMENT_EMOJI=:large_orange_circle: INPUT_SUITE=API INPUT_STATUS=good
-check "environment emoji for another environment" ":large_orange_circle: [sandbox] API Test Results :green-check:" "$TITLE"
-run_notify INPUT_ENVIRONMENT=qa INPUT_ENVIRONMENT_EMOJI=:star: INPUT_SUITE=API INPUT_STATUS=good
-check "environment emoji overrides the built-in one" ":star: [qa] API Test Results :green-check:" "$TITLE"
-run_notify INPUT_ENVIRONMENT_EMOJI=:star: INPUT_SUITE="UI Smoke" INPUT_STATUS=good \
+run_notify INPUT_SUITE="UI Smoke" INPUT_STATUS=good \
   INPUT_SUMMARY="10 passed, 0 failed, 0 broken, 0 skipped, 10 total"
-check "no environment: the environment emoji is ignored" "UI Smoke Test Results :green-check:" "$TITLE"
+check "no environment: no tag" "UI Smoke Test Results :green-check:" "$TITLE"
 check "no environment: no Environment line" "10 passed, 0 failed, 0 broken, 0 skipped, 10 total" "$(body)"
 run_notify INPUT_STACK=v2 INPUT_SUITE="UI Smoke" INPUT_STATUS=good
 check "stack without environment" "[v2] UI Smoke Test Results :green-check:" "$TITLE"
