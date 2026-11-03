@@ -248,14 +248,24 @@ runs:
         fi
       shell: bash
 
-    # From the project directory, so uv sees the same `[[tool.uv.index]]` as the step above
+    # From the project directory, so uv sees the same `[[tool.uv.index]]` as the step above.
+    # pdm gets a virtualenv of its own: `setup-uv` activated the project one, and pdm's dependencies
+    # must not leak into it (e.g. unearth >= 0.19 brings `httpx2`, which Starlette's `TestClient`
+    # then prefers over the project's `httpx`). Only the `pdm` executable is put on the `PATH`.
     - name: Install pdm
       id: setup-uv-pdm
       if: steps.detect.outputs.use_uv == 'true'
       working-directory: ${{ inputs.working-directory }}
       run: |
         : Install pdm
-        uv pip install pdm
+        PDM_VENV="${RUNNER_TEMP}/pdm/venv"
+        PDM_BIN="${RUNNER_TEMP}/pdm/bin"
+        uv venv --quiet --allow-existing "${PDM_VENV}"
+        uv pip install --python "${PDM_VENV}/bin/python" pdm
+        mkdir -p "${PDM_BIN}"
+        ln -sf "${PDM_VENV}/bin/pdm" "${PDM_BIN}/pdm"
+        echo "${PDM_BIN}" >> "${GITHUB_PATH}"
+        export PATH="${PDM_BIN}:${PATH}"
         pdm config python.install_root $(uv python dir --color never)
         echo "python-version=$(python -c 'import platform; print(platform.python_version())')" >> $GITHUB_OUTPUT
         echo "pdm-version=$(pdm --version | awk '{print $3}')" >> $GITHUB_OUTPUT
