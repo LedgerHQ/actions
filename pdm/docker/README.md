@@ -36,6 +36,7 @@ so saving/restoring layers costs more than rebuilding them.
 | Input | Description | Default | Required |
 | ----- | ----------- | ------- | -------- |
 | `working-directory` | Working directory containing the Dockerfile | `.` | `false` |
+| `build-contexts` | Docker build command extra named `build-contexts` (multiline `name=path` supported) | `""` | `false` |
 | `clone` | Whether to clone or not | `true` | `false` |
 | `version` | Force the built version | `""` | `false` |
 | `github-token` | A GitHub token with proper permissions | `${{ github.token }}` | `false` |

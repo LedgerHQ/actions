@@ -55,6 +55,7 @@ See [the shared documentation on JFrog Artifactory](https://github.com/LedgerHQ/
 | `extra-python-versions` | Additional Python versions to install, one per line, for projects testing against several interpreters (requires `uv`) | `""` | `false` |
 | `group` | Dependency group(s) to install | `""` | `false` |
 | `exclude-group` | Dependency group(s) to exclude from install | `""` | `false` |
+| `ref` | Branch, tag or SHA to check out (defaults to the commit that triggered the workflow, which can be stale for runs queued behind another one: use the branch for releases) | `""` | `false` |
 | `history` | Fetch the full history | `false` | `false` |
 | `github-token` | A Github token with proper permissions | `${{ github.token }}` | `false` |
 | `skip-dependencies` | Skip dependencies installation | `""` | `false` |
@@ -97,6 +98,7 @@ When the project uses `uv` (`use_uv = true` in `pdm.toml`) and JFrog authenticat
 | `python-version` | The Python version used by this action |
 | `pdm-version` | The version of `pdm` used by this action |
 | `use_uv` | Whether this project uses uv as PDM backend |
+| `workspace-root` | The PDM workspace root (relative to repo root) if the project is a workspace member, else the project directory itself |
 
 ## Exported environment variables
 
