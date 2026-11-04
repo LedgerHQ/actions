@@ -34,7 +34,7 @@ runs:
 
     - name: Restore sbt build outputs
       id: restore-sbt-build-outputs
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v6
       with:
         path: |
           ${{ github.workspace }}/**/target
@@ -59,7 +59,7 @@ runs:
         fi
 
     - name: Save sbt build outputs
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v6
       with:
         path: |
           ${{ github.workspace }}/**/target
